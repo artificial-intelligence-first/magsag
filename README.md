@@ -1,7 +1,5 @@
 # MAGSAG Framework
 
-**This repository has been migrated to [artificial-intelligence-first/magsag](https://github.com/artificial-intelligence-first/magsag). Please use the new repository for all updates, issues, and pull requests.**
-
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![CI Status](https://img.shields.io/github/actions/workflow/status/artificial-intelligence-first/magsag/ci.yml?branch=main&label=CI)](https://github.com/artificial-intelligence-first/magsag/actions/workflows/ci.yml?branch=main)
