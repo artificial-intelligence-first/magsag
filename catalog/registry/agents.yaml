@@ -1,6 +1,6 @@
 tasks:
   - id: "offer-orchestration"
-    description: "Generate a compensation offer packet from a candidate profile."
+    description: "Deterministic offer generation harness for regression tests."
     default: "magsag://main.offer-orchestrator-mag@>=0.1.0"
     variants:
       - id: "standard"
@@ -10,10 +10,14 @@ tasks:
   - match: "offer.generate"
     main_agent: "magsag://main.offer-orchestrator-mag@0.1.0"
     variants:
-      - id: "ab.A"
+      - id: "ab.control"
         weight: 50
         main_agent: "magsag://main.offer-orchestrator-mag@0.1.0"
-      - id: "ab.B"
+      - id: "ab.experimental"
         weight: 50
         main_agent: "magsag://main.offer-orchestrator-mag@0.1.0"
+    risk: low
+  - id: "test-orchestration"
+    description: "Auxiliary task alias for internal validation flows."
+    default: "magsag://main.offer-orchestrator-mag@>=0.1.0"
     risk: low

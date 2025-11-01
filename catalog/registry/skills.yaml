@@ -21,3 +21,8 @@ skills:
     location: "catalog/skills/result-aggregation"
     entrypoint: "catalog/skills/result-aggregation/impl/result_aggregation.py:run"
     permissions: []
+  - id: "skill.test-helper-transform"
+    version: "0.1.0"
+    location: "catalog/skills/test-helper"
+    entrypoint: "catalog/skills/test-helper/impl/transform.py:run"
+    permissions: []
