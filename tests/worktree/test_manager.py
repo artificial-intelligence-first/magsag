@@ -31,6 +31,7 @@ def git_repo(tmp_path: Path) -> Path:
     _run_git(repo, "init", "-b", "main")
     _run_git(repo, "config", "user.email", "magsag@example.com")
     _run_git(repo, "config", "user.name", "MAGSAG Tests")
+    _run_git(repo, "config", "commit.gpgsign", "false")
     (repo / "README.md").write_text("hello\n", encoding="utf-8")
     _run_git(repo, "add", "README.md")
     _run_git(repo, "commit", "-m", "initial")

@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 
 from magsag.runners.agent_runner import AgentRunner, Result
@@ -46,7 +48,7 @@ def test_offer_orchestrator_uses_runner_run_id() -> None:
 def test_offer_orchestrator_raises_when_all_delegations_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     runner = AgentRunner()
 
-    async def fake_invoke_sag_async(delegation):
+    async def fake_invoke_sag_async(delegation: Any) -> Result:
         return Result(
             task_id=delegation.task_id,
             status="failure",
@@ -71,7 +73,6 @@ def test_offer_orchestrator_propagates_parent_run_id() -> None:
         context=context,
     )
 
-    parent_run_id = context["run_id"]
     first_result = output["results"][0]
     assert first_result["status"] == "success"
     assert first_result["output"]["metadata"]["agent"] == "compensation-advisor-sag"
