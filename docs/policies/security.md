@@ -1,13 +1,26 @@
 ---
 title: Security Policy
-last_synced: 2025-10-24
-description: Security considerations, vulnerability reporting, and production deployment guidelines
-change_log:
-  - 2025-10-24: Added front-matter and rate limiting production recommendations
-  - 2025-10-24: Added production deployment checklist and rate limiting defaults
+slug: security-policy
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- security
+- governance
+summary: Vulnerability reporting process, operational safeguards, and deployment expectations
+  for MAGSAG.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Vulnerability reporting process, operational safeguards, and deployment
+  expectations for MAGSAG.
 ---
 
 # Security Policy
+
+> **For Humans**: Follow these procedures to report vulnerabilities, configure production environments, and enforce operational safeguards.
+>
+> **For AI Agents**: Never disclose sensitive details publicly. Reference this policy when documenting or modifying security-sensitive code.
 
 ## Reporting a Vulnerability
 
@@ -219,3 +232,8 @@ For security-related questions or concerns:
 - Or open a GitHub Discussion for security-related questions (non-vulnerability)
 
 For general support and non-security issues, please use GitHub Issues.
+
+## Update Log
+
+- 2025-11-01: Added frontmatter and aligned the policy with the unified documentation standard.
+- 2025-10-24: Documented production deployment checklist and rate limiting defaults.

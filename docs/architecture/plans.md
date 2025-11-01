@@ -1,18 +1,28 @@
 ---
 title: ExecPlan Quick Reference
-slug: plans
+slug: architecture-plans
 status: living
-last_synced: 2025-10-30
-tags: [magsag, execplan]
-description: "How to create, maintain, and close ExecPlans without unnecessary overhead."
-source_of_truth: "https://github.com/artificial-intelligence-first/magsag"
+last_updated: 2025-11-01
+tags:
+- magsag
+- plans
+- workflow
+summary: Lightweight framework for creating, maintaining, and closing ExecPlans.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Lightweight framework for creating, maintaining, and closing ExecPlans.
 ---
 
 # ExecPlan Quick Reference
 
-ExecPlans are lightweight documents that capture intent, validation, and
-handoff notes for work that spans multiple sessions or contributors. Keep them
-short, link to relevant assets, and update them while you work.
+> **For Humans**: Use this checklist to capture intent, validation, and decisions for multi-session work without adding overhead.
+>
+> **For AI Agents**: Create or update ExecPlans whenever tasks span sessions. Keep status notes current.
+
+## Overview
+
+ExecPlans are lightweight documents that capture intent, validation, and handoff notes for work that spans multiple sessions or contributors. Keep them short, link to relevant assets, and update them while you work.
 
 ## When to Create One
 
@@ -65,4 +75,6 @@ Store plans in `docs/development/plans/<slug>.md` and follow this structure:
 - Attach supporting scripts or diagrams next to the plan under the same slug.
 - Reflect key learnings in `docs/architecture/ssot.md` or other canonical surfaces.
 
-That’s all—ExecPlans should guide action, not become another maintenance burden.
+## Update Log
+
+- 2025-11-01: Adopted the unified documentation format and clarified audience guidance.

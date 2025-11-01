@@ -1,7 +1,22 @@
 ---
+title: Doc Generation Skill
+slug: skill-doc-gen
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- skill
+- documentation
+summary: Generates structured offer packets that combine compensation recommendations
+  with narrative guidance.
+authors: []
+sources: []
 name: doc-gen
-description: >
-  Generates offer packet documents that summarize compensation recommendations and candidate-specific details.
+description: 'Generates offer packet documents that summarize compensation recommendations
+  and candidate-specific details.
+
+  '
 iface:
   input_schema: catalog/contracts/candidate_profile.schema.json
   output_schema: catalog/contracts/offer_packet.schema.json
@@ -13,6 +28,10 @@ limits:
 ---
 
 # Doc Generation (doc-gen)
+
+> **For Humans**: Use this skill to produce complete offer packets ready for stakeholder review.
+>
+> **For AI Agents**: Validate inputs and outputs against the referenced schemas. Keep narrative sections consistent with advisor guidance.
 
 ## Purpose
 Produce a complete offer packet that combines validated candidate data, compensation recommendations, and narrative guidance that can be delivered directly to the recruiting partner or hiring manager.
@@ -55,3 +74,7 @@ Produce a complete offer packet that combines validated candidate data, compensa
 - **Schema Validation Fails**: Confirm the caller transformed the upstream data with `catalog/contracts/candidate_profile.schema.json`; missing identifiers or compensation targets frequently cause this failure.
 - **Missing Compensation Context**: When the payload lacks salary band guidance, emit a warning so the orchestrator can rerun `salary-band-lookup` before finalizing the packet.
 - **Latency Spikes**: Execution is CPU-bound; unexpected latency often indicates heavy upstream preprocessing or oversized payloads.
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.

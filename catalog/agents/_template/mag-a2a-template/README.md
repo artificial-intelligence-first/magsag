@@ -1,4 +1,25 @@
+---
+title: A2A MAG Template Overview
+slug: agent-template-mag-a2a
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- agent
+- template
+- a2a
+summary: Template for documenting agent-to-agent capable main agents.
+description: Template for documenting agent-to-agent capable main agents.
+authors: []
+sources: []
+---
+
 # YourA2AOrchestratorMAG
+
+> **For Humans**: Use this template when documenting A2A-enabled MAGs.
+>
+> **For AI Agents**: Populate every section with concrete APIs, delegation paths, and governance details.
 
 **Role:** Main Agent (MAG) with A2A Support
 **Version:** 0.1.0
@@ -210,3 +231,7 @@ uv run -m pytest tests/integration/test_a2a_e2e.py -v
 - Load balancing across multiple agent instances
 - A2A authentication and authorization
 - Request/response caching
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the A2A MAG template.

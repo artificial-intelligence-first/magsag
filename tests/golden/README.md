@@ -1,4 +1,21 @@
+---
+title: Golden Test Suite
+slug: tests-golden
+status: living
+last_updated: 2025-11-01
+last_synced: '2025-11-01'
+tags: [testing, golden, magsag]
+summary: "Reference data set for validating agent behaviour through golden tests."
+description: "Reference data set for validating agent behaviour through golden tests."
+authors: []
+sources: []
+---
+
 # Golden Tests
+
+> **For Humans**: Use this guide to maintain golden inputs and outputs for regression testing.
+>
+> **For AI Agents**: Update fixtures and expected outputs together. Document intentional divergences.
 
 This directory contains golden test cases for MAGSAG agents. Golden tests verify that agents produce expected outputs for known inputs, enabling regression detection and behavior validation.
 
@@ -250,6 +267,10 @@ When adding golden tests:
 3. Document any special requirements
 4. Update this README if adding new patterns
 5. Ensure tests pass in CI before merging
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
 
 ---
 

@@ -2,12 +2,26 @@
 title: MAGSAG Changelog
 slug: changelog
 status: living
-last_updated: 2025-10-30
-tags: [magsag, changelog, releases, semver]
-summary: "Release history for the MAGSAG framework following Keep a Changelog and SemVer."
+last_updated: 2025-11-01
+last_synced: '2025-11-01'
+tags:
+- magsag
+- changelog
+- releases
+- semver
+summary: Release history for the MAGSAG framework following Keep a Changelog and SemVer.
+description: Release history for the MAGSAG framework following Keep a Changelog and
+  SemVer.
+authors: []
 sources:
-  - { id: R1, title: "Keep a Changelog 1.1.0", url: "https://keepachangelog.com/en/1.1.0/", accessed: "2025-10-30" }
-  - { id: R2, title: "Semantic Versioning 2.0.0", url: "https://semver.org/spec/v2.0.0.html", accessed: "2025-10-30" }
+- id: R1
+  title: Keep a Changelog 1.1.0
+  url: https://keepachangelog.com/en/1.1.0/
+  accessed: '2025-11-01'
+- id: R2
+  title: Semantic Versioning 2.0.0
+  url: https://semver.org/spec/v2.0.0.html
+  accessed: '2025-11-01'
 ---
 
 # Changelog

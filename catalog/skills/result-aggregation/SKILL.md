@@ -1,7 +1,21 @@
 ---
+title: Result Aggregation Skill
+slug: skill-result-aggregation
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- skill
+- orchestration
+summary: Aggregates outputs from multiple SAG executions into a unified offer packet.
+authors: []
+sources: []
 name: result-aggregation
-description: >
-  Aggregates results from multiple sub-agent executions into a unified output.
+description: 'Aggregates results from multiple sub-agent executions into a unified
+  output.
+
+  '
 iface:
   input_schema: list of result payloads from SAG executions
   output_schema: catalog/contracts/offer_packet.schema.json
@@ -11,6 +25,10 @@ slo:
 ---
 
 # Result Aggregation (result-aggregation)
+
+> **For Humans**: Use this skill to merge SAG outputs into a single offer packet.
+>
+> **For AI Agents**: Maintain deterministic merge behaviour and document any schema changes in SSOT.
 
 ## Purpose
 Surface the first successful SAG result and provide a deterministic fallback when multiple results are available.
@@ -27,3 +45,7 @@ Surface the first successful SAG result and provide a deterministic fallback whe
 
 ## Examples
 `{"results": [{"offer": {...}}, {"offer": {..., "metadata": {...}}]}` → merged dictionary with second result’s overrides.
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.

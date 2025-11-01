@@ -1,4 +1,26 @@
+---
+title: A2A SAG Template Overview
+slug: agent-template-sag-a2a
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- agent
+- template
+- sag
+- a2a
+summary: Template for documenting A2A-capable sub-agents.
+description: Template for documenting A2A-capable sub-agents.
+authors: []
+sources: []
+---
+
 # YourA2AAdvisorSAG
+
+> **For Humans**: Use this template when documenting A2A-enabled sub-agents.
+>
+> **For AI Agents**: Populate every section with concrete A2A behaviours, contracts, and logging requirements.
 
 **Role:** Sub-Agent (SAG) with A2A Support
 **Version:** 0.1.0
@@ -213,3 +235,7 @@ uv run -m pytest tests/integration/test_a2a_e2e.py -v
 - Automatic context validation
 - A2A authentication support
 - Circuit breaker integration
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the A2A SAG template.

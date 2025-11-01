@@ -1,4 +1,26 @@
+---
+title: Approval-as-a-Policy
+slug: approval-policy
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- governance
+- approvals
+summary: Policy-driven approval workflow enabling human oversight for critical agent
+  actions.
+description: Policy-driven approval workflow enabling human oversight for critical
+  agent actions.
+authors: []
+sources: []
+---
+
 # Approval-as-a-Policy
+
+> **For Humans**: Configure and monitor approval gates to keep sensitive tool calls under human control without blocking routine automation.
+>
+> **For AI Agents**: Honor approval requirements automatically. Create, poll, and resume runs according to the workflows described here.
 
 ## Overview
 
@@ -362,7 +384,11 @@ approval_gate = ApprovalGate(
 
 ## Related Documentation
 
-- [Permission Evaluator](./governance/permission_evaluator.md)
+- `catalog/policies/` – YAML policy definitions consumed by the permission evaluator.
 - [Storage Layer](./storage.md)
 - [API Usage](./guides/api-usage.md)
 - [Security Policies](./policies/security.md)
+
+## Update Log
+
+- 2025-11-01: Added frontmatter and audience guidance to align with the unified documentation standard.

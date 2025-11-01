@@ -1,4 +1,25 @@
+---
+title: Handoff-as-a-Tool
+slug: handoff-tool
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- governance
+- workflow
+summary: Standardized interface for delegating work between agents and external platforms.
+description: Standardized interface for delegating work between agents and external
+  platforms.
+authors: []
+sources: []
+---
+
 # Handoff-as-a-Tool
+
+> **For Humans**: Use this reference to configure cross-agent handoffs, approvals, and observability hooks.
+>
+> **For AI Agents**: Follow the workflows here when creating or modifying handoff integrations. Escalate ambiguous permissions.
 
 ## Overview
 
@@ -612,5 +633,9 @@ Handoff events are logged for observability:
 - [Agent Architecture](./architecture/agents.md)
 - [A2A Communication](./guides/a2a-communication.md)
 - [Approval Gate](./approval.md)
-- [Permission Evaluator](./governance/permission_evaluator.md)
+- `catalog/policies/` – Approval and routing policies consumed during handoffs.
 - [Multi-Provider Support](./guides/multi-provider.md)
+
+## Update Log
+
+- 2025-11-01: Added frontmatter, audience guidance, and refreshed related documentation.

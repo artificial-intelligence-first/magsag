@@ -1,15 +1,27 @@
 ---
-title: MAGSAG Single Source of Truth
-slug: ssot
+title: MAGSAG SSOT Reference
+slug: architecture-ssot
 status: living
-last_synced: 2025-10-30
-tags: [magsag, ssot, governance, contracts, terminology]
-description: "Canonical definitions, data contracts, policies, and interfaces for the MAGSAG framework."
-source_of_truth: "https://github.com/artificial-intelligence-first/magsag"
+last_updated: 2025-11-01
+tags:
+- magsag
+- governance
+- ssot
+summary: Canonical terminology, contracts, and policies that underpin the MAGSAG platform.
+authors: []
+source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/SSOT.md
+last_synced: '2025-11-01'
 sources:
-  - { id: R1, title: "MAGSAG Catalog", url: "catalog/", accessed: "2025-10-30" }
-  - { id: R2, title: "MAGSAG API Server", url: "src/magsag/api/server.py", accessed: "2025-10-30" }
-  - { id: R3, title: "Observability Logger", url: "src/magsag/observability/logger.py", accessed: "2025-10-30" }
+- id: R1
+  title: MAGSAG Catalog
+  url: ../../catalog/
+  accessed: '2025-11-01'
+- id: R2
+  title: MAGSAG API Server
+  url: ../../src/magsag/api/server.py
+  accessed: '2025-11-01'
+description: Canonical terminology, contracts, and policies that underpin the MAGSAG
+  platform.
 ---
 
 # MAGSAG Single Source of Truth (SSOT)
@@ -137,4 +149,6 @@ MAGSAG provides:
 
 ## Update Log
 
+- 2025-11-01: Adopted unified documentation format and aligned metadata with root SSOT.
+- 2025-11-01: Linked canonical SSOT repository and enumerated key data contracts and workflows.
 - 2025-10-30: Reconstructed SSOT with canonical terminology, contracts, governance, and integration tables.

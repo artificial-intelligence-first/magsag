@@ -1,10 +1,26 @@
 ---
-title: MAGSAG MCP Server - Exposing Agents as Tools
-last_synced: 2025-10-25
-description: Expose MAGSAG agents and skills as MCP tools for Claude Desktop and other MCP clients
+title: MAGSAG MCP Server
+slug: guide-mcp-server
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- mcp
+- server
+summary: Expose MAGSAG agents and skills as MCP tools for Claude Desktop and other
+  compliant clients.
+description: Expose MAGSAG agents and skills as MCP tools for Claude Desktop and other
+  compliant clients.
+authors: []
+sources: []
 ---
 
 # MAGSAG MCP Server
+
+> **For Humans**: Configure and operate the MCP server to expose agents and skills to external clients.
+>
+> **For AI Agents**: Follow these steps when modifying server behaviour or documentation. Keep permissions and manifests consistent.
 
 This guide covers how to expose MAGSAG agents and skills as MCP (Model Context Protocol) tools, allowing external clients like Claude Desktop to invoke them.
 
@@ -643,3 +659,8 @@ Currently, each agent invocation runs sequentially. For high-volume use cases, c
 - [Model Context Protocol Specification](https://modelcontextprotocol.io/)
 - [FastMCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
 - [Claude Desktop MCP Configuration](https://docs.anthropic.com/claude/docs/model-context-protocol)
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and dual-audience guidance.
+- 2025-10-25: Documented MCP server architecture and integration steps.

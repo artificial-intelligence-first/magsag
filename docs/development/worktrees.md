@@ -1,4 +1,26 @@
+---
+title: Git Worktree Operations
+slug: worktree-operations
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- workflow
+- tooling
+summary: Managed Git worktree automation used to isolate MAGSAG runs and keep diffs
+  focused.
+description: Managed Git worktree automation used to isolate MAGSAG runs and keep
+  diffs focused.
+authors: []
+sources: []
+---
+
 # Git Worktree Operations
+
+> **For Humans**: Use these commands and policies to manage per-run worktrees safely.
+>
+> **For AI Agents**: Follow this flow when scripting worktree operations. Do not bypass safety guards unless instructed.
 
 MAGSAG provisions one Git worktree per agent run to isolate file changes and reduce merge conflicts. The implementation introduced in `feat/git-worktree` surfaces consistent tooling across the CLI, API, and observability stack.
 
@@ -63,3 +85,7 @@ Events flow through an in-process bus; subscribers register via `get_event_bus()
 ## Testing Notes
 
 Unit tests validate porcelain parsing, branch naming guards, and cleanup behaviour. Integration tests exercise `WorktreeManager` end-to-end using a temporary repository, including event emission, locking, and removal.
+
+## Update Log
+
+- 2025-11-01: Added frontmatter and audience guidance for the unified documentation standard.

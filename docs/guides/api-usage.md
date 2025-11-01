@@ -1,15 +1,25 @@
 ---
 title: MAGSAG HTTP API Reference
-last_synced: 2025-10-25
-description: Complete reference for MAGSAG FastAPI endpoints, authentication, and observability
-change_log:
-  - 2025-10-25: Phase 3 - Fixed authentication error response format to match documented schema
-  - 2025-10-25: Phase 3 - Updated run ID examples to use correct format (mag-{8-char-hex})
-  - 2025-10-24: Added front-matter and SSE/NDJSON contract specifications
-  - 2025-10-24: Added run_id format specification and retrieval documentation
+slug: guide-api-usage
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- api
+- reference
+summary: Complete reference for MAGSAG FastAPI endpoints, authentication, and observability.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Complete reference for MAGSAG FastAPI endpoints, authentication, and
+  observability.
 ---
 
 # MAGSAG HTTP API Reference
+
+> **For Humans**: Use this reference when integrating external systems with the MAGSAG API.
+>
+> **For AI Agents**: Keep endpoint documentation, schemas, and authentication details aligned with the implementation.
 
 The MAGSAG HTTP API exposes agent orchestration, run observability, and GitHub automation over FastAPI. This document provides an end-to-end reference for configuration, authentication, endpoints, and troubleshooting.
 
@@ -334,3 +344,9 @@ Common error payloads:
 - **SSE drops:** Some proxies buffer Server-Sent Events. Use `tail` polling as a fallback when streaming is not supported.
 
 For GitHub-specific diagnostics, refer to [GitHub Integration Guide](./github-integration.md).
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-25: Synced authentication schema and run ID references.
+- 2025-10-24: Documented SSE/NDJSON contracts and validation rules.

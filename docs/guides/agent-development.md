@@ -1,20 +1,33 @@
 ---
 title: Agent Development Guide
-last_synced: 2025-10-25
-source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/topics/AGENTS.md
-description: Operational guidance for MAGSAG agent development, testing, and deployment
-change_log:
-  - 2025-10-25: Phase 3 - Added complete CLI reference (flow validate/run, data management commands)
-  - 2025-10-24: Added SSOT reference and front-matter
+slug: guide-agent-development
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- agents
+- development
+summary: Operational guidance for building, validating, and shipping agents in the
+  MAGSAG repository.
+authors: []
+source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/docs/core/agents-guide.md
+sources:
+- id: R1
+  title: MAGSAG Agent Playbook
+  url: ../../AGENTS.md
+  accessed: '2025-11-01'
+last_synced: '2025-11-01'
+description: Operational guidance for building, validating, and shipping agents in
+  the MAGSAG repository.
 ---
 
 # Agent Development Guide
 
-**Note:** For canonical agent design principles and patterns, refer to [AGENTS.md in SSOT](https://github.com/artificial-intelligence-first/ssot/blob/main/topics/AGENTS.md). This guide focuses on MAGSAG-specific implementation details.
+> **For Humans**: Use this guide when implementing or modifying agents in the MAGSAG repository.
+>
+> **For AI Agents**: Follow these instructions exactly. Keep catalog assets, tests, and docs aligned.
 
-Operational guidance for the MAGSAG repository. The
-instructions below supersede general documentation when you are running or
-modifying code.
+For canonical agent design principles, start with `AGENTS.md`. This guide expands on repository-specific implementation details.
 
 ## Dev Environment Tips
 - Use Python 3.12 with the [`uv`](https://docs.astral.sh/uv/) package manager.
@@ -419,3 +432,9 @@ This project follows AI-first documentation standards. See the following files f
 2. Add user-facing changes to CHANGELOG.md under `[Unreleased]`
 3. Update PLANS.md progress and decisions for complex initiatives
 4. Follow the procedures in this AGENTS.md file for testing and PRs
+
+## Update Log
+
+- 2025-11-01: Adopted the unified documentation standard and refreshed references.
+- 2025-10-25: Added CLI reference and SSOT linkage.
+- 2025-10-24: Introduced frontmatter and repository-specific guidance.

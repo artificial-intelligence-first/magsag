@@ -1,4 +1,26 @@
+---
+title: MAG Template Overview
+slug: agent-template-mag
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- agent
+- template
+summary: Template for documenting main agents, including responsibilities, contracts,
+  and execution flow.
+description: Template for documenting main agents, including responsibilities, contracts,
+  and execution flow.
+authors: []
+sources: []
+---
+
 # YourOrchestratorMAG
+
+> **For Humans**: Copy this template when documenting a main agent.
+>
+> **For AI Agents**: Populate every section with concrete details and keep contracts synced with the catalog.
 
 **Role:** Main Agent (MAG)
 **Version:** 0.1.0
@@ -91,3 +113,7 @@ echo '{"field1":"test"}' | uv run magsag agent run your-orchestrator-mag
 ## Development Notes
 
 [Add implementation notes, known limitations, future enhancements]
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the MAG template.

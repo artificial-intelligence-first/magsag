@@ -1,16 +1,31 @@
 ---
 title: Model Context Protocol (MCP) Integration
-last_synced: 2025-10-29
-description: Integration of MCP servers for external tools, data sources, and standardized interfaces
-change_log:
-  - 2025-10-29: Added implementation status warning and migration guide preview
-  - 2025-10-24: Added front-matter and MCP architecture overview
+slug: guide-mcp-integration
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- mcp
+- integration
+summary: Guide to exposing and consuming MCP servers within MAGSAG, including migration
+  phases and governance requirements.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Guide to exposing and consuming MCP servers within MAGSAG, including
+  migration phases and governance requirements.
 ---
 
-> ⚠️ IMPLEMENTATION STATUS  
+# Model Context Protocol (MCP) Integration
+
+> **For Humans**: Follow this playbook to wire MCP servers into agents and skills safely.
+>
+> **For AI Agents**: Honour permission declarations, feature flags, and migration timelines before executing MCP calls.
+
+> ⚠️ **Implementation Status**  
 > Phase 1 — MCP server exposure (Complete, GA)  
 > Phase 2 — Async skill runtime & templates (Complete in this repository)  
-> Phase 3 — External MCP client integrations (In Progress; skills fall back to local logic until launch)
+> Phase 3 — External MCP client integrations (In progress; skills fall back to local logic until launch)
 
 ### Migration Guide Preview
 
@@ -21,8 +36,6 @@ Phase 2 delivered async signatures and optional MCP runtime wiring for all catal
 3. **Strengthen Contracts**: Expand schemas and tests to cover remote failure modes and partial data responses.
 
 Detailed migration instructions will ship alongside the Phase 3 release.
-
-# Model Context Protocol (MCP) Integration
 
 This guide covers the integration of Model Context Protocol (MCP) servers with MAGSAG agents, enabling access to external tools, data sources, and services through a standardized interface.
 
@@ -866,3 +879,9 @@ def run(payload: dict, **deps) -> dict:
 - [MCP Reference Servers](https://github.com/modelcontextprotocol/servers)
 - [MCP SDK Documentation](https://github.com/modelcontextprotocol/sdk)
 - [Security Best Practices](https://modelcontextprotocol.io/docs/security)
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter, audience guidance, and refreshed migration overview.
+- 2025-10-29: Documented implementation status and migration preview.
+- 2025-10-24: Introduced architecture overview and initial guidance.

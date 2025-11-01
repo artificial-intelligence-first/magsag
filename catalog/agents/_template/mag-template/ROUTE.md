@@ -1,4 +1,25 @@
+---
+title: MAG Route Template
+slug: agent-template-mag-route
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- agent
+- template
+- routing
+summary: Template for documenting MAG routing logic, delegation rules, and fallbacks.
+description: Template for documenting MAG routing logic, delegation rules, and fallbacks.
+authors: []
+sources: []
+---
+
 # Routing Logic - YourOrchestratorMAG
+
+> **For Humans**: Use this structure to document MAG routing decisions.
+>
+> **For AI Agents**: Keep decision trees, fallbacks, and capability notes synchronized with implementation.
 
 ## Decision Tree
 
@@ -38,6 +59,10 @@ Input: your_input
 
 ### Future Enhancements
 [Document planned routing strategies based on input attributes]
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the MAG route template.
 
 ## Error Handling
 

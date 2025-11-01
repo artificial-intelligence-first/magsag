@@ -1,12 +1,26 @@
 ---
+title: <Skill Display Name>
+slug: skill-template
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- skill
+- template
+summary: Template for documenting skills with frontmatter, procedures, and troubleshooting.
+authors: []
+sources: []
 name: <skill-name>
-description: >
-  Summarize the capability provided by this skill and the inputs or situations that trigger it.
+description: 'Summarize the capability provided by this skill and the inputs or situations
+  that trigger it.
+
+  '
 iface:
   input_schema: contracts/<in>.json
   output_schema: contracts/<out>.json
 mcp:
-  server_ref: "<server-id>"
+  server_ref: <server-id>
 slo:
   success_rate_min: 0.99
   latency_p95_ms: 1000
@@ -15,6 +29,10 @@ limits:
 ---
 
 # <Skill Display Name> (<skill-name>)
+
+> **For Humans**: Copy this template when documenting new skills.
+>
+> **For AI Agents**: Populate every section with concrete details. Keep schemas and SLOs synced with the catalog.
 
 ## Purpose
 Explain the end-to-end outcome the skill produces and why it matters to the broader workflow.
@@ -58,3 +76,7 @@ Add additional scenarios to capture edge cases or advanced usage as needed.
 - Describe common validation failures and how to resolve them.
 - Highlight monitoring signals to check when SLOs degrade.
 - Provide escalation contacts or follow-up actions when automation cannot recover.
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the template.

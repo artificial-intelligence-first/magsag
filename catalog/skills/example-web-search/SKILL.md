@@ -1,8 +1,22 @@
 ---
+title: Example Web Search Skill
+slug: skill-example-web-search
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- skill
+- mcp
+summary: Wrapper skill that proxies queries through the fetch MCP server for web search
+  and retrieval.
+authors: []
+sources: []
 name: example-web-search
-description: >
-  Example MCP tool wrapper for web content fetching and search.
-  Demonstrates how to integrate the fetch MCP server for web search capabilities.
+description: 'Example MCP tool wrapper for web content fetching and search. Demonstrates
+  how to integrate the fetch MCP server for web search capabilities.
+
+  '
 iface:
   input_schema: contracts/web_search_query.schema.json
   output_schema: contracts/web_search_result.schema.json
@@ -16,6 +30,10 @@ limits:
 ---
 
 # Example Web Search (example-web-search)
+
+> **For Humans**: Use this skill to retrieve and summarise web content via the fetch MCP server.
+>
+> **For AI Agents**: Validate payloads against the input schema before invoking the MCP server. Respect rate limits and logged SLOs.
 
 ## Purpose
 Demonstrates integration with the fetch MCP server to retrieve and process web content. This example shows how to wrap an MCP tool for web search/fetch operations, including URL fetching, content extraction, and result formatting.
@@ -106,3 +124,7 @@ The implementation demonstrates:
 - **Content Extraction Failures**: Check if the target website has changed its HTML structure
 - **MCP Server Not Available**: Ensure fetch server is configured in `.mcp/servers/fetch.yaml`
 - **Timeout Errors**: Increase latency threshold for slow websites
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.

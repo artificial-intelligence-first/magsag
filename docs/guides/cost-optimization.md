@@ -1,12 +1,26 @@
 ---
 title: Cost Optimization Guide
-last_synced: 2025-10-24
-description: Strategies for optimizing LLM costs through model selection, token management, and usage tracking
-change_log:
-  - 2025-10-24: Added front-matter and cost tracking architecture
+slug: guide-cost-optimization
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- cost
+- governance
+summary: Strategies for controlling LLM spend through routing, budgeting, and observability
+  in MAGSAG.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Strategies for controlling LLM spend through routing, budgeting, and
+  observability in MAGSAG.
 ---
 
 # Cost Optimization Guide
+
+> **For Humans**: Apply these practices to manage usage, routing, and budgeting.
+>
+> **For AI Agents**: Keep cost tracking code and documentation aligned. Record guardrails when modifying pricing logic.
 
 This guide covers strategies and best practices for optimizing LLM costs in the MAGSAG framework, from model selection to token management and usage tracking.
 
@@ -757,3 +771,8 @@ uv run magsag flow gate summary.json --dry-run
 - [Anthropic Pricing](https://www.anthropic.com/pricing)
 - [Token Optimization Best Practices](https://platform.openai.com/docs/guides/optimization)
 - [Prompt Engineering Guide](https://www.promptingguide.ai/)
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-24: Documented cost tracking architecture and strategies.

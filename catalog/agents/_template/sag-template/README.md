@@ -1,4 +1,27 @@
+---
+title: SAG Template Overview
+slug: agent-template-sag
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- agent
+- template
+- sag
+summary: Template for documenting sub-agents, including contracts, responsibilities,
+  and testing.
+description: Template for documenting sub-agents, including contracts, responsibilities,
+  and testing.
+authors: []
+sources: []
+---
+
 # YourAdvisorSAG
+
+> **For Humans**: Use this template when documenting a sub-agent.
+>
+> **For AI Agents**: Populate every section with concrete behaviour, schemas, and error handling details.
 
 **Role:** Sub-Agent (SAG)
 **Version:** 0.1.0
@@ -82,3 +105,7 @@ echo '{"domain_field":"test"}' > /tmp/input.json
 ## Development Notes
 
 [Add implementation notes, known limitations, future enhancements]
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the SAG template.

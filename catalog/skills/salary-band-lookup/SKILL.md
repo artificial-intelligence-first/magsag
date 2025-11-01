@@ -1,12 +1,27 @@
 ---
+title: Salary Band Lookup Skill
+slug: skill-salary-band-lookup
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- skill
+- compensation
+summary: Produces salary band recommendations by combining compensation tables, benchmarks,
+  and governance rules.
+authors: []
+sources: []
 name: salary-band-lookup
-description: >
-  Provides recommended salary bands by combining internal compensation tables with candidate attributes.
+description: 'Provides recommended salary bands by combining internal compensation
+  tables with candidate attributes.
+
+  '
 iface:
   input_schema: catalog/contracts/candidate_profile.schema.json
   output_schema: catalog/contracts/salary_band.schema.json
 mcp:
-  server_ref: "pg-readonly"
+  server_ref: pg-readonly
 slo:
   success_rate_min: 0.99
   latency_p95_ms: 1000
@@ -15,6 +30,10 @@ limits:
 ---
 
 # Salary Band Lookup (salary-band-lookup)
+
+> **For Humans**: Use this skill to derive policy-compliant salary bands for candidate offers.
+>
+> **For AI Agents**: Validate inputs and outputs against the referenced schemas. Preserve governance checks and warnings.
 
 ## Purpose
 Compute salary band recommendations that align with internal compensation policy, using candidate attributes, job level expectations, and available market benchmarks.
@@ -58,3 +77,7 @@ Compute salary band recommendations that align with internal compensation policy
 - **Missing Compensation Rows**: If `pg-readonly` returns zero results, return a warning and suggest verifying that the compensation tables contain the candidate's job family/level combination.
 - **Schema Violations**: Ensure optional numeric ranges are emitted as numbers, not strings, and that currency codes follow ISO 4217.
 - **Stale Benchmarks**: When benchmark metadata indicates an outdated refresh date, flag the issue in the `warnings` array and notify the compensation operations contact channel.
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.

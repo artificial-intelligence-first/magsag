@@ -1,12 +1,26 @@
 ---
 title: GitHub Integration Guide
-last_synced: 2025-10-24
-description: GitHub webhook integration for agent execution from PR/issue comments
-change_log:
-  - 2025-10-24: Added front-matter and webhook setup instructions
+slug: guide-github-integration
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- integration
+- github
+summary: Configure GitHub webhooks so comments can trigger MAGSAG agents and publish
+  results.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Configure GitHub webhooks so comments can trigger MAGSAG agents and publish
+  results.
 ---
 
 # GitHub Integration Guide
+
+> **For Humans**: Follow these steps to connect GitHub events to MAGSAG agents.
+>
+> **For AI Agents**: Confirm webhook secrets, payload formats, and security policies before automating updates.
 
 MAGSAG ships with a GitHub webhook bridge that executes agents from pull request or issue comments and posts the results back to the originating thread. This guide explains the end-to-end setup, supported commands, and troubleshooting steps.
 
@@ -126,3 +140,8 @@ Use the workflow as a template for scheduled automations or manual triggers.
 - The webhook handlers log failures to post comments via Python's standard logging facility; ensure your deployment collects WARN level logs.
 
 For deeper HTTP API behaviour, refer back to [API Usage Guide](./api-usage.md).
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-24: Documented webhook setup and command syntax.

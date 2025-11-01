@@ -1,15 +1,30 @@
 ---
 title: Tracking Issue – mypy/ruff debt cleanup
-status: closed
-resolved: 2025-02-15
+slug: issue-mypy-ruff-cleanup
+status: stable
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- tracking
+- quality
+summary: Resolution record for the mypy strict and ruff lint debt cleanup.
+description: Resolution record for the mypy strict and ruff lint debt cleanup.
+authors: []
+sources: []
+resolved: '2025-02-15'
 owner: platform-foundations
-created: 2025-02-14
+created: '2025-02-14'
 related_plans:
-  - ../roadmap.md
-  - ../../PLANS.md
+- ../roadmap.md
+- ../../PLANS.md
 ---
 
 # Summary
+
+> **For Humans**: Reference this issue to confirm the static analysis cleanup and related guardrails.
+>
+> **For AI Agents**: Use this as canonical evidence that mypy strict and ruff checks pass. Do not reintroduce ignores without updating this record.
 - `uv run mypy --strict src tests` and `uv run ruff check src tests` now pass without errors following debt cleanup.
 - Runtime suites (`pytest`, `pytest -m slow`) continue to succeed, completing the “Full validation matrix green” exit criterion.
 
@@ -29,3 +44,7 @@ related_plans:
 - `uv run ruff check src tests` exited 0 (2025-02-15).
 - Removed stale ignores/imports, tightened test annotations, and hardened provider adapters to satisfy strict typing.
 - Updated `PLANS.md` to reflect static analysis completion.
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.

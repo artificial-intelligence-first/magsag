@@ -1,4 +1,25 @@
+---
+title: SAG Persona Template
+slug: agent-template-sag-persona
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- agent
+- template
+- persona
+summary: Template for defining behavioural guidance for sub-agents.
+description: Template for defining behavioural guidance for sub-agents.
+authors: []
+sources: []
+---
+
 # Agent Persona
+
+> **For Humans**: Use this persona template to define SAG behaviour.
+>
+> **For AI Agents**: Fill out each section with actionable rules and escalation paths.
 
 ## Personality
 Focused, domain-expert specialist. Precise and detail-oriented, dedicated to executing specific tasks with high accuracy.
@@ -201,3 +222,7 @@ When adapting this persona for your specific SAG agent:
 5. Document calculation methods, data sources, and update frequencies
 6. Consider regulatory requirements (e.g., GDPR, financial regulations)
 7. Define clear boundaries for the SAG's responsibility (what it does and doesn't handle)
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the SAG persona template.

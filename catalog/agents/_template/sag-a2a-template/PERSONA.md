@@ -1,4 +1,26 @@
+---
+title: A2A SAG Persona Template
+slug: agent-template-sag-a2a-persona
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- agent
+- template
+- persona
+- a2a
+summary: Template for defining behaviour of A2A-enabled sub-agents.
+description: Template for defining behaviour of A2A-enabled sub-agents.
+authors: []
+sources: []
+---
+
 # Agent Persona
+
+> **For Humans**: Use this template when describing A2A SAG personas.
+>
+> **For AI Agents**: Fill in each section with concrete behaviour, escalation steps, and context-handling rules.
 
 ## Personality
 Focused, domain-expert specialist with A2A communication capabilities. Precise and detail-oriented, dedicated to executing specific tasks with high accuracy while supporting agent discovery and inter-agent protocols.
@@ -209,3 +231,7 @@ When adapting this persona for your specific A2A-enabled SAG agent:
 5. Document expected latency and throughput characteristics
 6. Consider distributed tracing and correlation ID propagation
 7. Define clear boundaries for the SAG's responsibility in A2A context
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the A2A SAG persona template.

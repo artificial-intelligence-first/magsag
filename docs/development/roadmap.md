@@ -1,17 +1,28 @@
 ---
 title: MAGSAG Framework Hardening ExecPlan
-last_synced: 2025-10-24
-source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/topics/PLANS.md
-description: Living document tracking governance, release, and documentation hardening
-change_log:
-  - 2025-10-24: Added front-matter and SSOT PLANS reference
+slug: roadmap-hardening
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- plans
+- governance
+summary: ExecPlan tracking governance, release, and documentation hardening efforts
+  for the MAGSAG platform.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: ExecPlan tracking governance, release, and documentation hardening efforts
+  for the MAGSAG platform.
 ---
 
 # MAGSAG Framework Hardening ExecPlan
 
-**Note:** For canonical ExecPlan format and planning guidelines, refer to [PLANS.md in SSOT](https://github.com/artificial-intelligence-first/ssot/blob/main/topics/PLANS.md).
+> **For Humans**: Maintain this plan as the canonical tracker for governance and release hardening work.
+>
+> **For AI Agents**: Update timestamps, decisions, and to-do items as you execute tasks. Keep the plan synced with related documentation.
 
-This ExecPlan is a living document. Keep Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective current as work proceeds.
+Refer to the template in `PLANS.md` for structure and usage expectations. This ExecPlan is living—keep Progress, Surprises & Discoveries, Decision Log, and Outcomes current as work proceeds.
 
 ## Purpose / Big Picture
 Anchor the MAGSAG repository around a resilient, AI-first walking skeleton so subsequent feature work inherits proven governance, observability, and packaging practices from day one.
@@ -26,8 +37,8 @@ Anchor the MAGSAG repository around a resilient, AI-first walking skeleton so su
 - [ ] Publish contributor-facing runbooks for syncing Flow Runner sample assets when upstream tags change.
 
 ### Documentation Hygiene
-- [ ] Cross-link ExecPlan expectations from `README.md`, [AGENTS.md](../architecture/agents.md), and contributor docs.
-- [ ] Capture validation guidance in `CHANGELOG.md` and [SSOT.md](../architecture/ssot.md) as features graduate from this plan.
+- [ ] Cross-link ExecPlan expectations from `README.md`, [AGENTS.md](../../AGENTS.md), and contributor docs.
+- [ ] Capture validation guidance in `CHANGELOG.md` and [SSOT.md](../../SSOT.md) as features graduate from this plan.
 
 ## Progress
 - [2025-10-23 02:30 UTC] Hardened typing and fixtures across runners, registry, governance gate, and API tests; added stub packages so `mypy --strict` succeeds alongside pytest/ruff checks.
@@ -37,6 +48,11 @@ Anchor the MAGSAG repository around a resilient, AI-first walking skeleton so su
 - [2025-10-20 11:55 UTC] Governance gate operationalized via `tools/gate_flow_summary.py`, wired into CI alongside Flow Runner validation and Multi-Agent Governance checks.
 - [2025-10-20 11:10 UTC] Observability summary tooling created for Flow Runner `.runs/`, exposing per-step metrics and MCP call counts.
 - [2025-10-20 10:40 UTC] Baseline repository skeleton established with `uv` tooling, initial directories, and core documentation.
+
+## Update Log
+
+- 2025-11-01: Converted to the unified documentation format and refreshed references.
+- 2025-10-24: Added SSOT planning reference and initial hardening scope.
 
 ## Surprises & Discoveries
 - [2025-10-20 16:05 UTC] Packaging smoke tests revealed missing mirrored assets; resolved by extending `uv build` guidance and ensuring wheel includes Flow Runner fixtures.

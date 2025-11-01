@@ -1,12 +1,26 @@
 ---
 title: Semantic Cache Guide
-last_synced: 2025-10-24
-description: Vector similarity caching with FAISS and Redis for cost and latency reduction
-change_log:
-  - 2025-10-24: Added front-matter and architecture overview
+slug: guide-semantic-cache
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- cache
+- performance
+summary: Configure vector similarity caching with FAISS or Redis to reduce latency
+  and cost.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Configure vector similarity caching with FAISS or Redis to reduce latency
+  and cost.
 ---
 
 # Semantic Cache Guide
+
+> **For Humans**: Deploy and tune semantic caching to balance cost savings with accuracy.
+>
+> **For AI Agents**: Update cache logic, thresholds, and documentation together. Escalate when changing embedding providers.
 
 MAGSAG provides semantic caching using vector similarity search to reduce costs and latency by reusing responses for similar prompts.
 
@@ -470,3 +484,8 @@ r = redis.Redis(connection_pool=pool)
 - [OpenAI Embeddings Guide](https://platform.openai.com/docs/guides/embeddings)
 - [MAGSAG Cost Optimization](./cost-optimization.md)
 - [MAGSAG Routing Guide](./multi-provider.md)
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-24: Documented semantic cache architecture and best practices.

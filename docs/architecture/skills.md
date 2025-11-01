@@ -1,17 +1,34 @@
 ---
 title: Skill Development Cheatsheet
-slug: skills
+slug: architecture-skills
 status: living
-last_synced: 2025-10-30
-tags: [magsag, skills]
-description: "Lean checklist for defining, implementing, and shipping MAGSAG skills."
-source_of_truth: "https://github.com/artificial-intelligence-first/magsag"
+last_updated: 2025-11-01
+tags:
+- magsag
+- skills
+- workflow
+summary: Checklist for defining, implementing, and shipping skills within the MAGSAG
+  catalog.
+authors: []
+sources:
+- id: R1
+  title: Catalog Skill Templates
+  url: ../../catalog/skills/_template/SKILL.md
+  accessed: '2025-11-01'
+last_synced: '2025-11-01'
+description: Checklist for defining, implementing, and shipping skills within the
+  MAGSAG catalog.
 ---
 
 # Skill Development Cheatsheet
 
-This cheatsheet keeps skill development consistent without forcing you to read
-pages of prose. Link out to detailed guides when further context is needed.
+> **For Humans**: Use this guide to deliver skills that match catalog and runtime expectations with minimal rework.
+>
+> **For AI Agents**: Enforce these steps when editing skill code or metadata; escalate if requirements conflict.
+
+## Overview
+
+This cheatsheet keeps skill development consistent without forcing you to read pages of prose. Link out to detailed guides when further context is needed.
 
 ## Where Things Live
 
@@ -64,5 +81,8 @@ Cover:
 - `catalog/skills/salary-band-lookup/` – async skill with MCP integration.
 - `tests/mcp/` – integration tests demonstrating mocked transports.
 
-Keep this cheatsheet lean. If you find yourself adding long explanations, move
-them into the relevant guide and link back instead.
+## Update Log
+
+- 2025-11-01: Converted to the unified documentation format and refreshed references.
+
+Keep this cheatsheet lean. If you find yourself adding long explanations, move them into the relevant guide and link back instead.

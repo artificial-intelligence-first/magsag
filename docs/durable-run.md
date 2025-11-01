@@ -1,4 +1,26 @@
+---
+title: Durable Run
+slug: durable-run
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- durability
+- workflow
+summary: Snapshot and restoration framework that keeps long-running agent executions
+  resilient.
+description: Snapshot and restoration framework that keeps long-running agent executions
+  resilient.
+authors: []
+sources: []
+---
+
 # Durable Run
+
+> **For Humans**: Configure durable execution to protect long-running workflows and provide restart safety.
+>
+> **For AI Agents**: Follow these steps when modifying checkpoint logic or documenting restart behaviour.
 
 ## Overview
 
@@ -512,3 +534,7 @@ Checkpoints accumulate over time:
 - [Agent Runner](./guides/runner-integration.md)
 - [Observability](./guides/cost-optimization.md)
 - [API Usage](./guides/api-usage.md)
+
+## Update Log
+
+- 2025-11-01: Added metadata and audience guidance for the unified documentation standard.

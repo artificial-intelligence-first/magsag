@@ -1,12 +1,26 @@
 ---
 title: Runner Integration Guide
-last_synced: 2025-10-24
-description: Expectations and interface requirements for runner adapters
-change_log:
-  - 2025-10-24: Added front-matter and structured runner requirements
+slug: guide-runner-integration
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- runners
+- integration
+summary: Expectations and interface requirements for integrating execution runners
+  with MAGSAG.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Expectations and interface requirements for integrating execution runners
+  with MAGSAG.
 ---
 
 # Runner Integration Guide
+
+> **For Humans**: Use this reference when building or maintaining runner adapters.
+>
+> **For AI Agents**: Validate capability flags and governance hooks against this guide before modifying runner code.
 
 This document captures the expectations for runner adapters that integrate with the MAGSAG Framework.
 
@@ -179,3 +193,8 @@ These values are surfaced in `summary.json` metadata and recorded alongside cost
 - Provide sample adapters or mocks for testing runner orchestration without external dependencies.
 - Add async/parallel SAG invocation for MAGs
 - Implement circuit breaker patterns for failing SAGs
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-24: Documented runner requirements and capability taxonomy.

@@ -1,10 +1,24 @@
 ---
 title: MAGSAG Migration Guide
-last_synced: 2025-10-30
-description: "Guide for migrating from legacy features to current MAGSAG implementation."
+slug: guide-migration
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- migration
+- upgrades
+summary: Steps for moving from legacy features to current MAGSAG conventions.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Steps for moving from legacy features to current MAGSAG conventions.
 ---
 
 # MAGSAG Migration Guide
+
+> **For Humans**: Follow these steps to adopt the current async agent architecture and supporting tooling.
+>
+> **For AI Agents**: Apply these migration patterns when refactoring code. Document deviations in SSOT and the changelog.
 
 This guide helps you migrate from legacy features to the current implementation.
 
@@ -163,3 +177,8 @@ echo '{"role":"Engineer","level":"Senior"}' | uv run magsag agent run your-agent
 ## Timeline
 
 These changes are effective immediately. There is no grace period for legacy support.
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-30: Documented async migration path and SDK consolidation.

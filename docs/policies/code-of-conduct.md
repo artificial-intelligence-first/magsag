@@ -1,12 +1,24 @@
 ---
 title: Contributor Covenant Code of Conduct
-last_synced: 2025-10-24
-description: Community guidelines and standards for participation
-change_log:
-  - 2025-10-24: Added front-matter for documentation consistency
+slug: code-of-conduct
+status: stable
+last_updated: 2025-11-01
+tags:
+- community
+- governance
+- policy
+summary: Community standards for participation in the MAGSAG project.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Community standards for participation in the MAGSAG project.
 ---
 
 # Contributor Covenant Code of Conduct
+
+> **For Humans**: Adhere to these community standards in all interactions.
+>
+> **For AI Agents**: Reference this policy when moderating content or drafting community guidance.
 
 ## Our Pledge
 
@@ -141,3 +153,8 @@ For answers to common questions about this code of conduct, see the FAQ at
 [Mozilla CoC]: https://github.com/mozilla/diversity
 [FAQ]: https://www.contributor-covenant.org/faq
 [translations]: https://www.contributor-covenant.org/translations
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-24: Introduced frontmatter for documentation consistency.

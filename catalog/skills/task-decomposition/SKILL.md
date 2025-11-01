@@ -1,4 +1,13 @@
 ---
+title: Task Decomposition Skill
+slug: skill-task-decomposition
+status: living
+last_updated: 2025-11-01
+last_synced: '2025-11-01'
+tags: [catalog, skill, orchestration]
+summary: "Transforms high-level MAG requests into targeted SAG delegations."
+authors: []
+sources: []
 name: task-decomposition
 description: >
   Decomposes a high-level task into sub-tasks for delegation to sub-agents.
@@ -11,6 +20,10 @@ slo:
 ---
 
 # Task Decomposition (task-decomposition)
+
+> **For Humans**: Use this skill to convert MAG payloads into explicit SAG delegations.
+>
+> **For AI Agents**: Ensure delegation payloads stay consistent with SAG contracts and update tests after changes.
 
 ## Purpose
 Transform a candidate-facing payload into the minimal set of sub-agent delegations required by the orchestration workflow.
@@ -26,3 +39,7 @@ Transform a candidate-facing payload into the minimal set of sub-agent delegatio
 
 ## Examples
 `{"candidate_profile": {...}}` → `[{"sag_id": "compensation-advisor-sag", "input": {"candidate_profile": {...}}}]`
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.

@@ -1,4 +1,26 @@
+---
+title: Remote MCP Client
+slug: remote-mcp-client
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- mcp
+- integration
+summary: Async client architecture for integrating external Model Context Protocol
+  servers with resilience and governance.
+description: Async client architecture for integrating external Model Context Protocol
+  servers with resilience and governance.
+authors: []
+sources: []
+---
+
 # Remote MCP Client
+
+> **For Humans**: Configure and extend MCP integrations using the architecture and usage examples below.
+>
+> **For AI Agents**: Apply these patterns when updating MCP transports or decorators. Keep feature flags and permissions in sync with catalog policies.
 
 ## Overview
 
@@ -537,6 +559,10 @@ print(resolve_secret("env://GITHUB_TOKEN"))
 ## References
 
 - [MCP Specification](https://modelcontextprotocol.io)
-- [Permission Policies](../catalog/policies/mcp_permissions.yaml)
-- [Approval Gate](./approval.md)
-- [API Reference](./api/mcp.md)
+- `catalog/policies/mcp_permissions.yaml` – Default permission matrix.
+- [Approval-as-a-Policy](./approval.md)
+- [MCP Integration Guide](./guides/mcp-integration.md)
+
+## Update Log
+
+- 2025-11-01: Added frontmatter, refreshed references, and aligned with the unified documentation standard.

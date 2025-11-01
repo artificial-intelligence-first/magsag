@@ -1,13 +1,26 @@
 ---
 title: Multi-Provider LLM Support
-last_synced: 2025-10-24
-description: Multiple LLM provider support with flexible configuration and model selection strategies
-change_log:
-  - 2025-10-24: Added front-matter and provider configuration overview
-  - 2025-10-24: Added unified provider selection via MAGSAG_PROVIDER environment variable
+slug: guide-multi-provider
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- providers
+- routing
+summary: Configure multiple LLM providers, routing strategies, and failover policies
+  in MAGSAG.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Configure multiple LLM providers, routing strategies, and failover policies
+  in MAGSAG.
 ---
 
 # Multi-Provider LLM Support
+
+> **For Humans**: Configure providers, routing policies, and fallbacks using this guide.
+>
+> **For AI Agents**: Ensure provider-specific changes are reflected in routing, cost tracking, and SSOT definitions.
 
 MAGSAG supports multiple LLM providers through flexible configuration and runtime model selection. This guide covers provider integration, model selection strategies, and best practices.
 
@@ -516,3 +529,8 @@ uv run magsag flow gate summary.json --policy catalog/policies/model_governance.
 - [Anthropic API Reference](https://docs.anthropic.com/claude/reference)
 - [Ollama Documentation](https://ollama.ai/docs)
 - [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-24: Documented provider configuration and routing strategies.

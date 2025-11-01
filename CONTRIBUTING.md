@@ -2,13 +2,31 @@
 title: Contributing to MAGSAG
 slug: contributing
 status: living
-last_updated: 2025-10-30
-tags: [magsag, contributing, governance, collaboration]
-summary: "Guidelines for contributing to the MAGSAG framework and keeping documentation, tests, and governance in sync."
+last_updated: 2025-11-01
+last_synced: '2025-11-01'
+tags:
+- magsag
+- contributing
+- governance
+- collaboration
+summary: Guidelines for contributing to the MAGSAG framework and keeping documentation,
+  tests, and governance in sync.
+description: Guidelines for contributing to the MAGSAG framework and keeping documentation,
+  tests, and governance in sync.
+authors: []
 sources:
-  - { id: R1, title: "MAGSAG README", url: "README.md", accessed: "2025-10-30" }
-  - { id: R2, title: "Agent Development Guide", url: "docs/guides/agent-development.md", accessed: "2025-10-30" }
-  - { id: R3, title: "Single Source of Truth", url: "docs/architecture/ssot.md", accessed: "2025-10-30" }
+- id: R1
+  title: MAGSAG README
+  url: README.md
+  accessed: '2025-11-01'
+- id: R2
+  title: AGENTS Playbook
+  url: AGENTS.md
+  accessed: '2025-11-01'
+- id: R3
+  title: Single Source of Truth
+  url: SSOT.md
+  accessed: '2025-11-01'
 ---
 
 # Contributing to MAGSAG
@@ -25,7 +43,7 @@ sources:
 
 ## Before You Start
 
-1. Read `README.md`, [SSOT.md](./docs/architecture/ssot.md), and [AGENTS.md](./docs/architecture/agents.md) to understand current capabilities and workflow expectations.
+1. Read `README.md`, [SSOT.md](./SSOT.md), and [AGENTS.md](./AGENTS.md) to understand current capabilities and workflow expectations.
 2. Sync dependencies: `uv sync --extra dev` (add `--extra production` when working with Postgres/Redis/MCP).
 3. Verify local environment by running:
    ```bash
@@ -48,9 +66,9 @@ sources:
 3. Implement changes with strict type hints and tests.
 4. Update documentation:
    - `README.md` for user-facing capabilities.
-   - [AGENTS.md](./docs/architecture/agents.md) for operational changes.
+   - [AGENTS.md](./AGENTS.md) for operational changes (update this root file before adjusting downstream guides).
    - [SKILL.md](./docs/architecture/skills.md) when modifying skill conventions.
-   - [SSOT.md](./docs/architecture/ssot.md) for new terminology, schemas, or policies.
+   - [SSOT.md](./SSOT.md) for new terminology, schemas, or policies (propagate changes after refreshing the canonical root).
 5. Run validation commands (tests, lint, type check, schema validators).
 6. Update `CHANGELOG.md` under `## [Unreleased]` with user-facing changes.
 7. Commit using imperative, Conventional Commit-friendly summaries (≤72 chars).
@@ -105,4 +123,5 @@ Record pass/fail results for each command in the PR description.
 
 ## Update Log
 
+- 2025-11-01: Updated references to the new SSOT/AGENTS locations and refreshed metadata.
 - 2025-10-30: Rebuilt CONTRIBUTING guide with governance, validation, and documentation requirements aligned to MAGSAG.

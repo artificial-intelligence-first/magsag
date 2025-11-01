@@ -1,12 +1,27 @@
 ---
+title: MCP Tool Skill Template
+slug: skill-template-mcp
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- skill
+- mcp
+summary: Template for documenting MCP-backed skills, including contracts, procedures,
+  and fallbacks.
+authors: []
+sources: []
 name: <skill-name>
-description: >
-  MCP tool wrapper for <tool-purpose>. Replace this with your tool's description.
+description: 'MCP tool wrapper for <tool-purpose>. Replace this with your tool''s
+  description.
+
+  '
 iface:
   input_schema: contracts/<input-contract>.json
   output_schema: contracts/<output-contract>.json
 mcp:
-  server_ref: "<mcp-server-id>"
+  server_ref: <mcp-server-id>
 slo:
   success_rate_min: 0.99
   latency_p95_ms: 1000
@@ -15,6 +30,10 @@ limits:
 ---
 
 # <Skill Display Name> (<skill-name>)
+
+> **For Humans**: Use this template when wrapping MCP tools as catalog skills.
+>
+> **For AI Agents**: Populate every field, validate contracts, and document fallback logic.
 
 ## Purpose
 MCP Tool Template provides a standardized structure for creating skills that wrap Model Context Protocol (MCP) tools. This template demonstrates how to integrate external MCP servers into the MAGSAG framework while maintaining contract validation, error handling, and observability requirements.
@@ -56,8 +75,12 @@ MCP Tool Template provides a standardized structure for creating skills that wra
   1. Validate input against schema
   2. Call MCP tool with extracted parameters
   3. Transform response to output format
-  4. Validate output against schema
+ 4. Validate output against schema
 - **Output**: [resources/examples/out.json](resources/examples/out.json)
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the MCP skill template.
 
 ## Implementation Notes
 

@@ -1,16 +1,25 @@
 ---
 title: Agent-to-Agent (A2A) Communication
-last_synced: 2025-10-24
-source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/topics/AGENTS.md
-description: MAG/SAG orchestration patterns and delegation workflows
-change_log:
-  - 2025-10-24: Added front-matter and SSOT reference for agent patterns
-  - 2025-10-24: Added protocol versioning and backward compatibility policy
+slug: guide-a2a-communication
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- agents
+- orchestration
+summary: MAG/SAG orchestration patterns, delegation workflows, and governance expectations.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: MAG/SAG orchestration patterns, delegation workflows, and governance
+  expectations.
 ---
 
 # Agent-to-Agent (A2A) Communication
 
-**Note:** For canonical A2A patterns and agent architecture principles, refer to [AGENTS.md in SSOT](https://github.com/artificial-intelligence-first/ssot/blob/main/topics/AGENTS.md).
+> **For Humans**: Use this guide when designing MAG/SAG coordination.
+>
+> **For AI Agents**: Apply these communication patterns when modifying orchestration logic. Escalate if requirements conflict with SSOT definitions.
 
 This guide covers the Agent-to-Agent (A2A) communication patterns in MAGSAG, focusing on the MAG (Main Agent) and SAG (Sub-Agent) orchestration architecture.
 
@@ -1008,3 +1017,8 @@ def delegate_safely(delegation: Delegation, runner, obs, visited: set = None):
 - [Example MAG](../../catalog/agents/main/offer-orchestrator-mag/) - Reference implementation
 - [Example SAG](../../catalog/agents/sub/compensation-advisor-sag/) - Reference implementation
 - [SSOT](../architecture/ssot.md) - Terminology and policies
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-24: Documented protocol versioning and SSOT references.

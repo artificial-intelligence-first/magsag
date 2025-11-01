@@ -1,12 +1,24 @@
 ---
 title: MAGSAG Storage Layer
-last_synced: 2025-10-24
-description: Pluggable data management system for agent execution data and observability
-change_log:
-  - 2025-10-24: Added front-matter and architecture overview
+slug: storage-layer
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- storage
+- observability
+summary: Pluggable data management system for agent execution artefacts and observability.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: Pluggable data management system for agent execution artefacts and observability.
 ---
 
 # MAGSAG Storage Layer
+
+> **For Humans**: Operate and extend the storage layer using these architecture notes, CLI commands, and lifecycle policies.
+>
+> **For AI Agents**: Follow this guidance when modifying storage code paths or documentation. Keep contracts in sync with catalog policies.
 
 The MAGSAG storage layer provides a pluggable, scalable data management system for querying and analyzing agent execution data.
 
@@ -396,3 +408,7 @@ Database is growing too large. Solutions:
 - [Litestream](https://litestream.io/)
 - [ClickHouse](https://clickhouse.com/docs/)
 - [OpenTelemetry Semantic Conventions](https://opentelemetry.io/docs/concepts/semantic-conventions/)
+
+## Update Log
+
+- 2025-11-01: Applied the unified documentation standard and refreshed metadata.

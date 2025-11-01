@@ -1,18 +1,35 @@
 ---
 title: MAGSAG Agent Guidelines
-slug: agents
+slug: architecture-agents
 status: living
-last_synced: 2025-10-30
-tags: [magsag, agents, workflow]
-description: "Concise operating rules for developers and AI assistants working on MAGSAG."
-source_of_truth: "https://github.com/artificial-intelligence-first/magsag"
+last_updated: 2025-11-01
+last_synced: '2025-11-01'
+tags:
+- magsag
+- agents
+- workflow
+summary: Detailed operating procedures for contributors working inside the MAGSAG
+  repository.
+authors: []
+source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/docs/core/agents-guide.md
+sources:
+- id: R1
+  title: MAGSAG Agent Playbook
+  url: ../../AGENTS.md
+  accessed: '2025-11-01'
+description: Detailed operating procedures for contributors working inside the MAGSAG
+  repository.
 ---
 
 # MAGSAG Agent Guidelines
 
-The goal of this playbook is to keep human and AI contributors aligned on the
-minimum set of rules required to land safe changes quickly. Everything here is
-actionable; follow it unless the user or maintainer explicitly overrides it.
+> **For Humans**: Use this guide to understand the repository layout, required tooling, and governance hooks that shape daily work.
+>
+> **For AI Agents**: Mirror these procedures when editing code or docs. Ask for clarification when instructions conflict.
+
+## Overview
+
+This guide expands on `AGENTS.md` with deeper context about the development environment, architecture, and validation routines that keep changes safe and traceable.
 
 ## Environment Essentials
 
@@ -109,5 +126,7 @@ If a check is intentionally skipped, state the reason in the delivery message.
 - `docs/guides/` – integration-specific walkthroughs (MCP, moderation, GitHub).
 - `docs/development/worktrees.md` – detailed worktree automation.
 
-Keep this file concise. If you need deep details, link out to the dedicated guide
-instead of inlining them here.
+## Update Log
+
+- 2025-11-01: Migrated to the unified documentation standard and refreshed metadata.
+- 2025-11-01: Linked canonical ssot repository reference and clarified governance pointers.

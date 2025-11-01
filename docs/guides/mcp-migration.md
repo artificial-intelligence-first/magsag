@@ -1,12 +1,26 @@
 ---
 title: MCP Client Migration Guide
-last_synced: 2025-10-29
-description: Guide for migrating skills to MCP client integration with graceful fallback patterns
-change_log:
-  - 2025-10-29: Initial migration guide created
+slug: guide-mcp-migration
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- mcp
+- migration
+summary: Upgrade skills to support MCP client integration with fallbacks and governance
+  controls.
+description: Upgrade skills to support MCP client integration with fallbacks and governance
+  controls.
+authors: []
+sources: []
 ---
 
 # MCP Client Migration Guide
+
+> **For Humans**: Use this walkthrough to retrofit skills with MCP client support while keeping fallbacks safe.
+>
+> **For AI Agents**: Ensure permissions, contracts, and tests align with migration steps. Document any deviations in SSOT.
 
 This guide covers migrating existing skills to support MCP (Model Context Protocol) client integration, enabling skills to access external data sources, tools, and services through standardized MCP servers.
 
@@ -1485,8 +1499,7 @@ Use this checklist when migrating a skill to MCP:
 - [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
 - [MAGSAG SSOT](../architecture/ssot.md) - Terminology and policies
 
----
+## Update Log
 
-**Last Updated:** 2025-10-29
-**Version:** 1.0.0
-**Maintainer:** MAGSAG Core Team
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-29: Initial migration guide created.

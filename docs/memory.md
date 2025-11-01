@@ -1,4 +1,26 @@
+---
+title: Memory IR Layer
+slug: memory-ir
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- magsag
+- memory
+- storage
+summary: Structured memory subsystem for persisting agent context with governance
+  and TTL controls.
+description: Structured memory subsystem for persisting agent context with governance
+  and TTL controls.
+authors: []
+sources: []
+---
+
 # Memory IR Layer
+
+> **For Humans**: Use this reference to design and operate memory strategies across agents, scopes, and storage backends.
+>
+> **For AI Agents**: Follow these rules when modifying memory schemas or updating related documentation.
 
 ## Overview
 
@@ -549,6 +571,10 @@ store = SQLiteMemoryStore(
 
 ## References
 
-- [Storage Architecture](./architecture/storage.md)
-- [Governance Policies](../catalog/policies/retention_policy.yaml)
-- [API Reference](./api/memory.md)
+- [Storage Layer](./storage.md)
+- `catalog/policies/retention_policy.yaml` – Memory retention policy.
+- [API Usage Guide](./guides/api-usage.md)
+
+## Update Log
+
+- 2025-11-01: Added frontmatter, corrected references, and aligned with the unified documentation standard.

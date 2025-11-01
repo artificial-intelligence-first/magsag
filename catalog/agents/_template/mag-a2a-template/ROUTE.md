@@ -1,4 +1,26 @@
+---
+title: A2A MAG Route Template
+slug: agent-template-mag-a2a-route
+status: living
+last_updated: '2025-11-01'
+last_synced: '2025-11-01'
+tags:
+- catalog
+- agent
+- template
+- routing
+- a2a
+summary: Template for documenting routing flows of A2A-enabled main agents.
+description: Template for documenting routing flows of A2A-enabled main agents.
+authors: []
+sources: []
+---
+
 # Routing Logic - YourA2AOrchestratorMAG
+
+> **For Humans**: Use this template to describe A2A routing phases, logging, and fallbacks.
+>
+> **For AI Agents**: Keep protocol metadata, event names, and fallbacks aligned with implementation.
 
 ## A2A Communication Flow
 
@@ -222,3 +244,7 @@ if request_count[source_agent] > rate_limit:
 - Test full discovery → invoke → aggregate → response flow
 - Test multi-agent coordination scenarios
 - Test failure recovery and partial result handling
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance to the A2A MAG route template.

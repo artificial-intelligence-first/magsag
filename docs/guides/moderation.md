@@ -1,12 +1,24 @@
 ---
 title: Content Moderation Guide
-last_synced: 2025-10-24
-description: OpenAI omni-moderation integration for input/output content safety
-change_log:
-  - 2025-10-24: Added front-matter and multimodal support details
+slug: guide-moderation
+status: living
+last_updated: 2025-11-01
+tags:
+- magsag
+- moderation
+- governance
+summary: How to configure and operate OpenAI omni-moderation within MAGSAG workflows.
+authors: []
+sources: []
+last_synced: '2025-11-01'
+description: How to configure and operate OpenAI omni-moderation within MAGSAG workflows.
 ---
 
 # Content Moderation Guide
+
+> **For Humans**: Configure moderation to protect users and meet compliance requirements.
+>
+> **For AI Agents**: Invoke moderation checks exactly as described. Do not bypass results without approval.
 
 MAGSAG integrates OpenAI's omni-moderation-latest model to ensure safe content generation before and after LLM interactions.
 
@@ -405,3 +417,8 @@ Moderation results are logged in observability artifacts:
 - [Content Policy](https://openai.com/policies/usage-policies)
 - [MAGSAG Routing Guide](./multi-provider.md)
 - [MAGSAG Observability](../storage.md)
+
+## Update Log
+
+- 2025-11-01: Added unified frontmatter and audience guidance.
+- 2025-10-24: Documented multimodal support and setup steps.
