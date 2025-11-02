@@ -7,7 +7,7 @@ transport:
   command: npx
   args:
     - -y
-    - "@modelcontextprotocol/server-fetch@1.0.0"
+    - "@pulsemcp/pulse-fetch@0.3.0"
 permissions:
   scope:
     - read:web

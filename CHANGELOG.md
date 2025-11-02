@@ -63,6 +63,8 @@ sources:
 - FastMCP server integration executes real skills via `AgentRunner`/`SkillRuntime`, replacing the Phase 2 placeholder response pipeline.
 - MCP runtime prioritises HTTP → SSE → stdio fallback, enforces agent-level tool policies, and masks arguments before logging observability records.
 - Documentation workflows, templates, and tag taxonomy were consolidated (`docs/workflows/*`, `docs/_templates/*`, `docs/governance/taxonomy.md`) with cross-references added across AGENTS/SSOT/CONTRIBUTING.
+- MCP integration guide and `.mcp/README` were refreshed for HTTP-first presets, Typer CLI tooling, and provider-specific authentication guidance.
+- Fetch sample server now uses `@pulsemcp/pulse-fetch`, and the legacy git preset was removed from `.mcp/servers/` to avoid broken npx installs.
 
 ### [0.2.0] - 2025-10-31
 

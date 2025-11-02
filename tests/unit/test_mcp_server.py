@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import AsyncExitStack, asynccontextmanager
 from types import SimpleNamespace
-from typing import Any, cast
+from typing import Any, AsyncIterator, cast
 
 import pytest
 
@@ -167,7 +167,7 @@ async def test_stdio_transport_allows_empty_args_override(monkeypatch: pytest.Mo
             captured_args.append(list(args))
 
     @asynccontextmanager
-    async def dummy_stdio_client(params: DummyStdioParams) -> Any:
+    async def dummy_stdio_client(params: DummyStdioParams) -> AsyncIterator[tuple[Any, Any]]:
         yield SimpleNamespace(), SimpleNamespace()
 
     class DummyClientSession:
@@ -177,7 +177,12 @@ async def test_stdio_transport_allows_empty_args_override(monkeypatch: pytest.Mo
         async def __aenter__(self) -> DummyClientSession:
             return self
 
-        async def __aexit__(self, exc_type, exc, tb) -> None:
+        async def __aexit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc: BaseException | None,
+            tb: BaseException | None,
+        ) -> None:
             return None
 
         async def initialize(self) -> SimpleNamespace:

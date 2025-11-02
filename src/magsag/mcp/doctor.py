@@ -4,30 +4,45 @@ from __future__ import annotations
 
 import contextlib
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable, cast
 
 import httpx
 
-try:  # pragma: no cover - optional dependency
-    from mcp.client.session import ClientSession
-    from mcp.client.streamable_http import streamablehttp_client
-    from mcp.client.sse import sse_client
-    from mcp.client.stdio import StdioServerParameters, stdio_client
-    from mcp.types import Implementation, Tool
+from magsag import __version__ as MAG_VERSION
+from magsag.mcp.config import MCPServerConfig, TransportDefinition
 
-    HAS_MCP_SDK = True
+ClientSession: Any
+streamablehttp_client: Callable[..., Any] | None
+sse_client: Callable[..., Any] | None
+stdio_client: Callable[..., Any] | None
+StdioServerParameters: Any
+Implementation: Any
+Tool: Any
+
+HAS_MCP_SDK = False
+try:  # pragma: no cover - optional dependency
+    from mcp.client.session import ClientSession as _ClientSession
+    from mcp.client.streamable_http import streamablehttp_client as _streamablehttp_client
+    from mcp.client.sse import sse_client as _sse_client
+    from mcp.client.stdio import StdioServerParameters as _StdioServerParameters, stdio_client as _stdio_client
+    from mcp.types import Implementation as _Implementation, Tool as _Tool
 except ImportError:  # pragma: no cover - optional dependency
-    ClientSession = None
+    ClientSession = cast(Any, None)
     streamablehttp_client = None
     sse_client = None
     stdio_client = None
-    StdioServerParameters = None
-    Implementation = None
-    Tool = Any
-    HAS_MCP_SDK = False
-
-from magsag import __version__ as MAG_VERSION
-from magsag.mcp.config import MCPServerConfig, TransportDefinition
+    StdioServerParameters = cast(Any, None)
+    Implementation = cast(Any, None)
+    Tool = cast(Any, None)
+else:
+    ClientSession = _ClientSession
+    streamablehttp_client = _streamablehttp_client
+    sse_client = _sse_client
+    stdio_client = _stdio_client
+    StdioServerParameters = _StdioServerParameters
+    Implementation = _Implementation
+    Tool = _Tool
+    HAS_MCP_SDK = True
 
 
 @dataclass(slots=True)

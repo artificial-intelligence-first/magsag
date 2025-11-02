@@ -43,7 +43,7 @@ class StubRegistry:
 
 
 class FailingObserver(ObservabilityLogger):
-    def log_mcp_call(self, record: dict[str, Any]) -> None:  # type: ignore[override]
+    def log_mcp_call(self, record: dict[str, Any]) -> None:
         raise ValueError("boom")
 
 

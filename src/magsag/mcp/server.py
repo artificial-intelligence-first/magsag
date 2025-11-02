@@ -13,29 +13,44 @@ import re
 import time
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
-from typing import Any, Callable
-
-try:  # pragma: no cover - optional dependency
-    from mcp.client.session import ClientSession
-    from mcp.client.streamable_http import streamablehttp_client
-    from mcp.client.sse import sse_client
-    from mcp.client.stdio import StdioServerParameters, stdio_client
-    from mcp.types import Implementation, Tool as MCPToolDescriptor
-
-    HAS_MCP_SDK = True
-except ImportError:  # pragma: no cover - optional dependency
-    ClientSession = None
-    streamablehttp_client = None
-    sse_client = None
-    stdio_client = None
-    StdioServerParameters = None
-    Implementation = None
-    MCPToolDescriptor = None
-    HAS_MCP_SDK = False
+from typing import Any, Callable, cast
 
 from magsag import __version__ as MAG_VERSION
 from magsag.mcp.config import MCPServerConfig, TransportDefinition
 from magsag.mcp.tool import MCPTool, MCPToolResult, MCPToolSchema
+
+ClientSession: Any
+streamablehttp_client: Callable[..., Any] | None
+sse_client: Callable[..., Any] | None
+stdio_client: Callable[..., Any] | None
+StdioServerParameters: Any
+Implementation: Any
+MCPToolDescriptor: Any
+
+HAS_MCP_SDK = False
+try:  # pragma: no cover - optional dependency
+    from mcp.client.session import ClientSession as _ClientSession
+    from mcp.client.streamable_http import streamablehttp_client as _streamablehttp_client
+    from mcp.client.sse import sse_client as _sse_client
+    from mcp.client.stdio import StdioServerParameters as _StdioServerParameters, stdio_client as _stdio_client
+    from mcp.types import Implementation as _Implementation, Tool as _MCPToolDescriptor
+except ImportError:  # pragma: no cover - optional dependency
+    ClientSession = cast(Any, None)
+    streamablehttp_client = cast(Callable[..., Any] | None, None)
+    sse_client = cast(Callable[..., Any] | None, None)
+    stdio_client = cast(Callable[..., Any] | None, None)
+    StdioServerParameters = cast(Any, None)
+    Implementation = cast(Any, None)
+    MCPToolDescriptor = cast(Any, None)
+else:
+    ClientSession = _ClientSession
+    streamablehttp_client = _streamablehttp_client
+    sse_client = _sse_client
+    stdio_client = _stdio_client
+    StdioServerParameters = _StdioServerParameters
+    Implementation = _Implementation
+    MCPToolDescriptor = _MCPToolDescriptor
+    HAS_MCP_SDK = True
 
 logger = logging.getLogger(__name__)
 
@@ -137,7 +152,7 @@ class ActiveConnection:
     transport: TransportDefinition
     stack: AsyncExitStack
     session: Any
-    session_id_cb: Callable[[], str] | None
+    session_id_cb: Callable[[], str | None] | None
     session_id: str | None
     protocol_version: str | None
     retries: int = 0

@@ -1,71 +1,62 @@
-# Model Context Protocol (MCP) Server Configuration
+---
+title: MCP Server Presets
+status: living
+last_updated: 2025-11-03
+tags:
+  - mcp
+  - presets
+summary: Workspace guidance for managing MCP server configurations shipped with MAGSAG.
+---
 
-This directory contains MCP server configurations for the MAGSAG framework.
+# Model Context Protocol Presets
 
-## Available Servers
+This directory stores MCP server configurations that the MAGSAG runtime discovers at start-up. Use the Typer CLI (`magsag mcp bootstrap`) to copy bundled presets into `.mcp/servers/` and keep them up to date.
 
-### Filesystem (`filesystem.yaml`)
-Secure file operations with configurable access controls.
-- **Version**: @modelcontextprotocol/server-filesystem@2025.8.21
-- **Scopes**: read:files, write:files
-- **Repository Path**: Current working directory (`.`)
-- **Note**: Run from repository root for proper operation
+## Bundled Remote Presets
 
-### Git (`git.yaml`)
-Tools to read, search, and manipulate Git repositories.
-- **Version**: @modelcontextprotocol/server-git@1.0.0
-- **Scopes**: read:git, write:git
-- **Repository Path**: Current working directory (`.`)
-- **Note**: Run from repository root for proper operation
+| Provider | Transport Chain | Notes |
+|----------|-----------------|-------|
+| `notion` | HTTP → SSE → stdio (`mcp-remote -y`) | Streamable HTTP is primary; SSE keeps backwards compatibility; stdio is the rescue path. |
+| `supabase` | HTTP | OAuth is the default; CI/headless runs may pass a PAT and `project_ref`. |
+| `github` | HTTP | Requires GitHub Copilot license for some tools; write operations require explicit approval. |
+| `obsidian` | stdio (`uvx mcp-obsidian`) | Targets the Obsidian Local REST API plugin with vault-scoped keys. |
 
-### Memory (`memory.yaml`)
-Knowledge graph-based persistent memory system.
-- **Version**: @modelcontextprotocol/server-memory@2025.9.25
-- **Scopes**: read:memory, write:memory
+Run `magsag mcp bootstrap --provider all` to refresh all four presets or specify a provider to update a single file.
 
-### Fetch (`fetch.yaml`)
-Web content fetching and conversion for efficient LLM usage.
-- **Version**: @modelcontextprotocol/server-fetch@1.0.0
-- **Scopes**: read:web
+## Local Reference Servers
 
-### PostgreSQL Read-Only (`pg-readonly.yaml`)
-Read-only PostgreSQL database access.
-- **Scopes**: read:tables
-- **Connection**: Via PG_RO_URL environment variable
+Additional sample configs (filesystem, fetch via `@pulsemcp/pulse-fetch`, memory, pg-readonly) may live in this directory for development and regression testing. These servers are not part of the bundled preset set—maintainers curate them manually as needed. Keep their paths repository-relative and pin npm package versions to avoid drift.
 
-## Usage
+## CLI Workflow
 
-These MCP servers are automatically available to agents running within the MAGSAG framework. The servers are invoked via npx and use the official Model Context Protocol SDKs.
-
-**Important**: MCP servers using filesystem or git configurations must be run from the repository root directory. The configurations use relative paths (`.`) to ensure portability across different environments and user setups.
-
-## Rate Limits
-
-Each server has configured rate limits to prevent abuse:
-- Filesystem: 60 requests/min
-- Git: 30 requests/min
-- Memory: 120 requests/min
-- Fetch: 30 requests/min
-- PostgreSQL: 120 requests/min
+```bash
+magsag mcp bootstrap        # Copy bundled presets into .mcp/servers/
+magsag mcp ls               # Inspect available providers and transports
+magsag mcp doctor           # Probe HTTP → SSE → stdio connectivity
+magsag mcp login github     # Launch provider-specific auth flows
+magsag mcp inspect notion   # Render the resolved YAML with environment expansion
+```
 
 ## Environment Variables
 
-- `PG_RO_URL`: PostgreSQL read-only connection string (required for pg-readonly server)
+| Variable | Purpose |
+|----------|---------|
+| `MAGSAG_MCP_SUPABASE_PROJECT_REF` | Optional project reference appended to Supabase HTTP URLs (CI only). |
+| `MAGSAG_MCP_SUPABASE_ACCESS_TOKEN` | Supabase OAuth token or CI PAT (used when present). |
+| `MAGSAG_MCP_SUPABASE_READONLY` | Controls read-only behaviour exposed to Supabase tools (`true` by default). |
+| `MAGSAG_MCP_GITHUB_PAT` | Least-privilege GitHub PAT for headless scenarios; OAuth remains the preferred path. |
+| `OBSIDIAN_API_KEY` / `OBSIDIAN_HOST` / `OBSIDIAN_PORT` | Obsidian Local REST API credentials for the stdio bridge. |
+| `PG_RO_URL` | Connection string for optional `pg-readonly.yaml` PostgreSQL server definitions. |
 
-## Version Management
+Store long-lived secrets in the OS keychain when possible and export them to the shell only for ephemeral sessions.
 
-All MCP server packages are pinned to specific versions to ensure:
-- **Deterministic behavior**: Same package version runs across all environments
-- **Security**: Protection against supply-chain attacks from compromised future releases
-- **Stability**: Prevents unexpected breaking changes from automatic updates
+## Observability
 
-To update MCP server versions:
-1. Check for new versions: `npm view @modelcontextprotocol/server-<name> version`
-2. Update the version in the corresponding `.yaml` file
-3. Test the new version in a development environment
-4. Commit the version update with a clear changelog entry
+MCP calls log to `.runs/agents/<run_id>/mcp_calls.jsonl` and attach transport metadata (including `mcp.session_id`, `mcp.protocol_version`, and HTTP status) to OpenTelemetry spans. Use these artefacts when diagnosing connectivity or policy issues.
 
-## References
+## Maintenance
 
-- [MCP Official Documentation](https://modelcontextprotocol.io/)
-- [MCP Reference Servers](https://github.com/modelcontextprotocol/servers)
+1. Update presets in `src/magsag/mcp/presets/servers/` when publishing changes.  
+2. Run `magsag mcp bootstrap --force` to regenerate local copies.  
+3. Record user-facing changes in `CHANGELOG.md` under `## [Unreleased]`.  
+4. Keep this README aligned with `docs/guides/mcp-integration.md` and the SSOT.
