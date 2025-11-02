@@ -1,12 +1,16 @@
 server_id: fetch
+version: "1"
 type: mcp
-command: npx
-args:
-  - -y
-  - "@modelcontextprotocol/server-fetch@1.0.0"
 description: Web content fetching and conversion for efficient LLM usage
-scopes:
-  - read:web
+transport:
+  type: stdio
+  command: npx
+  args:
+    - -y
+    - "@modelcontextprotocol/server-fetch@1.0.0"
+permissions:
+  scope:
+    - read:web
 limits:
   rate_per_min: 30
   timeout_s: 45

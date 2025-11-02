@@ -1,14 +1,18 @@
 server_id: filesystem
+version: "1"
 type: mcp
-command: npx
-args:
-  - -y
-  - "@modelcontextprotocol/server-filesystem@2025.8.21"
-  - "."
 description: Secure file operations with configurable access controls
-scopes:
-  - read:files
-  - write:files
+transport:
+  type: stdio
+  command: npx
+  args:
+    - -y
+    - "@modelcontextprotocol/server-filesystem@2025.8.21"
+    - "."
+permissions:
+  scope:
+    - read:files
+    - write:files
 limits:
   rate_per_min: 60
   timeout_s: 30
