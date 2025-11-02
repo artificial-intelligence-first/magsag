@@ -30,7 +30,7 @@ from magsag.mcp.client import (
     RetryConfig,
     TransportType,
 )
-from magsag.mcp.config import MCPServerConfig
+from magsag.mcp.config import MCPServerConfig, TransportDefinition
 from magsag.storage import get_storage_backend
 
 
@@ -118,14 +118,33 @@ async def _get_mcp_client(server_id: str, retry_attempts: Optional[int]) -> Asyn
                 "decorators. Use the dedicated runtime helpers for non-MCP backends."
             )
 
-        transport_name = config.transport or "stdio"
+        transports = config.transport_chain()
+        selected_transport: TransportDefinition | None = None
+        for candidate in transports:
+            if candidate.type in {"http", "stdio", "websocket"}:
+                selected_transport = candidate
+                break
+
+        if selected_transport is None:
+            raise MCPClientError(
+                f"Server '{server_id}' does not define a compatible transport for client decorators"
+            )
+
+        transport_name = selected_transport.type
         retry_config = RetryConfig(max_attempts=retry_attempts) if retry_attempts else None
 
         if transport_name == "stdio":
+            env_vars: dict[str, str] = {}
+            if config.env:
+                env_vars.update(config.env)
+            if selected_transport.env:
+                env_vars.update(selected_transport.env)
+            args_override = "args" in getattr(selected_transport, "model_fields_set", set())
             client_config = {
-                "command": config.command,
-                "args": config.args,
+                "command": selected_transport.command or config.command,
+                "args": selected_transport.args if args_override else config.args,
                 "limits": config.limits.model_dump(),
+                "env": env_vars,
             }
             client = AsyncMCPClient(
                 server_name=server_id,
@@ -134,9 +153,11 @@ async def _get_mcp_client(server_id: str, retry_attempts: Optional[int]) -> Asyn
                 retry_config=retry_config,
             )
         elif transport_name == "http":
+            if not selected_transport.url and not config.url:
+                raise MCPClientError(f"HTTP transport for '{server_id}' requires 'url'")
             client_config = {
-                "url": config.url,
-                "headers": config.headers,
+                "url": selected_transport.url or config.url,
+                "headers": selected_transport.headers or config.headers,
                 "limits": config.limits.model_dump(),
             }
             client = AsyncMCPClient(
@@ -147,8 +168,8 @@ async def _get_mcp_client(server_id: str, retry_attempts: Optional[int]) -> Asyn
             )
         elif transport_name == "websocket":
             client_config = {
-                "url": config.url,
-                "headers": config.headers,
+                "url": selected_transport.url or config.url,
+                "headers": selected_transport.headers or config.headers,
                 "limits": config.limits.model_dump(),
             }
             client = AsyncMCPClient(

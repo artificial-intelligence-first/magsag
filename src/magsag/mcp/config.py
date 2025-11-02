@@ -6,9 +6,98 @@ which are loaded from .mcp/servers/*.yaml files.
 
 from __future__ import annotations
 
-from typing import Dict, Literal
+import os
+from collections.abc import Mapping, Sequence
+from typing import Any, Dict, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, model_validator
+
+
+def _expand_string(value: str, env: Mapping[str, str] | None = None) -> str:
+    """Expand shell-style placeholders in a string, supporting nested expressions."""
+    env = env or os.environ
+    result: list[str] = []
+    i = 0
+    length = len(value)
+
+    while i < length:
+        if value.startswith("${", i):
+            j = i + 2
+            depth = 1
+            while j < length and depth > 0:
+                if value.startswith("${", j):
+                    depth += 1
+                    j += 2
+                    continue
+                if value[j] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        expr = value[i + 2 : j]
+                        replacement = _evaluate_placeholder(expr, env)
+                        result.append(replacement)
+                        j += 1
+                        break
+                    j += 1
+                    continue
+                j += 1
+            else:
+                # Unmatched brace; append remainder and exit
+                result.append(value[i:])
+                return "".join(result)
+
+            i = j
+            continue
+
+        result.append(value[i])
+        i += 1
+
+    return "".join(result)
+
+
+def _evaluate_placeholder(expr: str, env: Mapping[str, str]) -> str:
+    if ":+" in expr:
+        var, text = expr.split(":+", 1)
+        var = var.strip()
+        if env.get(var, ""):
+            return _expand_string(text, env)
+        return ""
+    if ":-" in expr:
+        var, text = expr.split(":-", 1)
+        var = var.strip()
+        if env.get(var, ""):
+            return env[var]
+        return _expand_string(text, env)
+    var = expr.strip()
+    return env.get(var, "")
+
+
+def _expand_list(values: Sequence[str], env: Mapping[str, str]) -> list[str]:
+    return [item for item in (_expand_string(value, env) for value in values) if item]
+
+
+def _expand_mapping(
+    mapping: Mapping[str, str],
+    env: Mapping[str, str],
+    *,
+    drop_empty: bool = False,
+) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for key, value in mapping.items():
+        expanded = _expand_string(value, env)
+        if drop_empty and expanded == "":
+            continue
+        result[key] = expanded
+    return result
+
+
+def _expand_nested(value: Any, env: Mapping[str, str]) -> Any:
+    if isinstance(value, str):
+        return _expand_string(value, env)
+    if isinstance(value, Mapping):
+        return {k: _expand_nested(v, env) for k, v in value.items()}
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_expand_nested(item, env) for item in value]
+    return value
 
 
 class MCPLimits(BaseModel):
@@ -34,6 +123,63 @@ class PostgresConnection(BaseModel):
     )
 
 
+class TransportDefinition(BaseModel):
+    """Transport definition supporting HTTP, SSE, and STDIO."""
+
+    type: Literal["http", "sse", "stdio", "websocket"]
+    url: str | None = Field(default=None, description="Remote endpoint URL")
+    command: str | None = Field(default=None, description="Executable for stdio transport")
+    args: list[str] = Field(default_factory=list, description="Command arguments")
+    headers: Dict[str, str] = Field(default_factory=dict, description="HTTP/SSE headers")
+    env: Dict[str, str] = Field(default_factory=dict, description="Environment variables for stdio")
+    timeout: float | str | None = Field(
+        default=None,
+        description="Optional timeout override in seconds",
+    )
+
+    @model_validator(mode="after")
+    def _validate_transport(self) -> "TransportDefinition":
+        if self.type in {"http", "sse", "websocket"}:
+            if not self.url:
+                raise ValueError(f"{self.type} transport requires 'url'")
+        if self.type == "stdio" and not self.command:
+            raise ValueError("stdio transport requires 'command'")
+
+        env = os.environ
+        if self.url:
+            self.url = _expand_string(self.url, env)
+        if self.command:
+            self.command = _expand_string(self.command, env)
+        if self.args:
+            self.args = _expand_list(self.args, env)
+        if self.headers:
+            self.headers = _expand_mapping(self.headers, env, drop_empty=True)
+        if self.env:
+            self.env = _expand_mapping(self.env, env, drop_empty=True)
+        if self.timeout is not None and isinstance(self.timeout, str):
+            expanded_timeout = _expand_string(self.timeout, env)
+            try:
+                self.timeout = float(expanded_timeout)
+            except ValueError:
+                raise ValueError(f"Invalid timeout value '{expanded_timeout}' for transport {self.type}") from None
+        return self
+
+
+class PermissionSettings(BaseModel):
+    """Structured permission settings for MCP servers."""
+
+    scope: list[str] = Field(default_factory=list, description="Scopes granted to the connection")
+    write_requires_approval: Optional[bool] = Field(
+        default=None,
+        description="Whether write operations require prior approval",
+    )
+    tools: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Per-tool policy overrides (allow/deny/require-approval)",
+    )
+    extra: Dict[str, Any] = Field(default_factory=dict, description="Unstructured permission metadata")
+
+
 class MCPServerConfig(BaseModel):
     """Configuration for a single MCP server.
 
@@ -42,33 +188,50 @@ class MCPServerConfig(BaseModel):
 
     server_id: str = Field(
         description="Unique identifier for the MCP server",
+        validation_alias=AliasChoices("server_id", "id"),
     )
-    type: Literal["mcp", "postgres"] = Field(
-        description="Server type: mcp for stdio MCP servers, postgres for database",
+    version: str | None = Field(default=None, description="Preset version identifier")
+    type: Literal["mcp", "postgres"] | None = Field(
+        default=None,
+        description="Server type: mcp for protocol servers, postgres for database",
     )
     description: str | None = Field(
         default=None,
         description="Human-readable description of the server",
     )
-    scopes: list[str] = Field(
-        default_factory=list,
-        description="Access scopes granted to this server (e.g., read:files)",
-    )
+    notes: str | None = Field(default=None, description="Operational notes for the preset")
+    scopes: list[str] = Field(default_factory=list, description="Legacy access scopes")
     limits: MCPLimits = Field(
         default_factory=MCPLimits,
         description="Rate limits and timeout configuration",
     )
-    transport: Literal["stdio", "websocket", "http"] | None = Field(
+    transport: TransportDefinition | None = Field(
         default=None,
-        description="Transport override: stdio (default), websocket, or http",
+        description="Primary transport definition (HTTP preferred)",
+    )
+    fallback: list[TransportDefinition] = Field(
+        default_factory=list,
+        description="Ordered list of fallback transport definitions",
+    )
+    permissions: PermissionSettings = Field(
+        default_factory=PermissionSettings,
+        description="Structured permission settings",
+    )
+    options: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional preset options (transport-specific)",
     )
     url: str | None = Field(
         default=None,
-        description="Endpoint URL for HTTP/WebSocket transports",
+        description="Legacy transport endpoint",
     )
     headers: Dict[str, str] = Field(
         default_factory=dict,
-        description="Additional headers for HTTP/WebSocket transports",
+        description="Legacy transport headers",
+    )
+    transport_override: str | None = Field(
+        default=None,
+        description="Legacy transport override (http/sse/websocket/stdio)",
     )
 
     # MCP server specific fields (type="mcp")
@@ -80,23 +243,122 @@ class MCPServerConfig(BaseModel):
         default_factory=list,
         description="Arguments for the MCP server command",
     )
+    env: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Environment variables for MCP command execution",
+    )
 
     # PostgreSQL specific fields (type="postgres")
     conn: PostgresConnection | None = Field(
         default=None,
         description="PostgreSQL connection configuration",
     )
+    raw: Dict[str, Any] = Field(default_factory=dict, description="Original YAML payload")
+
+    model_config = {
+        "populate_by_name": True,
+        "extra": "allow",
+    }
+
+    @model_validator(mode="before")
+    def _normalize_payload(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+
+        normalized = dict(data)
+        normalized.setdefault("raw", dict(data))
+
+        if "server_id" not in normalized and "id" in normalized:
+            normalized["server_id"] = normalized["id"]
+
+        transport_value = normalized.get("transport")
+        if isinstance(transport_value, str):
+            # Legacy transport override (stdio/http/websocket)
+            normalized["transport_override"] = transport_value
+            normalized["transport"] = None
+        elif isinstance(transport_value, dict):
+            normalized["transport"] = transport_value
+
+        fallback_value = normalized.get("fallback")
+        if fallback_value is None:
+            normalized["fallback"] = []
+
+        permissions_value = normalized.get("permissions")
+        if permissions_value is None:
+            permissions_value = {}
+        if not permissions_value.get("scope") and normalized.get("scopes"):
+            permissions_value["scope"] = normalized["scopes"]
+        normalized["permissions"] = permissions_value
+
+        return normalized
+
+    @model_validator(mode="after")
+    def _default_type(self) -> "MCPServerConfig":
+        if self.type is None:
+            if self.conn is not None:
+                self.type = "postgres"
+            else:
+                self.type = "mcp"
+
+        # Backfill legacy top-level fields when transport definitions are provided
+        if self.transport and not self.url:
+            if self.transport.type in {"http", "sse", "websocket"}:
+                self.url = self.transport.url
+                self.headers = self.transport.headers
+            elif self.transport.type == "stdio":
+                self.command = self.transport.command
+                self.args = self.transport.args
+                self.env = self.transport.env
+
+        return self
+
+    @model_validator(mode="after")
+    def _expand_environment(self) -> "MCPServerConfig":
+        env_vars = os.environ
+
+        if self.url:
+            self.url = _expand_string(self.url, env_vars)
+        if self.headers:
+            self.headers = _expand_mapping(self.headers, env_vars, drop_empty=True)
+        if self.command:
+            self.command = _expand_string(self.command, env_vars)
+        if self.args:
+            self.args = _expand_list(self.args, env_vars)
+        if self.env:
+            self.env = _expand_mapping(self.env, env_vars, drop_empty=True)
+        if self.options:
+            self.options = _expand_nested(self.options, env_vars)
+        if self.transport:
+            transport_data = _expand_nested(
+                self.transport.model_dump(exclude_unset=True),
+                env_vars,
+            )
+            self.transport = TransportDefinition.model_validate(transport_data)
+        if self.fallback:
+            expanded_fallback: list[TransportDefinition] = []
+            for entry in self.fallback:
+                fallback_data = _expand_nested(
+                    entry.model_dump(exclude_unset=True),
+                    env_vars,
+                )
+                expanded_fallback.append(TransportDefinition.model_validate(fallback_data))
+            self.fallback = expanded_fallback
+
+        # Expand permissions metadata for completeness
+        if self.permissions and self.permissions.extra:
+            self.permissions.extra = _expand_nested(self.permissions.extra, env_vars)
+        if self.permissions.scope:
+            self.permissions.scope = _expand_list(self.permissions.scope, env_vars)
+
+        return self
 
     def validate_type_fields(self) -> None:
         """Validate that required fields are present based on server type."""
         if self.type == "mcp":
-            if (self.transport or "stdio") == "stdio" and not self.command:
-                raise ValueError("STDIO MCP servers must specify 'command'")
-            if self.transport in {"http", "websocket"}:
-                if not self.url:
-                    raise ValueError(
-                        "HTTP/WebSocket MCP servers must specify 'url' field"
-                    )
+            if not self.transport and not self.url and not self.command:
+                raise ValueError(
+                    "MCP servers must specify a transport definition, HTTP url, or stdio command"
+                )
         elif self.type == "postgres":
             if not self.conn:
                 raise ValueError("PostgreSQL servers must specify 'conn' field")
@@ -108,3 +370,60 @@ class MCPServerConfig(BaseModel):
             Permission name in format "mcp:<server_id>"
         """
         return f"mcp:{self.server_id}"
+
+    def transport_chain(self) -> list[TransportDefinition]:
+        """Return ordered transport definitions including fallbacks."""
+        if self.type and self.type != "mcp":
+            return []
+
+        chain: list[TransportDefinition] = []
+
+        if self.transport is not None:
+            chain.append(self.transport)
+        else:
+            if self.url:
+                transport_type: Literal["http", "sse", "websocket"] = "http"
+                if self.transport_override:
+                    override = self.transport_override.strip().lower()
+                    if override == "sse":
+                        transport_type = "sse"
+                    elif override == "websocket":
+                        transport_type = "websocket"
+                    elif override == "http":
+                        transport_type = "http"
+                chain.append(
+                    TransportDefinition(
+                        type=transport_type,
+                        url=self.url,
+                        headers=self.headers,
+                        timeout=float(self.limits.timeout_s),
+                    )
+                )
+
+            if self.command:
+                chain.append(
+                    TransportDefinition(
+                        type="stdio",
+                        command=self.command,
+                        args=self.args,
+                        env=self.env,
+                        timeout=float(self.limits.timeout_s),
+                    )
+                )
+
+        for fallback in self.fallback:
+            chain.append(fallback)
+
+        # Ensure stdio fallback exists for legacy configs
+        if not chain and self.command:
+            chain.append(
+                TransportDefinition(
+                    type="stdio",
+                    command=self.command,
+                    args=self.args,
+                    env=self.env,
+                    timeout=float(self.limits.timeout_s),
+                )
+            )
+
+        return chain
