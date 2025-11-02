@@ -4,6 +4,7 @@ This module tests the integration between skills and MCP runtime,
 including async skill execution, permission management, and backward compatibility.
 """
 
+import importlib.util
 import inspect
 import tempfile
 from collections.abc import Generator
@@ -15,18 +16,9 @@ import pytest
 import yaml
 
 from magsag.mcp import MCPRegistry, MCPRuntime
+from magsag.mcp.tool import MCPToolResult
 from magsag.registry import Registry, SkillDescriptor
 from magsag.runners.agent_runner import SkillRuntime
-
-
-pytestmark = pytest.mark.slow
-# Check if asyncpg is available
-try:
-    import asyncpg  # noqa: F401
-
-    HAS_ASYNCPG = True
-except ImportError:
-    HAS_ASYNCPG = False
 
 
 class TestSkillWithMCPParameter:
@@ -133,6 +125,31 @@ class TestSkillWithMCPParameter:
         # Test without MCP
         result_without_mcp = await flexible_skill({"value": 10})
         assert result_without_mcp["source"] == "fallback"
+
+    @pytest.mark.asyncio
+    async def test_optional_mcp_skill_runs_when_mcp_disabled(self, mcp_registry: MCPRegistry) -> None:
+        """Optional MCP skills should execute when runtime is disabled."""
+
+        async def optional_skill(payload: Dict[str, Any], mcp: MCPRuntime | None = None) -> Dict[str, Any]:
+            return {"echo": payload, "has_mcp": mcp is not None}
+
+        descriptor = SkillDescriptor(
+            id="skill.optional-mcp",
+            version="0.1.0",
+            entrypoint="tests.fake_module:optional_skill",
+            permissions=[],
+            raw={},
+        )
+
+        mock_registry = MagicMock(spec=Registry)
+        mock_registry.load_skill.return_value = descriptor
+        mock_registry.resolve_entrypoint.return_value = optional_skill
+
+        skill_runtime = SkillRuntime(registry=mock_registry, enable_mcp=False)
+
+        result = await skill_runtime.invoke_async("skill.optional-mcp", {"value": 5})
+        assert result["echo"]["value"] == 5
+        assert result["has_mcp"] is False
 
 
 @pytest.mark.slow
@@ -311,139 +328,149 @@ async def run(payload: Dict[str, Any]) -> Dict[str, Any]:
                 del sys.modules[module_name]
 
 
-@pytest.mark.skipif(not HAS_ASYNCPG, reason="asyncpg not installed")
-@pytest.mark.slow
-class TestSalaryBandLookupWithMCP:
-    """Test cases for the actual salary-band-lookup skill with MCP.
+@pytest.mark.asyncio
+async def test_salary_band_lookup_requires_mcp() -> None:
+    """Phase 3 salary-band-lookup should raise when MCP runtime is missing."""
 
-    Note: These tests involve actual MCP server initialization and can be slow.
-    """
+    skill_path = Path("catalog/skills/salary-band-lookup/impl/salary_band_lookup.py").resolve()
+    module_name = "salary_band_lookup_skill"
+    spec = importlib.util.spec_from_file_location(module_name, skill_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
 
-    @pytest.fixture
-    def mcp_registry(self) -> MCPRegistry:
-        """Create MCP registry with PostgreSQL server."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            servers_dir = Path(tmpdir)
+    payload = {"role": "Senior Engineer", "level": "L5", "location": "SF"}
 
-            config_file = servers_dir / "pg-readonly.yaml"
-            with open(config_file, "w") as f:
-                yaml.dump(
-                    {
-                        "server_id": "pg-readonly",
-                        "type": "postgres",
-                        "scopes": ["read:tables"],
-                        "conn": {"url_env": "TEST_PG_URL"},
-                    },
-                    f,
-                )
+    with pytest.raises(RuntimeError):
+        await module.run(payload)  # type: ignore[attr-defined]
 
-            registry = MCPRegistry(servers_dir=servers_dir)
-            registry.discover_servers()
-            return registry
 
-    @pytest.mark.asyncio
-    async def test_salary_band_lookup_with_mcp(self, mcp_registry: MCPRegistry) -> None:
-        """Test salary-band-lookup skill with MCP database access.
+@pytest.mark.asyncio
+async def test_salary_band_lookup_queries_database() -> None:
+    """salary-band-lookup should return database rows via MCP runtime."""
 
-        Verifies:
-        - Skill can query database via MCP
-        - Fallback to mock data works when database unavailable
-        - Results conform to expected schema
-        """
+    skill_path = Path("catalog/skills/salary-band-lookup/impl/salary_band_lookup.py").resolve()
+    module_name = "salary_band_lookup_skill_impl"
+    spec = importlib.util.spec_from_file_location(module_name, skill_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
 
-        # Create enhanced version of salary band lookup with MCP
-        async def salary_band_lookup_mcp(
-            payload: Dict[str, Any], mcp: MCPRuntime | None = None
-        ) -> Dict[str, Any]:
-            """Enhanced salary band lookup with MCP support."""
-            role = payload.get("role", "")
-            level = payload.get("level", "")
+    payload = {"role": "Senior Engineer", "level": "L5", "location": "SF"}
 
-            # Try to use MCP if available
-            if mcp and mcp.check_permission("pg-readonly"):
-                try:
-                    # Query database via MCP
-                    result = await mcp.query_postgres(
-                        server_id="pg-readonly",
-                        sql="SELECT * FROM salary_bands WHERE level = $1 LIMIT 1",
-                        params=[level],
-                    )
-
-                    if result.success and result.output:
-                        # Use database result
-                        band = (
-                            result.output[0] if isinstance(result.output, list) else result.output
-                        )
-                        return {
-                            "currency": band.get("currency", "USD"),
-                            "min": band.get("min_salary"),
-                            "max": band.get("max_salary"),
-                            "source": "database",
+    class FakeMCP:
+        async def query_postgres(self, server_id: str, sql: str, params: list[Any]) -> MCPToolResult:
+            assert server_id == "pg-readonly"
+            assert params == [payload["role"], payload["level"], payload["location"]]
+            return MCPToolResult(
+                success=True,
+                output={
+                    "rows": [
+                        {
+                            "currency": "USD",
+                            "min_salary": 150000,
+                            "max_salary": 220000,
                         }
-                except Exception:
-                    # Fall through to fallback
-                    pass
+                    ]
+                },
+                error=None,
+                metadata={},
+            )
 
-            # Fallback to mock data
-            band = {"currency": "USD", "min": 100000, "max": 180000, "source": "fallback"}
+    result = await module.run(payload, mcp=FakeMCP())  # type: ignore[attr-defined]
 
-            if "Senior" in role or "Senior" in level:
-                band.update(min=150000, max=220000)
-            elif "Staff" in role or "Staff" in level:
-                band.update(min=180000, max=280000)
+    assert result == {
+        "currency": "USD",
+        "min": 150000,
+        "max": 220000,
+        "source": "database",
+    }
 
-            return band
 
-        # Test with MCP (will use fallback since DB isn't actually running)
-        mcp_runtime = MCPRuntime(mcp_registry)
-        mcp_runtime.grant_permissions(["mcp:pg-readonly"])
+@pytest.mark.asyncio
+async def test_doc_gen_requires_mcp() -> None:
+    """doc-gen should raise when MCP runtime is not provided."""
 
-        result = await salary_band_lookup_mcp(
-            {"role": "Senior Engineer", "level": "L5", "location": "SF"},
-            mcp=mcp_runtime,
-        )
+    skill_path = Path("catalog/skills/doc-gen/impl/doc_gen.py").resolve()
+    module_name = "doc_gen_skill"
+    spec = importlib.util.spec_from_file_location(module_name, skill_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
 
-        # Verify result structure
-        assert "currency" in result
-        assert "min" in result
-        assert "max" in result
-        assert "source" in result
-        assert result["currency"] == "USD"
-        assert result["min"] > 0
-        assert result["max"] > result["min"]
+    payload = {
+        "id": "cand-123",
+        "name": "Test Candidate",
+        "role": "Senior Engineer",
+        "level": "L5",
+        "location": "San Francisco",
+        "salary_band": {
+            "currency": "USD",
+            "min": 150000,
+            "max": 220000,
+            "source": "database",
+        },
+    }
 
-    @pytest.mark.asyncio
-    async def test_salary_band_lookup_fallback(self) -> None:
-        """Test salary-band-lookup skill fallback when MCP unavailable.
+    with pytest.raises(RuntimeError):
+        await module.run(payload)  # type: ignore[attr-defined]
 
-        Verifies that the skill works without MCP runtime.
-        """
 
-        async def salary_band_lookup_mcp(
-            payload: Dict[str, Any], mcp: MCPRuntime | None = None
-        ) -> Dict[str, Any]:
-            """Enhanced salary band lookup with MCP support."""
-            role = payload.get("role", "")
-            level = payload.get("level", "")
+@pytest.mark.asyncio
+async def test_doc_gen_uses_offer_template() -> None:
+    """doc-gen should render narrative content from the MCP-provided template."""
 
-            # Fallback implementation
-            band = {"currency": "USD", "min": 100000, "max": 180000, "source": "fallback"}
+    skill_path = Path("catalog/skills/doc-gen/impl/doc_gen.py").resolve()
+    module_name = "doc_gen_skill_impl"
+    spec = importlib.util.spec_from_file_location(module_name, skill_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
 
-            if "Senior" in role or "Senior" in level:
-                band.update(min=150000, max=220000)
-            elif "Staff" in role or "Staff" in level:
-                band.update(min=180000, max=280000)
+    payload = {
+        "id": "cand-123",
+        "name": "Test Candidate",
+        "role": "Senior Engineer",
+        "level": "L5",
+        "location": "San Francisco",
+        "salary_band": {
+            "currency": "USD",
+            "min": 150000,
+            "max": 220000,
+            "source": "database",
+        },
+    }
 
-            return band
+    class FakeDocGenMCP:
+        async def query_postgres(self, server_id: str, sql: str, params: list[Any]) -> MCPToolResult:
+            assert server_id == "pg-readonly"
+            assert params  # Ensure template slug is passed
+            return MCPToolResult(
+                success=True,
+                output={
+                    "rows": [
+                        {
+                            "summary_template": "Recommend {base_salary_phrase} for {candidate_name} ({candidate_role}).",
+                            "talking_points_template": [
+                                "Base compensation: {base_salary_phrase}",
+                                "Level: {candidate_level}",
+                            ],
+                            "default_warnings": ["template-warning"],
+                            "provenance_inputs": ["candidate_profile", "salary_band"],
+                            "provenance_schemas": {"template": "offer_template"},
+                        }
+                    ]
+                },
+                error=None,
+                metadata={},
+            )
 
-        # Test without MCP
-        result = await salary_band_lookup_mcp(
-            {"role": "Staff Engineer", "level": "L6", "location": "NYC"}
-        )
+    result = await module.run(payload, mcp=FakeDocGenMCP())  # type: ignore[attr-defined]
 
-        assert result["source"] == "fallback"
-        assert result["min"] == 180000
-        assert result["max"] == 280000
+    assert "Recommend" in result["narrative"]["summary"]
+    assert "Base compensation" in result["narrative"]["talking_points"]
+    assert "template-warning" in result["warnings"]
+    assert "salary_band" in result["provenance"]["inputs"]
 
 
 class TestMCPRuntimePermissionIsolation:

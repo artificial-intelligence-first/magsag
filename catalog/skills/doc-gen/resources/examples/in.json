@@ -1,1 +1,14 @@
-{"id": "cand-123"}
+{
+  "id": "cand-123",
+  "name": "Test Candidate",
+  "role": "Senior Software Engineer",
+  "level": "L5",
+  "location": "San Francisco, CA",
+  "salary_band": {
+    "currency": "USD",
+    "min": 150000,
+    "max": 220000,
+    "source": "database"
+  },
+  "advisor_notes": "Calibrate with market comps."
+}

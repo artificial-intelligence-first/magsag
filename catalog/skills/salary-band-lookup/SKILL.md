@@ -77,6 +77,7 @@ Compute salary band recommendations that align with internal compensation policy
 - **Missing Compensation Rows**: If `pg-readonly` returns zero results, return a warning and suggest verifying that the compensation tables contain the candidate's job family/level combination.
 - **Schema Violations**: Ensure optional numeric ranges are emitted as numbers, not strings, and that currency codes follow ISO 4217.
 - **Stale Benchmarks**: When benchmark metadata indicates an outdated refresh date, flag the issue in the `warnings` array and notify the compensation operations contact channel.
+- **MCP Runtime Missing**: This Phase 3 release removes the logic-only fallback. If the runtime fails to initialize, the skill raises a runtime error so orchestration can pause and escalate.
 
 ## Update Log
 

@@ -2,12 +2,12 @@
 Example Web Search MCP Tool
 
 Demonstrates integration with the fetch MCP server for web content retrieval.
-This example shows how to wrap an MCP tool for practical use cases, with
-graceful fallback to mock data when MCP is unavailable.
+Phase 3 removes the mock fallback so the skill now requires a configured
+MCP runtime with access to the `fetch` server.
 
 MCP Integration Pattern:
-- Attempts to use the fetch MCP server when MCPRuntime is provided
-- Falls back to mock data if MCP is unavailable or fails
+- Invokes the fetch MCP server for every request
+- Surfaces MCP errors back to the caller for observability
 - Demonstrates async/await patterns for MCP tool execution
 - Shows proper error handling and result extraction
 
@@ -153,66 +153,44 @@ async def _fetch_url_via_mcp(
     Raises:
         RuntimeError: If MCP server call fails critically
     """
-    # Try to use real MCP if available
-    if mcp is not None:
-        try:
-            logger.info(f"Attempting to fetch {url} via MCP fetch server")
+    if mcp is None:
+        raise RuntimeError("example-web-search requires an MCP runtime with the 'fetch' server.")
 
-            # Call the fetch MCP server's fetch_url tool
-            result = await mcp.execute_tool(
-                server_id="fetch", tool_name="fetch", arguments={"url": url}
-            )
+    try:
+        logger.info("Attempting to fetch %s via MCP fetch server", url)
 
-            # Check if MCP call succeeded
-            if result.success and result.output:
-                logger.info(f"Successfully fetched {url} via MCP")
+        result = await mcp.execute_tool(
+            server_id="fetch",
+            tool_name="fetch",
+            arguments={"url": url},
+        )
+    except Exception as exc:  # pragma: no cover - MCP wrapper defensive guard
+        raise RuntimeError(f"MCP fetch invocation failed: {exc}") from exc
 
-                # Extract content from MCP result
-                # The fetch server typically returns content in result.output
-                # Format may vary, so we handle common patterns
-                if isinstance(result.output, list):
-                    # MCP often returns content as list of content blocks
-                    content = ""
-                    for item in result.output:
-                        if isinstance(item, dict) and "text" in item:
-                            content += item["text"]
-                        elif isinstance(item, str):
-                            content += item
-                elif isinstance(result.output, dict):
-                    content = result.output.get("content", str(result.output))
-                else:
-                    content = str(result.output)
+    if not result.success:
+        raise RuntimeError(f"MCP fetch failed: {result.error or 'unknown error'}")
 
-                return {
-                    "url": url,
-                    "status_code": 200,
-                    "content_type": result.metadata.get("content_type", "text/html"),
-                    "content": content,
-                    "title": result.metadata.get("title", ""),
-                }
-            else:
-                # MCP call failed, log and fall through to mock
-                logger.warning(
-                    f"MCP fetch failed for {url}: {result.error}. Falling back to mock data."
-                )
-        except Exception as exc:
-            # MCP call raised an exception, log and fall through to mock
-            logger.warning(
-                f"Exception during MCP fetch for {url}: {exc}. Falling back to mock data.",
-                exc_info=True,
-            )
+    output = result.output
+    content: str
+    if isinstance(output, list):
+        content_chunks: list[str] = []
+        for item in output:
+            if isinstance(item, dict) and "text" in item:
+                content_chunks.append(str(item["text"]))
+            elif isinstance(item, str):
+                content_chunks.append(item)
+        content = "\n".join(content_chunks)
+    elif isinstance(output, dict):
+        content = str(output.get("content") or output.get("text") or output)
     else:
-        logger.info(f"No MCP runtime provided, using mock data for {url}")
+        content = str(output)
 
-    # Fallback: return mock data
-    # This ensures the skill works even without MCP configured
-    logger.debug(f"Returning mock data for {url}")
     return {
         "url": url,
-        "status_code": 200,
-        "content_type": "text/html",
-        "content": f"Mock content from {url}. This is demonstration data used when MCP is not available.",
-        "title": "Mock Title (MCP Not Available)",
+        "status_code": result.metadata.get("status_code", 200),
+        "content_type": result.metadata.get("content_type", "text/html"),
+        "content": content,
+        "title": result.metadata.get("title", ""),
     }
 
 
@@ -257,7 +235,7 @@ async def run(
     This async function demonstrates the recommended pattern for MCP-enabled skills:
     - Accepts optional MCPRuntime via keyword-only parameter
     - Passes MCP runtime to underlying async functions
-    - Maintains backward compatibility (works without MCP)
+    - Propagates MCP errors cleanly when runtime is unavailable
     - Validates input/output contracts
     - Provides comprehensive error handling
 
@@ -270,6 +248,7 @@ async def run(
 
     Raises:
         ValueError: If input validation fails
+        RuntimeError: If MCP runtime is unavailable or fetch fails
     """
     # Validate input
     _validate(payload, INPUT_SCHEMA, "web_search_query")
@@ -284,7 +263,7 @@ async def run(
     # Validate URL
     _validate_url(url)
 
-    # Fetch content via MCP (or fallback to mock)
+    # Fetch content via MCP
     try:
         mcp_response = await _fetch_url_via_mcp(url, extract_text, mcp=mcp)
     except Exception as exc:

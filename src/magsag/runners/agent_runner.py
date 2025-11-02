@@ -248,17 +248,47 @@ class SkillRuntime:
         # Inspect skill signature to detect MCP parameter
         sig = inspect.signature(callable_fn)
         has_mcp_param = "mcp" in sig.parameters
+        requires_mcp = has_mcp_param and any(
+            perm.startswith("mcp:") for perm in getattr(skill_desc, "permissions", [])
+        )
         is_async = _is_async_callable(callable_fn)
 
         mcp_runtime: Optional[MCPRuntime] = None
         mcp_started_here = False
 
         # If skill expects MCP, ensure servers are started and create runtime
-        if has_mcp_param and self.enable_mcp:
-            if not self._mcp_started:
-                mcp_started_here = True
-            await self._ensure_mcp_started()
-            mcp_runtime = self._create_mcp_runtime(skill_id)
+        if has_mcp_param:
+            if requires_mcp:
+                if not self.enable_mcp:
+                    raise RuntimeError(
+                        f"Skill '{skill_id}' requires MCP runtime, but MCP is disabled in settings."
+                    )
+
+                if not self._mcp_started:
+                    mcp_started_here = True
+
+                await self._ensure_mcp_started()
+
+                if not self._mcp_started or self.mcp_registry is None:
+                    raise RuntimeError(
+                        f"Skill '{skill_id}' requires MCP runtime, but MCP servers failed to start."
+                    )
+
+                mcp_runtime = self._create_mcp_runtime(skill_id)
+
+                if mcp_runtime is None:
+                    raise RuntimeError(
+                        f"Skill '{skill_id}' requires MCP runtime, but no MCP permissions were granted "
+                        "or the runtime could not be initialized."
+                    )
+            else:
+                # Optional MCP parameter: attempt to provide runtime only when enabled
+                if self.enable_mcp:
+                    if not self._mcp_started:
+                        mcp_started_here = True
+                    await self._ensure_mcp_started()
+                    if self._mcp_started and self.mcp_registry is not None:
+                        mcp_runtime = self._create_mcp_runtime(skill_id)
 
         try:
             if not is_async:

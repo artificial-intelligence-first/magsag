@@ -147,7 +147,7 @@ class MAGSAGMCPServer:
 
         # Initialize agent runner with custom registry
         # This ensures agents are loaded from the same catalog used for discovery
-        self.runner = AgentRunner(registry=self.registry)
+        self.runner = AgentRunner(registry=self.registry, enable_mcp=True)
 
         # Initialize FastMCP server
         if FastMCP is None:
@@ -304,26 +304,16 @@ class MAGSAGMCPServer:
 
         # Register tool
         async def skill_runner(payload: dict[str, Any], ctx: Any) -> dict[str, Any]:
-            """Execute MAGSAG skill.
+            """Execute MAGSAG skill using the shared AgentRunner."""
 
-            Args:
-                payload: Skill input payload
-                ctx: MCP context
-
-            Returns:
-                Skill output
-            """
             await ctx.info(f"Executing skill: {skill_id}")
 
             try:
-                # Load and execute skill
-                # Note: This would require skill execution infrastructure
-                # For now, return placeholder
-                await ctx.info(f"Skill {skill_id} executed")
-                return {"status": "completed", "skill_id": skill_id}
-
+                result = await self.runner.skills.invoke_async(skill_id, payload)
+                await ctx.info(f"Skill {skill_id} completed successfully")
+                return result
             except Exception as e:
-                error_msg = f"Skill execution failed: {str(e)}"
+                error_msg = f"Skill execution failed: {e}"
                 await ctx.error(error_msg)
                 raise RuntimeError(error_msg) from e
 

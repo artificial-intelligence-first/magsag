@@ -37,6 +37,10 @@ server_defaults:
     default: REQUIRE_APPROVAL
     description: "Local filesystem operations"
 
+  fetch:
+    default: REQUIRE_APPROVAL
+    description: "Remote web fetch operations"
+
   # Example of never-allowed server
   # production-db:
   #   default: NEVER
@@ -129,6 +133,12 @@ tools:
   "filesystem.execute_command":
     permission: NEVER
     description: "Execute shell command - security risk"
+
+  # Fetch tools
+  "fetch.fetch":
+    permission: REQUIRE_APPROVAL
+    description: "Perform remote web fetch"
+    approval_message: "Fetch remote URL via MCP?"
 
 # Environment-specific overrides
 # Different permission levels for different environments

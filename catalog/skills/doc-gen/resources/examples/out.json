@@ -1,1 +1,60 @@
-{"offer_id": "offer-123"}
+{
+  "offer_id": "offer-cand-123",
+  "generated_at": "2025-11-02T00:00:00Z",
+  "offer": {
+    "role": "Senior Software Engineer",
+    "base_salary": {
+      "currency": "USD",
+      "amount": 150000.0
+    },
+    "band": {
+      "currency": "USD",
+      "min": 150000.0,
+      "max": 220000.0,
+      "source": "database"
+    }
+  },
+  "candidate": {
+    "id": "cand-123",
+    "name": "Test Candidate",
+    "role": "Senior Software Engineer",
+    "level": "L5",
+    "location": "San Francisco, CA"
+  },
+  "compensation": {
+    "components": {
+      "base": {
+        "amount": 150000,
+        "currency": "USD"
+      },
+      "ceiling": {
+        "amount": 220000,
+        "currency": "USD"
+      }
+    },
+    "source": "database"
+  },
+  "narrative": {
+    "summary": "Recommend 150000 USD for Test Candidate (Senior Software Engineer).",
+    "talking_points": "Base compensation: 150000 USD\nLevel: L5"
+  },
+  "warnings": [
+    "template-warning"
+  ],
+  "provenance": {
+    "schemas": {
+      "template": "offer_template",
+      "input": "catalog/contracts/candidate_profile.schema.json",
+      "output": "catalog/contracts/offer_packet.schema.json"
+    },
+    "inputs": [
+      "candidate_profile",
+      "salary_band"
+    ]
+  },
+  "metadata": {
+    "generated_by": "skill.doc-gen",
+    "timestamp": "2025-11-02T00:00:00Z",
+    "version": "0.1.0"
+  }
+}

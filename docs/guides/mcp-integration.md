@@ -2,7 +2,7 @@
 title: Model Context Protocol (MCP) Integration
 slug: guide-mcp-integration
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
 - magsag
 - mcp
@@ -22,20 +22,18 @@ description: Guide to exposing and consuming MCP servers within MAGSAG, includin
 >
 > **For AI Agents**: Honour permission declarations, feature flags, and migration timelines before executing MCP calls.
 
-> ⚠️ **Implementation Status**  
+> ✅ **Implementation Status**  
 > Phase 1 — MCP server exposure (Complete, GA)  
 > Phase 2 — Async skill runtime & templates (Complete in this repository)  
-> Phase 3 — External MCP client integrations (In progress; skills fall back to local logic until launch)
+> Phase 3 — External MCP client integrations (Complete; skills now require MCP runtime)
 
 ### Migration Guide Preview
 
-Phase 2 delivered async signatures and optional MCP runtime wiring for all catalog skills. Phase 3 will introduce real MCP client calls and additional governance requirements. Expect to:
+Phase 2 delivered async signatures and optional MCP runtime wiring for all catalog skills. Phase 3 removed local fallbacks and fully enabled governed MCP client calls. Completed milestones:
 
-1. **Implement MCP Calls**: Replace local fallbacks with awaited MCP tool invocations where required.
-2. **Declare Permissions**: Annotate `skill.yaml` files with explicit `mcp:` permissions for each external server.
-3. **Strengthen Contracts**: Expand schemas and tests to cover remote failure modes and partial data responses.
-
-Detailed migration instructions will ship alongside the Phase 3 release.
+1. **Implemented MCP Calls**: Catalog skills now invoke MCP servers for salary data, offer templates, and web fetch operations.
+2. **Enforced Permissions**: `skill.yaml` files and runtime wiring require explicit `mcp:` permissions before establishing connections.
+3. **Strengthened Contracts**: Tests and documentation cover remote failure modes, approval policies, and error propagation.
 
 This guide covers the integration of Model Context Protocol (MCP) servers with MAGSAG agents, enabling access to external tools, data sources, and services through a standardized interface.
 

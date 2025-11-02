@@ -53,9 +53,12 @@ sources:
 - Durable runner snapshot store now auto-creates run metadata, persists snapshots to configured storage backends, and emits `run.snapshot.saved` / `run.resume` events.
 - Async MCP client and decorators gained full JSON-RPC transport support (stdio/websocket/http), approval-gated invocation flow, and dedicated unit coverage.
 - Handoff tool now records `handoff.requested` / `handoff.completed` events via the storage backend with regression tests covering the event path.
+- MCP governance now includes explicit `fetch` server policies and approval prompts for remote web fetch operations.
 
 #### Changed
 - AgentRunner automatically captures session `input`/`output` memories when memory IR is enabled and routes MAGSAG handoffs through the configured runner payload.
+- Catalog skills (`doc-gen`, `salary-band-lookup`, `example-web-search`) now require the configured MCP runtime, query governed data sources, and surface errors when MCP is unavailable; associated docs, YAML policies, and tests were updated.
+- FastMCP server integration executes real skills via `AgentRunner`/`SkillRuntime`, replacing the Phase 2 placeholder response pipeline.
 
 ### [0.2.0] - 2025-10-31
 

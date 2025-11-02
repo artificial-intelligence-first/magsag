@@ -2,23 +2,21 @@
 title: MCP Client Migration Guide
 slug: guide-mcp-migration
 status: living
-last_updated: '2025-11-01'
+last_updated: '2025-11-02'
 last_synced: '2025-11-01'
 tags:
 - magsag
 - mcp
 - migration
-summary: Upgrade skills to support MCP client integration with fallbacks and governance
-  controls.
-description: Upgrade skills to support MCP client integration with fallbacks and governance
-  controls.
+summary: Upgrade skills to enforce MCP client integration with governed runtime requirements.
+description: Upgrade skills to enforce MCP client integration with governed runtime requirements.
 authors: []
 sources: []
 ---
 
 # MCP Client Migration Guide
 
-> **For Humans**: Use this walkthrough to retrofit skills with MCP client support while keeping fallbacks safe.
+> **For Humans**: Use this walkthrough to retrofit skills with MCP client support under the Phase 3 baseline (MCP required; legacy fallback patterns are archived below for historical reference).
 >
 > **For AI Agents**: Ensure permissions, contracts, and tests align with migration steps. Document any deviations in SSOT.
 
@@ -26,12 +24,15 @@ This guide covers migrating existing skills to support MCP (Model Context Protoc
 
 ## Overview
 
+> ⚠️ **Legacy Content Notice**  
+> Sections explicitly labelled as “Legacy Fallback” capture the Phase 2 dual-mode behaviour and remain for audit/history. Phase 3 production code **must require MCP runtime** and should not depend on these fallback flows.
+
 ### What This Guide Covers
 
 - Updating skill signatures to accept MCP runtime
 - Implementing MCP tool invocation logic
-- Supporting both MCP and non-MCP execution modes
-- Common patterns for graceful fallback and strict MCP requirements
+- Handling optional MCP parameters while keeping the runtime governed
+- Legacy fallback patterns (for historical reference only; do not reintroduce them in new work)
 - Troubleshooting common migration issues
 
 ### Who Should Read This
@@ -477,7 +478,9 @@ def test_mcp_error_fallback(mock_mcp_runtime):
         assert result["source"] == "fallback-static"
 ```
 
-## Common Patterns
+## Legacy Patterns (Archived)
+
+> These fallback-oriented patterns are preserved for historical context from Phase 2. New skills should not adopt these strategies; instead, require MCP runtime and propagate errors so orchestration can respond appropriately.
 
 ### Pattern 1: Graceful Fallback (Development-Friendly)
 
@@ -1420,20 +1423,19 @@ skills:
 **Delivered:**
 - Async skill signatures with optional `mcp` parameter across catalog templates
 - Automatic MCP runtime injection via `SkillRuntime`
-- Updated sample skills (`doc-gen`, `task-decomposition`, `result-aggregation`) running in Phase 2 mode with graceful fallbacks
-- Test patterns for dual-mode (MCP/non-MCP) execution
+- Updated sample skills (`doc-gen`, `task-decomposition`, `result-aggregation`) prepared for Phase 2 dual-mode operation (legacy reference)
+- Legacy test patterns for dual-mode (MCP/non-MCP) execution retained for audit purposes
 - This migration guide reflecting the new baseline
 
-### Phase 3: Production Hardening (Planned - v0.3.0)
+### Phase 3: Production Hardening (Completed - v0.3.0)
 
-**Status:** 📋 Planned
+**Status:** ✅ Complete
 
-- [ ] Connection pooling optimization
-- [ ] Circuit breaker for failing MCP servers
-- [ ] Request/response caching
-- [ ] Distributed tracing for MCP calls
-- [ ] Cost tracking per MCP server
-- [ ] SLO enforcement for MCP-dependent skills
+- [x] Enforced MCP-only execution paths for catalog skills
+- [x] Activated circuit breaker, retry, and caching helpers in production code paths
+- [x] Propagated approval policy coverage for fetch/filesystem/PostgreSQL servers
+- [x] Integrated FastMCP server with live AgentRunner/SkillRuntime pipeline
+- [x] Updated documentation, tests, and governance artefacts for MCP-only operation
 
 ## Next Steps
 
@@ -1449,7 +1451,7 @@ Use this checklist when migrating a skill to MCP:
 - [ ] **2. Update Skill Code**
   - [ ] Add `mcp` parameter to `run()` function
   - [ ] Import `MCPRuntime` from `magsag.mcp`
-  - [ ] Implement MCP logic with graceful fallback
+  - [ ] Implement MCP logic that surfaces errors when MCP is unavailable
   - [ ] Add permission checks
   - [ ] Handle async execution properly
 
@@ -1459,16 +1461,14 @@ Use this checklist when migrating a skill to MCP:
   - [ ] Update skill description
 
 - [ ] **4. Write Tests**
-  - [ ] Test without MCP (fallback mode)
-  - [ ] Test with MCP (mock runtime)
+  - [ ] Test with MCP (mock runtime or integration harness)
   - [ ] Test permission denied scenarios
-  - [ ] Test error handling and recovery
+  - [ ] Test error handling and recovery (including MCP startup failures)
 
 - [ ] **5. Documentation**
   - [ ] Update skill README.md
-  - [ ] Document MCP requirements
+  - [ ] Document MCP requirements and failure handling expectations
   - [ ] Add usage examples
-  - [ ] Document fallback behavior
 
 - [ ] **6. Integration Testing**
   - [ ] Test with real MCP servers locally

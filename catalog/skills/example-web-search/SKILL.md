@@ -49,6 +49,7 @@ Demonstrates integration with the fetch MCP server to retrieve and process web c
 - Internet connectivity for accessing web resources
 - Input conforms to `contracts/web_search_query.schema.json`
 - Rate limits configured to respect web service constraints
+- The orchestrator must supply an MCP runtime; the skill returns an error when MCP is disabled
 
 ## Procedures
 
@@ -123,6 +124,7 @@ The implementation demonstrates:
 - **Rate Limit Errors**: Reduce request frequency or increase rate limit in configuration
 - **Content Extraction Failures**: Check if the target website has changed its HTML structure
 - **MCP Server Not Available**: Ensure fetch server is configured in `.mcp/servers/fetch.yaml`
+- **MCP Runtime Missing**: This Phase 3 release no longer provides a mock fallback. If the runtime is absent, the skill returns an error payload so orchestration can pause execution.
 - **Timeout Errors**: Increase latency threshold for slow websites
 
 ## Update Log

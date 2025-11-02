@@ -2,7 +2,7 @@
 title: Doc Generation Skill
 slug: skill-doc-gen
 status: living
-last_updated: '2025-11-01'
+last_updated: '2025-11-02'
 last_synced: '2025-11-01'
 tags:
 - catalog
@@ -44,13 +44,13 @@ Produce a complete offer packet that combines validated candidate data, compensa
 ## Prerequisites
 - Input payload must validate against `catalog/contracts/candidate_profile.schema.json`.
 - Salary band recommendations and advisor notes are optional but improve the generated summary.
-- MCP runtime is optional; when provided it will be used in future phases for remote data enrichment.
+- MCP runtime with access to `pg-readonly` is required; offer templates are retrieved from the governed PostgreSQL catalog.
 
 ## Procedures
 
 ### Generate Offer Packet
 1. **Validate Inputs** – Run schema validation on the incoming payload using `catalog/contracts/candidate_profile.schema.json`. Reject or request correction when required keys are missing.
-2. **Collect Supporting Data** – Incorporate salary band guidance or advisor notes from the payload when present. If enrichment data is missing, surface a warning in the result.
+2. **Collect Supporting Data** – Retrieve the role/level offer template via MCP (`pg-readonly`) and incorporate salary band guidance or advisor notes from the payload. If enrichment data is missing, surface a warning in the result.
 3. **Compose Narrative Sections** – Draft role overview, compensation summary, and key talking points. Explicitly reference base salary, variable components, and any equity recommendations that are available.
 4. **Assemble Structured Output** – Populate the JSON response so it satisfies `catalog/contracts/offer_packet.schema.json`, including metadata, narrative sections, and machine-readable compensation values.
 5. **Quality Gate** – Perform a final schema validation before returning the payload. Include an audit trail of data sources in the `provenance` section when available.
@@ -61,8 +61,8 @@ Produce a complete offer packet that combines validated candidate data, compensa
 - **Input**: [`resources/examples/in.json`](resources/examples/in.json)
 - **Process**:
   1. Validate the stub candidate identifier.
- 2. Merge salary band guidance if included in the payload.
- 3. Draft the offer summary referencing available data.
+ 2. Merge salary band guidance if included in the payload (required in Phase 3 to satisfy governance).
+ 3. Draft the offer summary referencing available data and the retrieved template.
 - **Output**: [`resources/examples/out.json`](resources/examples/out.json)
 
 ## Additional Resources
@@ -73,8 +73,10 @@ Produce a complete offer packet that combines validated candidate data, compensa
 ## Troubleshooting
 - **Schema Validation Fails**: Confirm the caller transformed the upstream data with `catalog/contracts/candidate_profile.schema.json`; missing identifiers or compensation targets frequently cause this failure.
 - **Missing Compensation Context**: When the payload lacks salary band guidance, emit a warning so the orchestrator can rerun `salary-band-lookup` before finalizing the packet.
+- **Template Lookup Fails**: If the MCP query returns no template rows, raise an error. Verify the `offer_templates` table contains the target role/level combination and that the MCP runtime has `mcp:pg-readonly` permission.
 - **Latency Spikes**: Execution is CPU-bound; unexpected latency often indicates heavy upstream preprocessing or oversized payloads.
 
 ## Update Log
 
+- 2025-11-02: Updated MCP requirements, regenerated examples, and aligned documentation with Phase 3 baseline.
 - 2025-11-01: Added unified frontmatter and audience guidance.
