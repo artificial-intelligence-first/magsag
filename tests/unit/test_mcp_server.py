@@ -175,3 +175,10 @@ async def test_stdio_transport_allows_empty_args_override(monkeypatch: pytest.Mo
 def test_is_read_only_allows_quoted_keyword_identifiers() -> None:
     assert _is_read_only_postgres_query('SELECT "DELETE" FROM foo')
     assert _is_read_only_postgres_query('WITH t AS (SELECT 1) SELECT "INSERT" FROM t')
+
+
+def test_is_read_only_rejects_select_into() -> None:
+    assert not _is_read_only_postgres_query("SELECT * INTO new_table FROM foo")
+    assert not _is_read_only_postgres_query(
+        "WITH base AS (SELECT 1) SELECT * INTO TEMP tmp_table FROM base"
+    )

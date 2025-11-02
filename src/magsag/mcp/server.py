@@ -51,6 +51,7 @@ _MUTATING_STATEMENT_RE = re.compile(
     r"\b(INSERT|UPDATE|DELETE|MERGE|ALTER|CREATE|DROP|TRUNCATE|GRANT|REVOKE|VACUUM|ANALYZE)\b",
     re.IGNORECASE,
 )
+_SELECT_INTO_RE = re.compile(r"\bSELECT\b[\s\S]+?\bINTO\b", re.IGNORECASE)
 
 
 def _strip_leading_sql_comments(statement: str) -> str:
@@ -116,6 +117,9 @@ def _is_read_only_postgres_query(sql: str) -> bool:
 
     upper_head = stripped.upper()
     upper_scrubbed = scrubbed.upper()
+
+    if _SELECT_INTO_RE.search(upper_scrubbed):
+        return False
 
     if upper_head.startswith("SELECT"):
         return True
