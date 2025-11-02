@@ -2,15 +2,14 @@
 title: ExecPlan Quick Reference
 slug: architecture-plans
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - plans
 - workflow
 summary: Lightweight framework for creating, maintaining, and closing ExecPlans.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Lightweight framework for creating, maintaining, and closing ExecPlans.
 ---
 
@@ -33,7 +32,7 @@ ExecPlans are lightweight documents that capture intent, validation, and handoff
 
 ## Minimal Template
 
-Store plans in `docs/development/plans/<slug>.md` and follow this structure:
+Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templates/execplan.md`) and follow this structure:
 
 ```markdown
 # <Action title>
@@ -75,6 +74,12 @@ Store plans in `docs/development/plans/<slug>.md` and follow this structure:
 - Attach supporting scripts or diagrams next to the plan under the same slug.
 - Reflect key learnings in `docs/architecture/ssot.md` or other canonical surfaces.
 
+## See Also
+
+- `docs/workflows/plans.md` — End-to-end ExecPlan workflow and maintenance cadence.
+- `docs/_templates/execplan.md` — Ready-to-use plan template.
+
 ## Update Log
 
+- 2025-11-02: Linked workflow and template references.
 - 2025-11-01: Adopted the unified documentation format and clarified audience guidance.

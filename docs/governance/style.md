@@ -2,8 +2,8 @@
 title: Documentation Style Guide
 slug: documentation-style
 status: living
-last_updated: 2025-11-01
-last_synced: '2025-11-01'
+last_updated: 2025-11-02
+last_synced: '2025-11-02'
 tags:
 - documentation
 - governance
@@ -135,7 +135,7 @@ Capture pass/fail results in PR descriptions or delivery notes so reviewers can 
 
 ## Taxonomy
 
-Use the following controlled tags when possible; extend cautiously and document additions here.
+Use the controlled vocabulary maintained in `docs/governance/taxonomy.md`; extend cautiously and update that file before applying new tags elsewhere. Common tags include:
 
 | Tag | Usage |
 |-----|-------|
@@ -149,4 +149,5 @@ Use the following controlled tags when possible; extend cautiously and document 
 
 ## Change Log
 
+- 2025-11-02: Redirected tag guidance to the dedicated taxonomy reference.
 - 2025-11-01: Established and expanded documentation style rules with detailed structures, formatting, and hygiene guidance.

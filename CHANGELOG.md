@@ -54,11 +54,15 @@ sources:
 - Async MCP client and decorators gained full JSON-RPC transport support (stdio/websocket/http), approval-gated invocation flow, and dedicated unit coverage.
 - Handoff tool now records `handoff.requested` / `handoff.completed` events via the storage backend with regression tests covering the event path.
 - MCP governance now includes explicit `fetch` server policies and approval prompts for remote web fetch operations.
+- Standard MCP presets (Notion, Supabase, GitHub, Obsidian) with Typer CLI helpers, bundled YAML assets, and sample skills for each provider.
+- MCP observability ledger (`mcp_calls.jsonl`) and OTel span attributes capturing transport, session ID, protocol version, and policy outcomes.
 
 #### Changed
 - AgentRunner automatically captures session `input`/`output` memories when memory IR is enabled and routes MAGSAG handoffs through the configured runner payload.
 - Catalog skills (`doc-gen`, `salary-band-lookup`, `example-web-search`) now require the configured MCP runtime, query governed data sources, and surface errors when MCP is unavailable; associated docs, YAML policies, and tests were updated.
 - FastMCP server integration executes real skills via `AgentRunner`/`SkillRuntime`, replacing the Phase 2 placeholder response pipeline.
+- MCP runtime prioritises HTTP → SSE → stdio fallback, enforces agent-level tool policies, and masks arguments before logging observability records.
+- Documentation workflows, templates, and tag taxonomy were consolidated (`docs/workflows/*`, `docs/_templates/*`, `docs/governance/taxonomy.md`) with cross-references added across AGENTS/SSOT/CONTRIBUTING.
 
 ### [0.2.0] - 2025-10-31
 

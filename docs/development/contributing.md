@@ -2,9 +2,8 @@
 title: Development Contribution Guide
 slug: dev-contributing
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - contributing
 - development
 summary: Developer-focused setup, validation, and delivery workflow for contributing
@@ -15,7 +14,7 @@ sources:
   title: Repository Contribution Guide
   url: ../../CONTRIBUTING.md
   accessed: '2025-11-01'
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Developer-focused setup, validation, and delivery workflow for contributing
   to MAGSAG.
 ---
@@ -110,6 +109,7 @@ uv run python ops/tools/check_docs.py
 - Update `AGENTS.md`, `SSOT.md`, and surface-specific docs when behaviours change.
 - Ensure every Markdown file (except `README.md`) includes compliant frontmatter.
 - Use the style guide in `docs/governance/style.md`.
+- Start new docs from `docs/_templates/` and validate tags against `docs/governance/taxonomy.md`.
 
 ## Pull Request Process
 
@@ -135,5 +135,6 @@ PR expectations:
 
 ## Update Log
 
+- 2025-11-02: Linked documentation templates and taxonomy usage.
 - 2025-11-01: Rebuilt guide using the unified documentation standard.
 - 2025-10-24: Added structured contribution guidelines and setup notes.

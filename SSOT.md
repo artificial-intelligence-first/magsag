@@ -2,12 +2,12 @@
 title: MAGSAG Single Source of Truth
 slug: ssot
 status: living
-last_updated: 2025-11-01
-last_synced: '2025-11-01'
+last_updated: 2025-11-02
+last_synced: '2025-11-02'
 tags:
-- magsag
 - governance
 - ssot
+- documentation
 summary: Defines canonical documentation surfaces, ownership, and update workflows
   for MAGSAG.
 description: Defines canonical documentation surfaces, ownership, and update workflows
@@ -37,6 +37,7 @@ sources:
 | Agent operations | `AGENTS.md` | Day-one setup, validation, and delivery rules |
 | Governance policies | `docs/policies/` | Security, conduct, and approval requirements |
 | Documentation standards | `docs/governance/` | Frontmatter schema, style, taxonomy |
+| Documentation workflows | `docs/workflows/` | Changelog, ExecPlan, and operational runbooks |
 | Architecture overview | `docs/architecture/` | System design, workflows, skill conventions |
 | Development process | `docs/development/` | Roadmap, plans, contributing guides |
 | Catalog assets | `catalog/` | Agent, skill, and policy definitions |
@@ -81,6 +82,14 @@ Document skipped steps or deferred updates in delivery notes so follow-up action
 | Offer Packet | `catalog/contracts/offer_packet.schema.json` | Result aggregation, doc generation |
 | Salary Band | `catalog/contracts/salary_band.schema.json` | Compensation advisor, governance checks |
 | Flow Summary | `src/magsag/assets/contracts/flow_summary.schema.json` | Governance gate, flow metrics tooling |
+
+## MCP Standard Support
+
+- **Canonical presets** – `.mcp/servers/` (runtime) and `src/magsag/mcp/presets/servers/` (bundled defaults) define HTTP-first configurations for Notion, Supabase, GitHub, and Obsidian.
+- **Transports** – Streamable HTTP is primary, Server-Sent Events provide backward compatibility, and stdio (`mcp-remote` / `mcp-obsidian`) acts as a rescue path.
+- **CLI workflow** – `magsag mcp bootstrap|ls|doctor|login|inspect` bootstraps configs, diagnoses connectivity, and documents authentication flows.
+- **Observability** – MCP calls emit entries to `.runs/<run_id>/mcp_calls.jsonl` and attach transport/session attributes to OTel spans.
+- **Policies** – Agent YAML files may declare `policies.tools` overrides (`allow`, `require-approval`, `deny`) which are enforced before MCP execution.
 
 ## Conflict Resolution
 
@@ -181,4 +190,5 @@ Use this checklist during review to prevent drift and retain SSOT integrity.
 
 ## Update Log
 
+- 2025-11-02: Added documentation workflows to the canonical map.
 - 2025-11-01: Expanded SSOT guidance with glossary, data contracts, policies, and workflows aligned to ssot reference.

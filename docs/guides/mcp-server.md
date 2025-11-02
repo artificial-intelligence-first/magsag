@@ -2,10 +2,9 @@
 title: MAGSAG MCP Server
 slug: guide-mcp-server
 status: living
-last_updated: '2025-11-01'
-last_synced: '2025-11-01'
+last_updated: '2025-11-02'
+last_synced: '2025-11-02'
 tags:
-- magsag
 - mcp
 - server
 summary: Expose MAGSAG agents and skills as MCP tools for Claude Desktop and other
@@ -662,5 +661,6 @@ Currently, each agent invocation runs sequentially. For high-volume use cases, c
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter and dual-audience guidance.
 - 2025-10-25: Documented MCP server architecture and integration steps.

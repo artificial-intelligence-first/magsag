@@ -2,10 +2,9 @@
 title: MAGSAG Agent Guidelines
 slug: architecture-agents
 status: living
-last_updated: 2025-11-01
-last_synced: '2025-11-01'
+last_updated: 2025-11-02
+last_synced: '2025-11-02'
 tags:
-- magsag
 - agents
 - workflow
 summary: Detailed operating procedures for contributors working inside the MAGSAG
@@ -125,8 +124,11 @@ If a check is intentionally skipped, state the reason in the delivery message.
 - `catalog/registry/` – agent and skill registry entries.
 - `docs/guides/` – integration-specific walkthroughs (MCP, moderation, GitHub).
 - `docs/development/worktrees.md` – detailed worktree automation.
+- `docs/workflows/` – changelog and ExecPlan operating procedures.
+- `docs/governance/taxonomy.md` – controlled documentation tags.
 
 ## Update Log
 
+- 2025-11-02: Added workflow and taxonomy references for documentation alignment.
 - 2025-11-01: Migrated to the unified documentation standard and refreshed metadata.
 - 2025-11-01: Linked canonical ssot repository reference and clarified governance pointers.

@@ -4,14 +4,13 @@ slug: roadmap-hardening
 status: living
 last_updated: 2025-11-02
 tags:
-- magsag
 - plans
 - governance
 summary: ExecPlan tracking governance, release, and documentation hardening efforts
   for the MAGSAG platform.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: ExecPlan tracking governance, release, and documentation hardening efforts
   for the MAGSAG platform.
 ---
@@ -41,6 +40,7 @@ Anchor the MAGSAG repository around a resilient, AI-first walking skeleton so su
 - [ ] Capture validation guidance in `CHANGELOG.md` and [SSOT.md](../../SSOT.md) as features graduate from this plan.
 
 ## Progress
+- [2025-11-02 12:15 UTC] Published documentation workflows and templates; notified contributors to trial them on upcoming releases and ExecPlans.
 - [2025-11-02 09:30 UTC] Phase 3 MCP integration delivered: catalog skills invoke governed MCP servers exclusively, FastMCP server proxies real AgentRunner/SkillRuntime calls, policies/docs/tests aligned.
 - [2025-10-23 02:30 UTC] Hardened typing and fixtures across runners, registry, governance gate, and API tests; added stub packages so `mypy --strict` succeeds alongside pytest/ruff checks.
 - [2025-10-21 07:40 UTC] Refactored ExecPlan to the ExecPlans template, migrated historical accomplishments, and identified remaining governance hardening tasks.
@@ -52,6 +52,7 @@ Anchor the MAGSAG repository around a resilient, AI-first walking skeleton so su
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Converted to the unified documentation format and refreshed references.
 - 2025-10-24: Added SSOT planning reference and initial hardening scope.
 

@@ -2,16 +2,15 @@
 title: Cost Optimization Guide
 slug: guide-cost-optimization
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - cost
 - governance
 summary: Strategies for controlling LLM spend through routing, budgeting, and observability
   in MAGSAG.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Strategies for controlling LLM spend through routing, budgeting, and
   observability in MAGSAG.
 ---
@@ -774,5 +773,6 @@ uv run magsag flow gate summary.json --dry-run
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter and audience guidance.
 - 2025-10-24: Documented cost tracking architecture and strategies.

@@ -2,9 +2,8 @@
 title: Skill Development Cheatsheet
 slug: architecture-skills
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - skills
 - workflow
 summary: Checklist for defining, implementing, and shipping skills within the MAGSAG
@@ -15,7 +14,7 @@ sources:
   title: Catalog Skill Templates
   url: ../../catalog/skills/_template/SKILL.md
   accessed: '2025-11-01'
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Checklist for defining, implementing, and shipping skills within the
   MAGSAG catalog.
 ---
@@ -83,6 +82,7 @@ Cover:
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Converted to the unified documentation format and refreshed references.
 
 Keep this cheatsheet lean. If you find yourself adding long explanations, move them into the relevant guide and link back instead.

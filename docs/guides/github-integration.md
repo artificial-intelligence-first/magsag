@@ -2,16 +2,15 @@
 title: GitHub Integration Guide
 slug: guide-github-integration
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - integration
 - github
 summary: Configure GitHub webhooks so comments can trigger MAGSAG agents and publish
   results.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Configure GitHub webhooks so comments can trigger MAGSAG agents and publish
   results.
 ---
@@ -143,5 +142,6 @@ For deeper HTTP API behaviour, refer back to [API Usage Guide](./api-usage.md).
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter and audience guidance.
 - 2025-10-24: Documented webhook setup and command syntax.

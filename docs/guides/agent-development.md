@@ -2,9 +2,8 @@
 title: Agent Development Guide
 slug: guide-agent-development
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - agents
 - development
 summary: Operational guidance for building, validating, and shipping agents in the
@@ -16,7 +15,7 @@ sources:
   title: MAGSAG Agent Playbook
   url: ../../AGENTS.md
   accessed: '2025-11-01'
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Operational guidance for building, validating, and shipping agents in
   the MAGSAG repository.
 ---
@@ -435,6 +434,7 @@ This project follows AI-first documentation standards. See the following files f
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Adopted the unified documentation standard and refreshed references.
 - 2025-10-25: Added CLI reference and SSOT linkage.
 - 2025-10-24: Introduced frontmatter and repository-specific guidance.

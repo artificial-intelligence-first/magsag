@@ -2,10 +2,9 @@
 title: Durable Run
 slug: durable-run
 status: living
-last_updated: '2025-11-01'
-last_synced: '2025-11-01'
+last_updated: '2025-11-02'
+last_synced: '2025-11-02'
 tags:
-- magsag
 - durability
 - workflow
 summary: Snapshot and restoration framework that keeps long-running agent executions
