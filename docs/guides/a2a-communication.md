@@ -2,15 +2,14 @@
 title: Agent-to-Agent (A2A) Communication
 slug: guide-a2a-communication
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - agents
 - orchestration
 summary: MAG/SAG orchestration patterns, delegation workflows, and governance expectations.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: MAG/SAG orchestration patterns, delegation workflows, and governance
   expectations.
 ---
@@ -1020,5 +1019,6 @@ def delegate_safely(delegation: Delegation, runner, obs, visited: set = None):
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter and audience guidance.
 - 2025-10-24: Documented protocol versioning and SSOT references.

@@ -2,10 +2,9 @@
 title: Handoff-as-a-Tool
 slug: handoff-tool
 status: living
-last_updated: '2025-11-01'
-last_synced: '2025-11-01'
+last_updated: '2025-11-02'
+last_synced: '2025-11-02'
 tags:
-- magsag
 - governance
 - workflow
 summary: Standardized interface for delegating work between agents and external platforms.
@@ -638,4 +637,5 @@ Handoff events are logged for observability:
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added frontmatter, audience guidance, and refreshed related documentation.

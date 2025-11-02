@@ -6,19 +6,141 @@ including lifecycle management and tool execution.
 
 from __future__ import annotations
 
-import asyncio
 import contextlib
-import json
 import logging
 import os
+import re
 import time
-from asyncio.subprocess import PIPE, Process
-from typing import Any, cast
+from contextlib import AsyncExitStack
+from dataclasses import dataclass
+from typing import Any, Callable
 
-from magsag.mcp.config import MCPServerConfig
+try:  # pragma: no cover - optional dependency
+    from mcp.client.session import ClientSession
+    from mcp.client.streamable_http import streamablehttp_client
+    from mcp.client.sse import sse_client
+    from mcp.client.stdio import StdioServerParameters, stdio_client
+    from mcp.types import Implementation, Tool as MCPToolDescriptor
+
+    HAS_MCP_SDK = True
+except ImportError:  # pragma: no cover - optional dependency
+    ClientSession = None
+    streamablehttp_client = None
+    sse_client = None
+    stdio_client = None
+    StdioServerParameters = None
+    Implementation = None
+    MCPToolDescriptor = None
+    HAS_MCP_SDK = False
+
+from magsag import __version__ as MAG_VERSION
+from magsag.mcp.config import MCPServerConfig, TransportDefinition
 from magsag.mcp.tool import MCPTool, MCPToolResult, MCPToolSchema
 
 logger = logging.getLogger(__name__)
+
+CLIENT_INFO = (
+    Implementation(name="magsag-runtime", version=MAG_VERSION) if HAS_MCP_SDK else None
+)
+
+_COMMENT_RE = re.compile(r"--[^\n]*|/\*.*?\*/", re.DOTALL)
+_DOLLAR_QUOTE_RE = re.compile(r"\$([A-Za-z0-9_]*)\$(?:.|\n)*?\$\1\$", re.DOTALL)
+_SINGLE_QUOTE_RE = re.compile(r"(?i)E?'([^']|'')*'")
+_DOUBLE_QUOTED_IDENTIFIER_RE = re.compile(r'"([^"]|"")*"', re.DOTALL)
+_MUTATING_STATEMENT_RE = re.compile(
+    r"\b(INSERT|UPDATE|DELETE|MERGE|ALTER|CREATE|DROP|TRUNCATE|GRANT|REVOKE|VACUUM|ANALYZE)\b",
+    re.IGNORECASE,
+)
+_SELECT_INTO_RE = re.compile(r"\bSELECT\b[\s\S]+?\bINTO\b", re.IGNORECASE)
+
+
+def _strip_leading_sql_comments(statement: str) -> str:
+    """Remove leading whitespace and comments from an SQL statement."""
+    idx = 0
+    length = len(statement)
+
+    while idx < length:
+        while idx < length and statement[idx].isspace():
+            idx += 1
+
+        if statement.startswith("--", idx):
+            newline = statement.find("\n", idx + 2)
+            if newline == -1:
+                return ""
+            idx = newline + 1
+            continue
+
+        if statement.startswith("/*", idx):
+            end = statement.find("*/", idx + 2)
+            if end == -1:
+                return ""
+            idx = end + 2
+            continue
+
+        break
+
+    return statement[idx:]
+
+
+def _strip_sql_comments(statement: str) -> str:
+    """Remove inline SQL comments."""
+    return _COMMENT_RE.sub(" ", statement)
+
+
+def _strip_sql_string_literals(statement: str) -> str:
+    """Remove SQL string and dollar-quoted literals."""
+
+    def _replace_dollar(match: re.Match[str]) -> str:
+        return " "
+
+    without_dollar = _DOLLAR_QUOTE_RE.sub(_replace_dollar, statement)
+    return _SINGLE_QUOTE_RE.sub(" ", without_dollar)
+
+
+def _strip_double_quoted_identifiers(statement: str) -> str:
+    """Remove double-quoted identifiers from SQL."""
+    return _DOUBLE_QUOTED_IDENTIFIER_RE.sub(" ", statement)
+
+
+def _is_read_only_postgres_query(sql: str) -> bool:
+    """Check whether the provided PostgreSQL query is read-only."""
+    stripped = _strip_leading_sql_comments(sql).lstrip()
+    if not stripped:
+        return False
+
+    scrubbed = _strip_double_quoted_identifiers(
+        _strip_sql_string_literals(_strip_sql_comments(stripped))
+    ).strip()
+
+    if _MUTATING_STATEMENT_RE.search(scrubbed):
+        return False
+
+    upper_head = stripped.upper()
+    upper_scrubbed = scrubbed.upper()
+
+    if _SELECT_INTO_RE.search(upper_scrubbed):
+        return False
+
+    if upper_head.startswith("SELECT"):
+        return True
+
+    if upper_head.startswith("WITH"):
+        return "SELECT" in upper_scrubbed
+
+    return False
+
+
+@dataclass(slots=True)
+class ActiveConnection:
+    """Active MCP transport session."""
+
+    transport: TransportDefinition
+    stack: AsyncExitStack
+    session: Any
+    session_id_cb: Callable[[], str] | None
+    session_id: str | None
+    protocol_version: str | None
+    retries: int = 0
 
 # Optional import for PostgreSQL support
 try:
@@ -51,16 +173,11 @@ class MCPServer:
             config: Server configuration loaded from YAML
         """
         self.config = config
-        self._process: Process | None = None
-        self._stdin: asyncio.StreamWriter | None = None
-        self._stdout: asyncio.StreamReader | None = None
-        self._stderr: asyncio.StreamReader | None = None
         self._tools: dict[str, MCPTool] = {}
         self._pg_pool: Any = None  # asyncpg.Pool[Any] | None (if asyncpg is installed)
         self._started: bool = False
-        self._rpc_counter: int = 0
-        self._io_lock = asyncio.Lock()
-        self._stderr_task: asyncio.Task[None] | None = None
+        self._connection: ActiveConnection | None = None
+        self._transport_errors: list[tuple[TransportDefinition, Exception]] = []
 
     @property
     def server_id(self) -> str:
@@ -82,7 +199,7 @@ class MCPServer:
             return
 
         if self.config.type == "mcp":
-            await self._start_mcp_server()
+            await self._start_mcp_connection()
         elif self.config.type == "postgres":
             await self._start_postgres_connection()
         else:
@@ -95,22 +212,10 @@ class MCPServer:
         if not self._started:
             return
 
-        if self._process:
-            self._process.terminate()
-            try:
-                await asyncio.wait_for(self._process.wait(), timeout=5)
-            except asyncio.TimeoutError:
-                self._process.kill()
-                await self._process.wait()
-            self._process = None
-            self._stdin = None
-            self._stdout = None
-            self._stderr = None
-
-        if self._stderr_task is not None:
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._stderr_task
-            self._stderr_task = None
+        if self._connection is not None:
+            with contextlib.suppress(Exception):
+                await self._connection.stack.aclose()
+            self._connection = None
 
         if self._pg_pool:
             await self._pg_pool.close()
@@ -119,70 +224,139 @@ class MCPServer:
         self._started = False
         self._tools.clear()
 
-    async def _start_mcp_server(self) -> None:
-        """Start an MCP stdio server process.
+    async def _start_mcp_connection(self) -> None:
+        """Establish an MCP connection with transport fallback."""
 
-        Raises:
-            MCPServerError: If server command is not configured
-        """
-        if not self.config.command:
-            raise MCPServerError(f"No command specified for MCP server {self.server_id}")
-
-        # Note: In a production implementation, we would:
-        # 1. Start the subprocess with stdin/stdout pipes
-        # 2. Implement the MCP protocol handshake
-        # 3. Discover available tools via the protocol
-        #
-        # For now, we create a placeholder implementation that
-        # can be extended with the actual MCP protocol later.
-
-        # Placeholder: mark as started without actual process
-        # Real implementation would start subprocess and perform handshake
-        cmd = [self.config.command, *self.config.args]
-
-        try:
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdin=PIPE,
-                stdout=PIPE,
-                stderr=PIPE,
+        if not HAS_MCP_SDK:
+            raise MCPServerError(
+                "MCP SDK not installed. Install with: pip install mcp"
             )
-        except Exception as exc:  # noqa: BLE001
-            raise MCPServerError(f"Failed to start MCP server '{self.server_id}': {exc}") from exc
 
-        self._process = process
-        self._stdin = process.stdin
-        self._stdout = process.stdout
-        self._stderr = process.stderr
-        self._rpc_counter = 0
+        transports = self.config.transport_chain()
+        if not transports:
+            raise MCPServerError(f"Server {self.server_id} has no transports configured")
 
-        # Drain stderr in the background for debugging purposes
-        if self._stderr:
-            self._stderr_task = asyncio.create_task(self._drain_stderr())
+        self._transport_errors.clear()
 
-        try:
-            initialize_response = await self._send_request(
-                "initialize",
-                {
-                    "clientInfo": {"name": "magsag", "version": "1.0"},
-                    "capabilities": {},
-                },
-            )
-            if "error" in initialize_response:
-                raise MCPServerError(f"Initialize failed: {initialize_response['error']}")
+        for transport in transports:
+            try:
+                connection, tools = await self._connect_transport(transport)
+            except Exception as exc:  # noqa: BLE001
+                self._transport_errors.append((transport, exc))
+                logger.warning(
+                    "Transport %s failed for server %s: %s",
+                    transport.type,
+                    self.server_id,
+                    exc,
+                )
+                continue
 
-            # Notify server that initialization completed
-            await self._send_notification("notifications/initialized", {})
-
-            tools_response = await self._send_request("tools/list", {})
-            if "error" in tools_response:
-                raise MCPServerError(f"tools/list failed: {tools_response['error']}")
-
-            tools_payload = tools_response.get("result", {}).get("tools", [])
+            tools_payload = [tool.model_dump(by_alias=True) for tool in tools]
+            connection.retries = len(self._transport_errors)
             self._register_tools_from_payload(tools_payload)
+            self._connection = connection
+            logger.info(
+                "Connected to MCP server %s via %s",
+                self.server_id,
+                transport.type,
+            )
+            return
 
-        except Exception:  # noqa: BLE001
-            await self._cleanup_process()
+        messages = [
+            f"{err[0].type}: {err[1]}" for err in self._transport_errors
+        ]
+        raise MCPServerError(
+            f"Failed to establish MCP connection for {self.server_id}: {'; '.join(messages)}"
+        )
+
+    async def _connect_transport(
+        self, transport: TransportDefinition
+    ) -> tuple[ActiveConnection, list[Any]]:
+        if ClientSession is None:
+            raise MCPServerError("MCP SDK not installed.")
+
+        stack = AsyncExitStack()
+        connection: ActiveConnection | None = None
+
+        try:
+            if transport.type == "http":
+                if not transport.url:
+                    raise MCPServerError("HTTP transport requires 'url'")
+                if streamablehttp_client is None:
+                    raise MCPServerError("HTTP transport requires MCP HTTP client support")
+                timeout = float(transport.timeout or self.config.limits.timeout_s)
+                read_stream, write_stream, get_session_id = await stack.enter_async_context(
+                    streamablehttp_client(
+                        transport.url,
+                        headers=transport.headers or None,
+                        timeout=timeout,
+                    )
+                )
+            elif transport.type == "sse":
+                if not transport.url:
+                    raise MCPServerError("SSE transport requires 'url'")
+                if sse_client is None:
+                    raise MCPServerError("SSE transport requires MCP SSE client support")
+                timeout = float(transport.timeout or self.config.limits.timeout_s)
+                read_stream, write_stream = await stack.enter_async_context(
+                    sse_client(
+                        transport.url,
+                        headers=transport.headers or None,
+                        timeout=timeout,
+                    )
+                )
+                get_session_id = None
+            elif transport.type == "stdio":
+                command = transport.command or self.config.command
+                if not command:
+                    raise MCPServerError("STDIO transport requires 'command'")
+                if stdio_client is None or StdioServerParameters is None:
+                    raise MCPServerError("STDIO transport requires MCP stdio client support")
+                merged_env: dict[str, str] | None = None
+                if self.config.env or transport.env:
+                    merged_env = {**self.config.env}
+                    if transport.env:
+                        merged_env.update(transport.env)
+                args = (
+                    transport.args
+                    if "args" in getattr(transport, "model_fields_set", set())
+                    else self.config.args
+                )
+                params = StdioServerParameters(
+                    command=command,
+                    args=args,
+                    env=merged_env,
+                )
+                read_stream, write_stream = await stack.enter_async_context(stdio_client(params))
+                get_session_id = None
+            else:
+                raise MCPServerError(f"Unsupported transport type: {transport.type}")
+
+            session = await stack.enter_async_context(
+                ClientSession(read_stream, write_stream, client_info=CLIENT_INFO)
+            )
+
+            init_result = await session.initialize()
+            tools_result = await session.list_tools()
+
+            session_id = None
+            if get_session_id is not None:
+                with contextlib.suppress(Exception):
+                    session_id = get_session_id()
+
+            connection = ActiveConnection(
+                transport=transport,
+                stack=stack,
+                session=session,
+                session_id_cb=get_session_id,
+                session_id=session_id,
+                protocol_version=str(init_result.protocolVersion),
+            )
+
+            return connection, tools_result.tools
+
+        except Exception:
+            await stack.aclose()
             raise
 
     async def _start_postgres_connection(self) -> None:
@@ -302,130 +476,87 @@ class MCPServer:
         try:
             if self.config.type == "postgres":
                 result = await self._execute_postgres_tool(tool_name, arguments)
-            else:
-                result = await self._execute_mcp_tool(tool_name, arguments)
+                result.metadata.setdefault("transport", "postgres")
+                result.metadata.setdefault("server_id", self.server_id)
+                result.metadata.setdefault("latency_ms", int((time.time() - start_time) * 1000))
+                return result
 
-            execution_time = time.time() - start_time
-            result.metadata["execution_time_s"] = execution_time
-            result.metadata["server_id"] = self.server_id
-
-            return result
-
-        except Exception as e:
-            execution_time = time.time() - start_time
-            return MCPToolResult(
-                success=False,
-                error=f"Tool execution failed: {str(e)}",
-                metadata={
-                    "execution_time_s": execution_time,
-                    "server_id": self.server_id,
-                },
-            )
-
-    async def _cleanup_process(self) -> None:
-        if self._process is not None:
-            if self._process.returncode is None:
-                self._process.kill()
-            with contextlib.suppress(Exception):  # noqa: BLE001
-                await self._process.wait()
-        self._process = None
-        self._stdin = None
-        self._stdout = None
-        self._stderr = None
-        if self._stderr_task is not None:
-            self._stderr_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._stderr_task
-            self._stderr_task = None
-
-    def _next_message_id(self) -> int:
-        self._rpc_counter += 1
-        return self._rpc_counter
-
-    async def _write_message(self, message: dict[str, Any]) -> None:
-        if not self._stdin:
-            raise MCPServerError("MCP server stdin is not available")
-        try:
-            payload = json.dumps(message, ensure_ascii=False)
-        except (TypeError, ValueError) as exc:
-            raise MCPServerError(f"Failed to encode MCP message: {exc}") from exc
-
-        self._stdin.write(payload.encode("utf-8") + b"\n")
-        await self._stdin.drain()
-
-    async def _read_message(self, timeout: float) -> dict[str, Any]:
-        if not self._stdout:
-            raise MCPServerError("MCP server stdout is not available")
-
-        try:
-            line = await asyncio.wait_for(self._stdout.readline(), timeout=timeout)
-        except asyncio.TimeoutError as exc:
-            raise MCPServerError("Timed out waiting for MCP server response") from exc
-
-        if not line:
-            raise MCPServerError("MCP server closed the connection")
-
-        try:
-            payload = json.loads(line.decode("utf-8"))
-        except json.JSONDecodeError as exc:  # noqa: BLE001
-            raise MCPServerError(f"Failed to decode MCP response: {exc}") from exc
-
-        if not isinstance(payload, dict):
-            raise MCPServerError("Invalid MCP response payload")
-
-        return cast(dict[str, Any], payload)
-
-    async def _send_request(
-        self,
-        method: str,
-        params: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        if not self._process or not self._stdin or not self._stdout:
-            raise MCPServerError("MCP server process is not running")
-
-        request_id = self._next_message_id()
-        message: dict[str, Any] = {"jsonrpc": "2.0", "id": request_id, "method": method}
-        if params:
-            message["params"] = params
-
-        timeout = max(float(self.config.limits.timeout_s), 1.0)
-
-        async with self._io_lock:
-            await self._write_message(message)
-            while True:
-                response = await self._read_message(timeout)
-                if response.get("id") == request_id:
-                    return response
-
-                # Handle notifications or unrelated responses gracefully
-                if "method" in response and "id" not in response:
-                    logger.debug(
-                        "Received MCP notification from %s: %s",
-                        self.server_id,
-                        response.get("method"),
-                    )
-                    continue
-
-                logger.debug(
-                    "Ignoring unrelated MCP message from %s: %s",
-                    self.server_id,
-                    response,
+            if self._connection is None:
+                raise MCPServerError(
+                    f"MCP connection for server {self.server_id} is not established"
                 )
 
-    async def _send_notification(
-        self,
-        method: str,
-        params: dict[str, Any] | None = None,
-    ) -> None:
-        if not self._stdin:
-            raise MCPServerError("MCP server stdin is not available")
+            connection = self._connection
+            call_result = await connection.session.call_tool(tool_name, arguments or {})
 
-        message: dict[str, Any] = {"jsonrpc": "2.0", "method": method}
-        if params:
-            message["params"] = params
+            latency_ms = int((time.time() - start_time) * 1000)
+            output: Any
+            if call_result.structuredContent is not None:
+                output = call_result.structuredContent
+            else:
+                content = getattr(call_result, "content", None)
+                if content is None:
+                    output = [] if not call_result.isError else None
+                else:
+                    output = [item.model_dump(by_alias=True) for item in content]
 
-        async with self._io_lock:
-            await self._write_message(message)
+            if connection.session_id_cb is not None:
+                with contextlib.suppress(Exception):
+                    connection.session_id = connection.session_id_cb()
+
+            metadata = {
+                "server_id": self.server_id,
+                "transport": connection.transport.type,
+                "protocol_version": connection.protocol_version,
+                "session_id": connection.session_id,
+                "latency_ms": latency_ms,
+                "retries": connection.retries,
+            }
+            if call_result.meta:
+                metadata["meta"] = call_result.meta
+
+            success = not call_result.isError
+            error_message = None
+            if not success:
+                error_payload = call_result.meta or {}
+                if isinstance(error_payload, dict):
+                    error_message = (
+                        error_payload.get("message")
+                        or error_payload.get("error")
+                        or error_payload.get("detail")
+                    )
+                if not error_message:
+                    error_attr = getattr(call_result, "error", None)
+                    if isinstance(error_attr, str) and error_attr:
+                        error_message = error_attr
+                if not error_message:
+                    message_attr = getattr(call_result, "message", None)
+                    if isinstance(message_attr, str) and message_attr:
+                        error_message = message_attr
+                if not error_message:
+                    error_message = "MCP tool returned an error"
+
+            return MCPToolResult(
+                success=success,
+                output=output if success else None,
+                error=error_message,
+                metadata=metadata,
+            )
+
+        except Exception as exc:
+            latency_ms = int((time.time() - start_time) * 1000)
+            transport_type = None
+            if self._connection is not None:
+                transport_type = self._connection.transport.type
+            return MCPToolResult(
+                success=False,
+                error=str(exc),
+                metadata={
+                    "server_id": self.server_id,
+                    "transport": transport_type,
+                    "latency_ms": latency_ms,
+                },
+            )
 
     def _register_tools_from_payload(self, tools_payload: list[dict[str, Any]]) -> None:
         self._tools.clear()
@@ -450,65 +581,6 @@ class MCPServer:
                 server_id=self.server_id,
             )
             self._tools[name] = tool
-
-    async def _drain_stderr(self) -> None:
-        if not self._stderr:
-            return
-        try:
-            while True:
-                line = await self._stderr.readline()
-                if not line:
-                    break
-                logger.debug(
-                    "MCP[%s] stderr: %s",
-                    self.server_id,
-                    line.decode(errors="ignore").rstrip(),
-                )
-        except Exception as exc:  # noqa: BLE001
-            # Best-effort logging only; surface trace for debugging without failing pipeline
-            logger.debug("Failed to drain MCP stderr for %s", self.server_id, exc_info=exc)
-
-    async def _execute_mcp_tool(
-        self,
-        tool_name: str,
-        arguments: dict[str, Any],
-    ) -> MCPToolResult:
-        if not self._process or not self._stdin or not self._stdout:
-            return MCPToolResult(success=False, error="MCP server process is not running")
-
-        try:
-            response = await self._send_request(
-                "tools/call",
-                {"name": tool_name, "arguments": arguments or {}},
-            )
-        except MCPServerError as exc:
-            return MCPToolResult(success=False, error=str(exc))
-
-        if "error" in response:
-            error_payload = response.get("error")
-            if isinstance(error_payload, dict):
-                message = error_payload.get("message") or error_payload.get("data")
-            else:
-                message = str(error_payload)
-            return MCPToolResult(success=False, error=message or "MCP tool call failed")
-
-        result_payload = response.get("result", {})
-        success = result_payload.get("success")
-        if success is None:
-            success = result_payload.get("error") is None
-
-        metadata = {
-            key: value
-            for key, value in result_payload.items()
-            if key not in {"success", "output", "error"}
-        }
-
-        return MCPToolResult(
-            success=bool(success),
-            output=result_payload.get("output"),
-            error=result_payload.get("error"),
-            metadata={"raw_result": result_payload, **metadata},
-        )
 
     async def _execute_postgres_tool(
         self,
@@ -536,8 +608,8 @@ class MCPServer:
                     sql = arguments.get("sql", "")
                     params = arguments.get("params", [])
 
-                    # Validate that query is read-only (SELECT only)
-                    if not sql.strip().upper().startswith("SELECT"):
+                    # Validate that query is read-only
+                    if not _is_read_only_postgres_query(sql):
                         return MCPToolResult(
                             success=False,
                             error="Only SELECT queries are allowed in read-only mode",

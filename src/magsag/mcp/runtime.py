@@ -7,10 +7,20 @@ MCP tools with proper permission enforcement.
 from __future__ import annotations
 
 import logging
-from typing import Any
+from contextlib import nullcontext
+from typing import Any, Protocol
 
-from magsag.mcp.registry import MCPRegistry
+from magsag.core.permissions import mask_tool_args
 from magsag.mcp.tool import MCPTool, MCPToolResult
+from magsag.observability.context import get_current_agent_policies
+from magsag.observability.logger import ObservabilityLogger
+
+try:  # pragma: no cover - optional dependency
+    from opentelemetry import trace
+    from opentelemetry.trace import Span
+except ImportError:  # pragma: no cover - optional dependency
+    trace = None
+    Span = Any
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +31,23 @@ class MCPRuntimeError(Exception):
     pass
 
 
+class MCPRegistryProtocol(Protocol):
+    """Protocol describing the registry interface required by MCPRuntime."""
+
+    def get_tools(self, server_id: str) -> list[MCPTool]:
+        ...
+
+    async def execute_tool(
+        self,
+        *,
+        server_id: str,
+        tool_name: str,
+        arguments: dict[str, Any],
+        required_permissions: list[str],
+    ) -> MCPToolResult:
+        ...
+
+
 class MCPRuntime:
     """Runtime interface for skills to access MCP tools.
 
@@ -28,7 +55,11 @@ class MCPRuntime:
     discover and execute MCP tools, with permission enforcement.
     """
 
-    def __init__(self, registry: MCPRegistry) -> None:
+    def __init__(
+        self,
+        registry: MCPRegistryProtocol,
+        observer: ObservabilityLogger | None = None,
+    ) -> None:
         """Initialize MCP runtime.
 
         Args:
@@ -36,6 +67,7 @@ class MCPRuntime:
         """
         self._registry = registry
         self._granted_permissions: set[str] = set()
+        self._observer: ObservabilityLogger | None = observer
 
     def grant_permissions(self, permissions: list[str]) -> None:
         """Grant permissions to this runtime instance.
@@ -66,6 +98,51 @@ class MCPRuntime:
         """
         return list(self._granted_permissions)
 
+    def attach_observer(self, observer: ObservabilityLogger | None) -> None:
+        """Attach an observability logger for MCP call tracing."""
+        self._observer = observer
+
+    def _record_observability(
+        self,
+        server_id: str,
+        tool_name: str,
+        arguments: dict[str, Any],
+        result: MCPToolResult,
+    ) -> None:
+        if self._observer is None:
+            return
+
+        metadata = dict(result.metadata)
+        meta_payload = metadata.pop("meta", None)
+
+        try:
+            masked_args = mask_tool_args(dict(arguments))
+        except Exception:  # noqa: BLE001 - defensive
+            masked_args = {}
+
+        record = {
+            "server_id": server_id,
+            "tool": tool_name,
+            "status": "success" if result.success else "error",
+            "transport": metadata.get("transport"),
+            "latency_ms": metadata.get("latency_ms"),
+            "protocol_version": metadata.get("protocol_version"),
+            "session_id": metadata.get("session_id"),
+            "http_status": metadata.get("http_status"),
+            "retries": metadata.get("retries"),
+            "permission": metadata.get("permission"),
+            "arguments": masked_args,
+        }
+        if result.error:
+            record["error"] = result.error
+        if meta_payload is not None:
+            record["meta"] = meta_payload
+
+        try:
+            self._observer.log_mcp_call(record)
+        except Exception:  # noqa: BLE001 - observability must be best-effort
+            logger.warning("Failed to log MCP call for %s.%s", server_id, tool_name, exc_info=True)
+
     def list_available_tools(self) -> list[MCPTool]:
         """List all tools available with current permissions.
 
@@ -95,6 +172,24 @@ class MCPRuntime:
         """
         permission = f"mcp:{server_id}"
         return permission in self._granted_permissions
+
+    @staticmethod
+    def _resolve_policy(server_id: str, tool_name: str) -> str | None:
+        policies = get_current_agent_policies() or {}
+        tools_policy = policies.get("tools") if isinstance(policies, dict) else None
+        if not isinstance(tools_policy, dict):
+            return None
+
+        qualified = f"{server_id}.{tool_name}"
+        value = tools_policy.get(qualified)
+        if isinstance(value, str):
+            return value.lower()
+
+        wildcard = tools_policy.get(f"{server_id}.*")
+        if isinstance(wildcard, str):
+            return wildcard.lower()
+
+        return None
 
     async def execute_tool(
         self,
@@ -132,17 +227,84 @@ class MCPRuntime:
         # (avoids false failures when skill has multiple MCP permissions and one is invalid)
         required_permission = f"mcp:{server_id}"
         logger.info(f"Executing tool {server_id}.{tool_name}")
-        result = await self._registry.execute_tool(
-            server_id=server_id,
-            tool_name=tool_name,
-            arguments=arguments,
-            required_permissions=[required_permission],
-        )
+
+        policy_action = self._resolve_policy(server_id, tool_name)
+        if policy_action == "deny":
+            error_msg = f"Tool '{server_id}.{tool_name}' is denied by agent policy"
+            logger.warning(error_msg)
+            result = MCPToolResult(
+                success=False,
+                error=error_msg,
+                metadata={
+                    "server_id": server_id,
+                    "tool_name": tool_name,
+                    "permission": required_permission,
+                    "policy": "deny",
+                },
+            )
+            self._record_observability(server_id, tool_name, arguments, result)
+            return result
+
+        if policy_action == "require-approval":
+            error_msg = (
+                f"Tool '{server_id}.{tool_name}' requires human approval per agent policy"
+            )
+            logger.warning(error_msg)
+            result = MCPToolResult(
+                success=False,
+                error=error_msg,
+                metadata={
+                    "server_id": server_id,
+                    "tool_name": tool_name,
+                    "permission": required_permission,
+                    "policy": "require-approval",
+                },
+            )
+            self._record_observability(server_id, tool_name, arguments, result)
+            return result
+
+        span_cm = nullcontext()
+        span: Span | None
+        if trace is not None:  # pragma: no cover - optional instrumentation
+            tracer = trace.get_tracer("magsag.mcp.runtime")
+            span_cm = tracer.start_as_current_span(
+                "mcp.call",
+                attributes={
+                    "mcp.server_id": server_id,
+                    "mcp.tool_name": tool_name,
+                },
+            )
+
+        with span_cm as span:
+            result = await self._registry.execute_tool(
+                server_id=server_id,
+                tool_name=tool_name,
+                arguments=arguments,
+                required_permissions=[required_permission],
+            )
+
+            metadata = result.metadata
+            metadata.setdefault("server_id", server_id)
+            metadata.setdefault("tool_name", tool_name)
+            metadata.setdefault("permission", required_permission)
+            if policy_action:
+                metadata.setdefault("policy", policy_action)
+
+            if span is not None:
+                span.set_attribute("mcp.transport", metadata.get("transport", "unknown"))
+                span.set_attribute("mcp.latency_ms", metadata.get("latency_ms", 0))
+                span.set_attribute("mcp.protocol_version", metadata.get("protocol_version", "unknown"))
+                span.set_attribute("mcp.session_id", metadata.get("session_id", ""))
+                span.set_attribute("mcp.status", "success" if result.success else "error")
+                if not result.success and result.error:
+                    span.set_attribute("mcp.error", result.error)
 
         if result.success:
             logger.info(f"Tool execution succeeded: {server_id}.{tool_name}")
         else:
             logger.warning(f"Tool execution failed: {server_id}.{tool_name} - {result.error}")
+
+        self._record_observability(server_id, tool_name, arguments, result)
 
         return result
 

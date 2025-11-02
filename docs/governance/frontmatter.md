@@ -2,8 +2,8 @@
 title: Markdown Frontmatter Specification
 slug: frontmatter
 status: living
-last_updated: 2025-11-01
-last_synced: '2025-11-01'
+last_updated: 2025-11-02
+last_synced: '2025-11-02'
 tags:
 - documentation
 - governance
@@ -112,11 +112,12 @@ draft → living → stable → deprecated
 
 ## Tag Taxonomy
 
-Use tags from the controlled vocabulary in `docs/governance/style.md`. When introducing new tags, update the taxonomy table there and apply consistently across related docs.
+Use tags from the controlled vocabulary in `docs/governance/taxonomy.md`. Update that file before applying new tags elsewhere and keep usage consistent across related docs.
 
 ## Change Log
 
 Record frontmatter schema updates here:
 
+- 2025-11-02: Redirected tag guidance to the dedicated taxonomy document.
 - 2025-11-02: Restored `last_synced` and `description` as required fields to align with `ops/tools/check_docs.py`.
 - 2025-11-01: Introduced v1 schema and validation requirements for the MAGSAG repository.

@@ -4,14 +4,13 @@ slug: guide-mcp-integration
 status: living
 last_updated: 2025-11-02
 tags:
-- magsag
 - mcp
 - integration
 summary: Guide to exposing and consuming MCP servers within MAGSAG, including migration
   phases and governance requirements.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Guide to exposing and consuming MCP servers within MAGSAG, including
   migration phases and governance requirements.
 ---
@@ -880,6 +879,7 @@ def run(payload: dict, **deps) -> dict:
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter, audience guidance, and refreshed migration overview.
 - 2025-10-29: Documented implementation status and migration preview.
 - 2025-10-24: Introduced architecture overview and initial guidance.

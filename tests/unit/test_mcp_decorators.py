@@ -9,7 +9,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from magsag.core.permissions import ToolPermission
-from magsag.mcp.client import MCPClientError
+from magsag.mcp.client import MCPClientError, RetryConfig, TransportType
+from magsag.mcp.config import MCPServerConfig, TransportDefinition
 from magsag.mcp.decorators import (
     _CLIENT_CACHE,
     _CLIENT_RETRY_OVERRIDES,
@@ -181,6 +182,100 @@ async def test_get_mcp_client_respects_retry_overrides(monkeypatch: pytest.Monke
 
         assert client_low is not client_high
         assert _CLIENT_RETRY_OVERRIDES["filesystem"] == 5
+    finally:
+        _CLIENT_CACHE.clear()
+        _CLIENT_CACHE.update(original_cache)
+        _CLIENT_RETRY_OVERRIDES.clear()
+        _CLIENT_RETRY_OVERRIDES.update(original_overrides)
+
+
+@pytest.mark.asyncio
+async def test_get_mcp_client_stdio_allows_empty_args_override(monkeypatch: pytest.MonkeyPatch) -> None:
+    original_cache = dict(_CLIENT_CACHE)
+    original_overrides = dict(_CLIENT_RETRY_OVERRIDES)
+    _CLIENT_CACHE.clear()
+    _CLIENT_RETRY_OVERRIDES.clear()
+
+    config = MCPServerConfig(
+        server_id="stdio-empty",
+        command="run",
+        args=["--default"],
+        transport=TransportDefinition(
+            type="stdio",
+            command="run",
+            args=[],
+        ),
+    )
+
+    class DummyClient:
+        def __init__(self, *, server_name: str, transport: TransportType, config: dict[str, Any], retry_config: RetryConfig | None) -> None:
+            self._config_payload = config
+
+        async def initialize(self) -> None:
+            return None
+
+        async def close(self) -> None:
+            return None
+
+    monkeypatch.setattr("magsag.mcp.decorators.AsyncMCPClient", DummyClient)
+    monkeypatch.setattr("magsag.mcp.decorators._load_server_config", lambda server_id: config)
+
+    try:
+        client = await _get_mcp_client("stdio-empty", retry_attempts=None)
+        assert isinstance(client, DummyClient)
+        assert client._config_payload["args"] == []
+        assert client._config_payload["command"] == "run"
+    finally:
+        _CLIENT_CACHE.clear()
+        _CLIENT_CACHE.update(original_cache)
+        _CLIENT_RETRY_OVERRIDES.clear()
+        _CLIENT_RETRY_OVERRIDES.update(original_overrides)
+
+
+@pytest.mark.asyncio
+async def test_get_mcp_client_stdio_includes_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """STDIO client should merge transport/env overrides into config."""
+
+    original_cache = dict(_CLIENT_CACHE)
+    original_overrides = dict(_CLIENT_RETRY_OVERRIDES)
+    _CLIENT_CACHE.clear()
+    _CLIENT_RETRY_OVERRIDES.clear()
+
+    config = MCPServerConfig(
+        server_id="stdio-env",
+        transport=TransportDefinition(
+            type="stdio",
+            command="run",
+            env={"TOKEN": "transport-token"},
+            args=["--flag"],
+        ),
+        env={"BASE": "base-value"},
+    )
+    config.env["TOKEN"] = "base-token"
+    config.env["BASE"] = "base-value"
+
+    class DummyClient:
+        def __init__(self, *, server_name: str, transport: TransportType, config: dict[str, Any], retry_config: RetryConfig | None) -> None:
+            self._config_payload = config
+            self._initialized = False
+
+        async def initialize(self) -> None:
+            self._initialized = True
+
+        async def close(self) -> None:
+            self._initialized = False
+
+    monkeypatch.setattr("magsag.mcp.decorators.AsyncMCPClient", DummyClient)
+    monkeypatch.setattr("magsag.mcp.decorators._load_server_config", lambda server_id: config)
+
+    try:
+        client = await _get_mcp_client("stdio-env", retry_attempts=None)
+        assert isinstance(client, DummyClient)
+        assert client._config_payload["env"] == {
+            "BASE": "base-value",
+            "TOKEN": "transport-token",
+        }
+        assert client._config_payload["args"] == ["--flag"]
     finally:
         _CLIENT_CACHE.clear()
         _CLIENT_CACHE.update(original_cache)

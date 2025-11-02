@@ -2,15 +2,14 @@
 title: MAGSAG Storage Layer
 slug: storage-layer
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - storage
 - observability
 summary: Pluggable data management system for agent execution artefacts and observability.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Pluggable data management system for agent execution artefacts and observability.
 ---
 
@@ -411,4 +410,5 @@ Database is growing too large. Solutions:
 
 ## Update Log
 
+- 2025-11-02: Updated metadata and aligned tags with documentation taxonomy.
 - 2025-11-01: Applied the unified documentation standard and refreshed metadata.

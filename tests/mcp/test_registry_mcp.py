@@ -101,6 +101,22 @@ class TestMCPRegistryDiscovery:
         assert "test-mcp" in servers
         assert "test-pg" in servers
 
+    def test_discover_supports_yml_extension(
+        self,
+        temp_servers_dir: Path,
+        sample_mcp_config: dict[str, object],
+    ) -> None:
+        """Ensure discovery loads .yml configs."""
+        config_file = temp_servers_dir / "with_yml.yml"
+        with open(config_file, "w") as f:
+            yaml.dump(sample_mcp_config, f)
+
+        registry = MCPRegistry(servers_dir=temp_servers_dir)
+        registry.discover_servers()
+
+        servers = registry.list_servers()
+        assert servers == ["test-mcp"]
+
     def test_discover_ignores_invalid_configs(
         self,
         temp_servers_dir: Path,

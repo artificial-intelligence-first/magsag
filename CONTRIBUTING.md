@@ -2,8 +2,8 @@
 title: Contributing to MAGSAG
 slug: contributing
 status: living
-last_updated: 2025-11-01
-last_synced: '2025-11-01'
+last_updated: 2025-11-02
+last_synced: '2025-11-02'
 tags:
 - magsag
 - contributing
@@ -69,6 +69,8 @@ sources:
    - [AGENTS.md](./AGENTS.md) for operational changes (update this root file before adjusting downstream guides).
    - [SKILL.md](./docs/architecture/skills.md) when modifying skill conventions.
    - [SSOT.md](./SSOT.md) for new terminology, schemas, or policies (propagate changes after refreshing the canonical root).
+   - [docs/workflows/changelog.md](./docs/workflows/changelog.md) and [docs/workflows/plans.md](./docs/workflows/plans.md) when adjusting release tracking or ExecPlan procedures.
+   - Scaffold new Markdown from `docs/_templates/` and align tags with `docs/governance/taxonomy.md`.
 5. Run validation commands (tests, lint, type check, schema validators).
 6. Update `CHANGELOG.md` under `## [Unreleased]` with user-facing changes.
 7. Commit using imperative, Conventional Commit-friendly summaries (≤72 chars).
@@ -123,5 +125,6 @@ Record pass/fail results for each command in the PR description.
 
 ## Update Log
 
+- 2025-11-02: Added documentation workflow references and template requirements.
 - 2025-11-01: Updated references to the new SSOT/AGENTS locations and refreshed metadata.
 - 2025-10-30: Rebuilt CONTRIBUTING guide with governance, validation, and documentation requirements aligned to MAGSAG.

@@ -341,8 +341,9 @@ async def test_salary_band_lookup_requires_mcp() -> None:
 
     payload = {"role": "Senior Engineer", "level": "L5", "location": "SF"}
 
+    run = getattr(module, "run")
     with pytest.raises(RuntimeError):
-        await module.run(payload)  # type: ignore[attr-defined]
+        await run(payload)
 
 
 @pytest.mark.asyncio
@@ -377,7 +378,8 @@ async def test_salary_band_lookup_queries_database() -> None:
                 metadata={},
             )
 
-    result = await module.run(payload, mcp=FakeMCP())  # type: ignore[attr-defined]
+    run = getattr(module, "run")
+    result = await run(payload, mcp=FakeMCP())
 
     assert result == {
         "currency": "USD",
@@ -412,8 +414,9 @@ async def test_doc_gen_requires_mcp() -> None:
         },
     }
 
+    run = getattr(module, "run")
     with pytest.raises(RuntimeError):
-        await module.run(payload)  # type: ignore[attr-defined]
+        await run(payload)
 
 
 @pytest.mark.asyncio
@@ -465,7 +468,8 @@ async def test_doc_gen_uses_offer_template() -> None:
                 metadata={},
             )
 
-    result = await module.run(payload, mcp=FakeDocGenMCP())  # type: ignore[attr-defined]
+    run = getattr(module, "run")
+    result = await run(payload, mcp=FakeDocGenMCP())
 
     assert "Recommend" in result["narrative"]["summary"]
     assert "Base compensation" in result["narrative"]["talking_points"]

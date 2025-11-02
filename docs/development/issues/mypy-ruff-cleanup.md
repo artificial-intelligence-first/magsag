@@ -2,10 +2,9 @@
 title: Tracking Issue – mypy/ruff debt cleanup
 slug: issue-mypy-ruff-cleanup
 status: stable
-last_updated: '2025-11-01'
-last_synced: '2025-11-01'
+last_updated: '2025-11-02'
+last_synced: '2025-11-02'
 tags:
-- magsag
 - tracking
 - quality
 summary: Resolution record for the mypy strict and ruff lint debt cleanup.
@@ -47,4 +46,5 @@ related_plans:
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter and audience guidance.

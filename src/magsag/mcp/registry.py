@@ -1,7 +1,7 @@
 """MCP Registry for auto-discovery and server management.
 
 This module provides centralized management of all MCP servers,
-including auto-discovery from .mcp/servers/*.yaml files.
+including auto-discovery from .mcp/servers/*.yaml and *.yml files.
 """
 
 from __future__ import annotations
@@ -15,8 +15,95 @@ import yaml
 from magsag.mcp.config import MCPServerConfig
 from magsag.mcp.server import MCPServer
 from magsag.mcp.tool import MCPTool, MCPToolResult
+from magsag.mcp.presets import available_presets, load_presets
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_SERVERS_DIR = Path(".mcp") / "servers"
+
+
+class MCPPresetError(Exception):
+    """Raised when MCP preset management fails."""
+
+    pass
+
+
+def _normalize_provider(provider: str) -> str:
+    return provider.strip().lower()
+
+
+def _resolve_providers(provider: str) -> list[str]:
+    known = set(available_presets())
+    if provider in {"*", "all"}:
+        return sorted(known)
+
+    normalized = _normalize_provider(provider)
+    if normalized not in known:
+        raise MCPPresetError(f"Unknown MCP preset provider: {provider}")
+    return [normalized]
+
+
+def load_server_config(path: Path) -> MCPServerConfig:
+    """Load a single MCP server configuration from YAML."""
+    with path.open(encoding="utf-8") as handle:
+        data = yaml.safe_load(handle) or {}
+
+    config = MCPServerConfig(**data)
+    config.validate_type_fields()
+    return config
+
+
+def bootstrap_presets(
+    provider: str = "all",
+    force: bool = False,
+    target_dir: Path | None = None,
+) -> dict[str, str]:
+    """
+    Bootstrap MCP server presets into the workspace.
+
+    Args:
+        provider: Provider identifier or 'all'
+        force: Overwrite existing files when True
+        target_dir: Optional override for target directory
+
+    Returns:
+        Mapping of provider -> action ('created', 'updated', 'skipped')
+    """
+    providers = _resolve_providers(provider)
+    try:
+        yaml_by_provider = load_presets(providers)
+    except ValueError as exc:  # pragma: no cover - defensive
+        raise MCPPresetError(str(exc)) from exc
+
+    destination_dir = target_dir or DEFAULT_SERVERS_DIR
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    results: dict[str, str] = {}
+    for name, yaml_text in yaml_by_provider.items():
+        dest_path = destination_dir / f"{name}.yaml"
+        if dest_path.exists() and not force:
+            results[name] = "skipped"
+            continue
+
+        if dest_path.exists():
+            action = "updated"
+        else:
+            action = "created"
+
+        dest_path.write_text(yaml_text, encoding="utf-8")
+        results[name] = action
+
+    return results
+
+
+def list_local_servers(servers_dir: Path | None = None) -> list[Path]:
+    """List YAML server configs available in the local workspace."""
+    directory = servers_dir or DEFAULT_SERVERS_DIR
+    if not directory.exists():
+        return []
+
+    candidates = set(directory.glob("*.yaml")) | set(directory.glob("*.yml"))
+    return sorted(candidates)
 
 
 class MCPRegistryError(Exception):
@@ -44,12 +131,15 @@ class MCPRegistry:
         """
         self._servers: dict[str, MCPServer] = {}
         self._configs: dict[str, MCPServerConfig] = {}
-        self._servers_dir = servers_dir or Path.cwd() / ".mcp" / "servers"
+        if servers_dir is None:
+            self._servers_dir = Path.cwd() / DEFAULT_SERVERS_DIR
+        else:
+            self._servers_dir = servers_dir
 
     def discover_servers(self) -> None:
         """Discover and load all MCP server configurations.
 
-        This method scans the servers directory for *.yaml files
+        This method scans the servers directory for *.yaml and *.yml files
         and loads their configurations.
 
         Raises:
@@ -62,7 +152,7 @@ class MCPRegistry:
         if not self._servers_dir.is_dir():
             raise MCPRegistryError(f"Not a directory: {self._servers_dir}")
 
-        yaml_files = list(self._servers_dir.glob("*.yaml"))
+        yaml_files = list_local_servers(self._servers_dir)
         logger.info(f"Discovering MCP servers from {len(yaml_files)} config files")
 
         for yaml_file in yaml_files:
@@ -83,14 +173,7 @@ class MCPRegistry:
         Raises:
             MCPRegistryError: If loading or validation fails
         """
-        with open(yaml_file, encoding="utf-8") as f:
-            data = yaml.safe_load(f)
-
-        if not data:
-            raise MCPRegistryError(f"Empty configuration file: {yaml_file}")
-
-        config = MCPServerConfig(**data)
-        config.validate_type_fields()
+        config = load_server_config(yaml_file)
 
         if config.server_id in self._configs:
             logger.warning(f"Duplicate server ID '{config.server_id}', overwriting")

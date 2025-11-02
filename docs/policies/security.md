@@ -2,16 +2,15 @@
 title: Security Policy
 slug: security-policy
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - security
 - governance
 summary: Vulnerability reporting process, operational safeguards, and deployment expectations
   for MAGSAG.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Vulnerability reporting process, operational safeguards, and deployment
   expectations for MAGSAG.
 ---
@@ -235,5 +234,6 @@ For general support and non-security issues, please use GitHub Issues.
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added frontmatter and aligned the policy with the unified documentation standard.
 - 2025-10-24: Documented production deployment checklist and rate limiting defaults.

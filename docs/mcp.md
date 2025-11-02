@@ -2,10 +2,9 @@
 title: Remote MCP Client
 slug: remote-mcp-client
 status: living
-last_updated: '2025-11-01'
-last_synced: '2025-11-01'
+last_updated: '2025-11-02'
+last_synced: '2025-11-02'
 tags:
-- magsag
 - mcp
 - integration
 summary: Async client architecture for integrating external Model Context Protocol

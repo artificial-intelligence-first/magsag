@@ -35,8 +35,21 @@ Usage:
     await registry.stop_all_servers()
 """
 
-from magsag.mcp.config import MCPLimits, MCPServerConfig, PostgresConnection
-from magsag.mcp.registry import MCPRegistry, MCPRegistryError
+from magsag.mcp.config import (
+    MCPLimits,
+    MCPServerConfig,
+    PermissionSettings,
+    PostgresConnection,
+    TransportDefinition,
+)
+from magsag.mcp.registry import (
+    MCPRegistry,
+    MCPRegistryError,
+    MCPPresetError,
+    bootstrap_presets,
+    list_local_servers,
+    load_server_config,
+)
 from magsag.mcp.runtime import MCPRuntime, MCPRuntimeError
 from magsag.mcp.server import MCPServer, MCPServerError
 from magsag.mcp.tool import (
@@ -59,14 +72,20 @@ except ImportError:
 __all__ = [
     # Configuration
     "MCPServerConfig",
+    "TransportDefinition",
+    "PermissionSettings",
     "MCPLimits",
     "PostgresConnection",
+    "MCPPresetError",
     # Server management
     "MCPServer",
     "MCPServerError",
     # Registry
     "MCPRegistry",
     "MCPRegistryError",
+    "bootstrap_presets",
+    "list_local_servers",
+    "load_server_config",
     # Runtime
     "MCPRuntime",
     "MCPRuntimeError",

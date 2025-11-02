@@ -2,12 +2,12 @@
 title: MAGSAG Agent Playbook
 slug: agents
 status: living
-last_updated: 2025-11-01
-last_synced: '2025-11-01'
+last_updated: 2025-11-02
+last_synced: '2025-11-02'
 tags:
-- magsag
 - agents
 - workflow
+- governance
 summary: Operational instructions for humans and AI assistants collaborating on MAGSAG.
 description: Operational instructions for humans and AI assistants collaborating on
   MAGSAG.
@@ -58,6 +58,8 @@ uv run python ops/tools/check_docs.py
 - Apply the frontmatter standard in `docs/governance/frontmatter.md` to every Markdown file except `README.md`.
 - Update the canonical surfaces listed in `SSOT.md` first, then propagate references.
 - Maintain update logs at the end of living documents (`docs/architecture/`, `docs/development/`, catalog templates).
+- Follow workflow guides in `docs/workflows/changelog.md` and `docs/workflows/plans.md` when recording releases or long-running initiatives.
+- Start new docs from the templates under `docs/_templates/` and align tags with `docs/governance/taxonomy.md`.
 - Keep diagrams, examples, and CLI excerpts accurate. Link to deeper guides rather than duplicating content.
 - Highlight unresolved questions in delivery notes so follow-up work stays visible.
 
@@ -103,11 +105,14 @@ uv run python ops/tools/check_docs.py
 - `SSOT.md` – Canonical document index and governance rules.
 - `docs/governance/style.md` – Writing, formatting, and tone guidelines.
 - `docs/governance/frontmatter.md` – Required metadata schema for Markdown.
+- `docs/governance/taxonomy.md` – Controlled vocabulary for documentation tags.
 - `docs/architecture/agents.md` – Deep dive into repository layout, workflows, and validation commands.
+- `docs/workflows/changelog.md` / `docs/workflows/plans.md` – Changelog and ExecPlan operations.
 - `catalog/` templates – Authoritative schema for agent and skill definitions.
 
 ## Update Log
 
+- 2025-11-02: Linked workflow guides, templates, and taxonomy reference.
 - 2025-11-01: Migrated to the unified documentation standard and refreshed metadata.
 - 2025-11-01: Expanded guidance on placement, machine-first writing, and best practices.
 

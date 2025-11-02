@@ -2,16 +2,15 @@
 title: Runner Integration Guide
 slug: guide-runner-integration
 status: living
-last_updated: 2025-11-01
+last_updated: 2025-11-02
 tags:
-- magsag
 - runners
 - integration
 summary: Expectations and interface requirements for integrating execution runners
   with MAGSAG.
 authors: []
 sources: []
-last_synced: '2025-11-01'
+last_synced: '2025-11-02'
 description: Expectations and interface requirements for integrating execution runners
   with MAGSAG.
 ---
@@ -196,5 +195,6 @@ These values are surfaced in `summary.json` metadata and recorded alongside cost
 
 ## Update Log
 
+- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter and audience guidance.
 - 2025-10-24: Documented runner requirements and capability taxonomy.
