@@ -19,20 +19,19 @@ description: Guide to exposing and consuming MCP servers within MAGSAG, includin
 
 > **For Humans**: Follow this playbook to wire MCP servers into agents and skills safely.
 >
-> **For AI Agents**: Honour permission declarations, feature flags, and migration timelines before executing MCP calls.
+> **For AI Agents**: Honour permission declarations and governance policies before executing MCP calls.
 
-> ✅ **Implementation Status**  
-> Phase 1 — MCP server exposure (Complete, GA)  
-> Phase 2 — Async skill runtime & templates (Complete in this repository)  
-> Phase 3 — External MCP client integrations (Complete; skills now require MCP runtime)
+> ✅ **Implementation Status: Complete**
+> - HTTP-first transport with SSE and STDIO fallbacks
+> - Tool-level governance policies (allow/deny/require-approval)
+> - Comprehensive observability with session tracking
+> - CLI tools for bootstrap, diagnostics, and authentication
 
-### Migration Guide Preview
+### Key Features
 
-Phase 2 delivered async signatures and optional MCP runtime wiring for all catalog skills. Phase 3 removed local fallbacks and fully enabled governed MCP client calls. Completed milestones:
-
-1. **Implemented MCP Calls**: Catalog skills now invoke MCP servers for salary data, offer templates, and web fetch operations.
-2. **Enforced Permissions**: `skill.yaml` files and runtime wiring require explicit `mcp:` permissions before establishing connections.
-3. **Strengthened Contracts**: Tests and documentation cover remote failure modes, approval policies, and error propagation.
+1. **MCP Client Integration**: Catalog skills invoke MCP servers for data access, document generation, and external tool operations.
+2. **Permission Enforcement**: `skill.yaml` and `agent.yaml` files require explicit `mcp:` permissions before establishing connections.
+3. **Governance Controls**: Tool-level policies enable fine-grained control over MCP operations with approval workflows.
 
 This guide covers the integration of Model Context Protocol (MCP) servers with MAGSAG agents, enabling access to external tools, data sources, and services through a standardized interface.
 
