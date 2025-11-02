@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from collections.abc import Mapping, Sequence
 from typing import Any, Callable, Dict, List, Optional, cast
@@ -34,6 +34,7 @@ class AgentDescriptor:
     evaluation: Dict[str, Any]
     raw: Dict[str, Any]  # Full YAML content
     persona_content: Optional[str] = None  # Content of PERSONA.md if exists
+    policies: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -193,6 +194,7 @@ class Registry:
                     evaluation=self._ensure_dict(data.get("evaluation", {})),
                     raw=dict(data),
                     persona_content=persona_content,
+                    policies=self._ensure_dict(data.get("policies", {})),
                 )
                 self._agent_cache[slug] = descriptor
 

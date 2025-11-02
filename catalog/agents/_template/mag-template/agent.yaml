@@ -13,6 +13,13 @@ depends_on:
     - "skill.task-decomposition"
     - "skill.result-aggregation"
 
+requires:
+  mcp:
+    - "notion"
+    - "supabase"
+    - "github"
+    - "obsidian"
+
 contracts:
   input_schema: "catalog/contracts/your_input.schema.json"
   output_schema: "catalog/contracts/your_output.schema.json"
@@ -41,3 +48,10 @@ evaluation:
   performance_targets:
     p95_latency_ms: 5000
     success_rate: 0.95
+
+policies:
+  tools:
+    github.create_issue: require-approval
+    supabase.sql_select: allow
+    supabase.sql_execute: deny
+    obsidian.delete_file: deny

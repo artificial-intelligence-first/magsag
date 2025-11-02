@@ -117,6 +117,17 @@ class ObservabilityLogger:
         with open(log_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
+    def log_mcp_call(self, record: Dict[str, Any]) -> None:
+        """Append an MCP call record to the run ledger for auditing."""
+        entry = {
+            "run_id": self.run_id,
+            "timestamp": time.time(),
+            **record,
+        }
+        path = self.run_dir / "mcp_calls.jsonl"
+        with open(path, "a", encoding="utf-8") as handle:
+            handle.write(json.dumps(entry, ensure_ascii=False) + "\n")
+
     def metric(self, key: str, value: Any) -> None:
         """Record a metric value."""
         if key not in self.metrics:

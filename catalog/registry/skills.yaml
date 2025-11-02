@@ -21,6 +21,30 @@ skills:
     location: "catalog/skills/result-aggregation"
     entrypoint: "catalog/skills/result-aggregation/impl/result_aggregation.py:run"
     permissions: []
+  - id: "skill.notion-page-lookup"
+    version: "0.1.0"
+    location: "catalog/skills/notion-page-lookup"
+    entrypoint: "catalog/skills/notion-page-lookup/impl/notion_page.py:run"
+    permissions:
+      - "mcp:notion"
+  - id: "skill.supabase-sql-readonly"
+    version: "0.1.0"
+    location: "catalog/skills/supabase-sql-readonly"
+    entrypoint: "catalog/skills/supabase-sql-readonly/impl/sql_readonly.py:run"
+    permissions:
+      - "mcp:supabase"
+  - id: "skill.github-issue-triage"
+    version: "0.1.0"
+    location: "catalog/skills/github-issue-triage"
+    entrypoint: "catalog/skills/github-issue-triage/impl/issue_triage.py:run"
+    permissions:
+      - "mcp:github"
+  - id: "skill.obsidian-note-append"
+    version: "0.1.0"
+    location: "catalog/skills/obsidian-note-append"
+    entrypoint: "catalog/skills/obsidian-note-append/impl/note_append.py:run"
+    permissions:
+      - "mcp:obsidian"
   - id: "skill.test-helper-transform"
     version: "0.1.0"
     location: "catalog/skills/test-helper"

@@ -31,6 +31,11 @@ from magsag.core.memory import (
 from magsag.evaluation.runtime import EvalRuntime
 from magsag.governance.permission_evaluator import PermissionEvaluator
 from magsag.mcp import MCPRegistry, MCPRuntime
+from magsag.observability.context import (
+    get_current_observer,
+    use_agent_policies,
+    use_observer,
+)
 from magsag.observability.logger import ObservabilityLogger
 from magsag.runners.durable import DurableRunner
 from magsag.registry import AgentDescriptor, Registry, get_registry
@@ -214,6 +219,7 @@ class SkillRuntime:
                 return None
 
             runtime = MCPRuntime(self.mcp_registry)
+            runtime.attach_observer(get_current_observer())
             runtime.grant_permissions(mcp_permissions)
             logger.debug(
                 f"Created MCP runtime for skill '{skill_id}' with permissions: {mcp_permissions}"
@@ -983,13 +989,15 @@ class AgentRunner:
 
             run_fn = self.registry.resolve_entrypoint(exec_ctx.agent.entrypoint)
             t0 = time.time()
-            output: Dict[str, Any] = await run_fn(
-                payload,
-                registry=self.registry,
-                skills=self.skills,
-                runner=self,  # Allow MAG to delegate to SAG
-                obs=exec_ctx.observer,
-            )
+            policies = exec_ctx.agent.policies
+            with use_agent_policies(policies), use_observer(exec_ctx.observer):
+                output: Dict[str, Any] = await run_fn(
+                    payload,
+                    registry=self.registry,
+                    skills=self.skills,
+                    runner=self,  # Allow MAG to delegate to SAG
+                    obs=exec_ctx.observer,
+                )
             duration_ms = int((time.time() - t0) * MS_PER_SECOND)
 
             if self.memory_enabled:
@@ -1265,7 +1273,9 @@ class AgentRunner:
             )
 
         async def _run() -> Dict[str, Any]:
-            return await run_fn(payload, skills=self.skills, obs=observer)  # type: ignore[no-any-return]
+            policies = agent.policies
+            with use_agent_policies(policies), use_observer(observer):
+                return await run_fn(payload, skills=self.skills, obs=observer)  # type: ignore[no-any-return]
 
         return self._run_async_safely(_run())  # type: ignore[no-any-return]
 
@@ -1419,9 +1429,11 @@ class AgentRunner:
 
             run_fn = self.registry.resolve_entrypoint(exec_ctx.agent.entrypoint)
             t0 = time.time()
-            output: Dict[str, Any] = await run_fn(
-                delegation.input, skills=self.skills, obs=exec_ctx.observer
-            )
+            policies = exec_ctx.agent.policies
+            with use_agent_policies(policies), use_observer(exec_ctx.observer):
+                output: Dict[str, Any] = await run_fn(
+                    delegation.input, skills=self.skills, obs=exec_ctx.observer
+                )
             duration_ms = int((time.time() - t0) * MS_PER_SECOND)
 
             if self.memory_enabled:

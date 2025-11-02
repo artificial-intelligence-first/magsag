@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+import anyio
 import json
 import pathlib
 from typing import TYPE_CHECKING, Any, Optional
 
 import typer
 
+from magsag.mcp import MCPPresetError, bootstrap_presets, list_local_servers, load_server_config
+from magsag.mcp.doctor import diagnose_many
+from magsag.mcp.inspector import inspection_as_lines
+from magsag.mcp.login import build_login_plan, launch_login_flow
 from magsag.worktree import (
     WorktreeError,
     WorktreeManager,
@@ -24,6 +29,198 @@ wt_app = typer.Typer(help="Git worktree orchestration commands")
 def _handle_worktree_error(exc: WorktreeError) -> None:
     typer.echo(f"Error: {exc}", err=True)
     raise typer.Exit(1)
+
+
+def _resolve_server_paths(provider: str | None) -> list[pathlib.Path]:
+    paths = list_local_servers()
+    if provider is None:
+        return paths
+
+    normalized = provider.strip().lower()
+    for path in paths:
+        if path.stem == normalized:
+            return [path]
+
+    typer.echo(f"Error: MCP provider '{provider}' not found in .mcp/servers", err=True)
+    raise typer.Exit(1)
+
+
+DOCTOR_HINTS = {
+    "reachable": "Connection established successfully.",
+    "needs-auth": "Authenticate with the provider and retry.",
+    "auth-failed": "Credential rejected; refresh token or adjust scopes.",
+    "unreachable": "Transport failed; check network, endpoint, or fallback options.",
+}
+
+
+def _format_transport(probe_transport: Any) -> str:
+    parts: list[str] = [probe_transport.type]
+    if getattr(probe_transport, "url", None):
+        parts.append(f"url={probe_transport.url}")
+    if getattr(probe_transport, "command", None):
+        parts.append(f"command={probe_transport.command}")
+    return " ".join(parts)
+
+
+def _render_doctor_report(report: Any) -> None:
+    hint = DOCTOR_HINTS.get(report.status, "")
+    header = f"{report.server_id}: {report.status}"
+    if hint:
+        header = f"{header} – {hint}"
+    typer.echo(header)
+
+    if not report.probes:
+        typer.echo("  No transport definitions to probe.")
+        return
+
+    for probe in report.probes:
+        typer.echo(f"  - transport: {_format_transport(probe.transport)}")
+        if probe.status != report.status:
+            sub_hint = DOCTOR_HINTS.get(probe.status, "")
+            line = f"    status: {probe.status}"
+            if sub_hint:
+                line = f"{line} – {sub_hint}"
+            typer.echo(line)
+        if probe.message:
+            typer.echo(f"    detail: {probe.message}")
+        if probe.tool_names:
+            typer.echo(f"    tools: {', '.join(probe.tool_names)}")
+        if probe.session_id:
+            typer.echo(f"    session_id: {probe.session_id}")
+        if probe.protocol_version:
+            typer.echo(f"    protocol_version: {probe.protocol_version}")
+        if probe.http_status:
+            typer.echo(f"    http_status: {probe.http_status}")
+
+
+@mcp_app.command("bootstrap")
+def mcp_bootstrap(
+    provider: str = typer.Option("all", "--provider", "-p", help="Preset provider to bootstrap"),
+    force: bool = typer.Option(False, "--force", help="Overwrite existing files when present"),
+) -> None:
+    """Copy bundled MCP server presets into the local workspace."""
+
+    try:
+        results = bootstrap_presets(provider=provider, force=force)
+    except MCPPresetError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+
+    if not results:
+        typer.echo("No presets were applied.")
+        return
+
+    for name, action in sorted(results.items()):
+        typer.echo(f"{name}: {action}")
+
+
+@mcp_app.command("ls")
+def mcp_list() -> None:
+    """List locally available MCP server configurations."""
+
+    paths = list_local_servers()
+    if not paths:
+        typer.echo("No MCP server configs found. Run 'magsag mcp bootstrap' first.")
+        return
+
+    header = f"{'PROVIDER':<14} {'TRANSPORTS':<24} PATH"
+    typer.echo(header)
+
+    for path in paths:
+        try:
+            config = load_server_config(path)
+            transports = ",".join(t.type for t in config.transport_chain()) or "-"
+        except Exception as exc:  # noqa: BLE001
+            typer.echo(f"{path.stem:<14} <error> {path} ({exc})")
+            continue
+
+        typer.echo(f"{config.server_id:<14} {transports:<24} {path}")
+
+
+@mcp_app.command("doctor")
+def mcp_doctor(
+    provider: str | None = typer.Option(None, "--provider", "-p", help="Restrict diagnostics to a provider"),
+) -> None:
+    """Diagnose connectivity for MCP providers with HTTP→SSE→STDIO fallback."""
+
+    paths = _resolve_server_paths(provider)
+    if not paths:
+        typer.echo("No MCP server configs found.")
+        return
+
+    configs: list[Any] = []
+    skipped: list[str] = []
+
+    for path in paths:
+        try:
+            config = load_server_config(path)
+        except Exception as exc:  # noqa: BLE001
+            typer.echo(f"Error loading {path}: {exc}", err=True)
+            continue
+
+        if config.type and config.type != "mcp":
+            skipped.append(config.server_id)
+            continue
+
+        configs.append(config)
+
+    if skipped:
+        typer.echo(f"Skipping non-MCP providers: {', '.join(skipped)}")
+
+    if not configs:
+        typer.echo("No MCP providers available for diagnostics.")
+        return
+
+    async def _run(configurations: list[Any]) -> list[Any]:
+        return await diagnose_many(configurations)
+
+    try:
+        reports = anyio.run(lambda: _run(configs))
+    except Exception as exc:  # noqa: BLE001
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+
+    for report in reports:
+        _render_doctor_report(report)
+
+
+@mcp_app.command("login")
+def mcp_login(
+    provider: str = typer.Argument(..., help="Provider to authenticate (notion/supabase/github/obsidian)"),
+    no_browser: bool = typer.Option(False, "--no-browser", help="Do not launch a browser automatically"),
+) -> None:
+    """Guide authentication for an MCP provider."""
+
+    try:
+        plan = build_login_plan(provider)
+    except ValueError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+
+    launch_login_flow(plan, open_browser=not no_browser)
+
+    typer.echo(plan.summary)
+    for idx, step in enumerate(plan.steps, start=1):
+        typer.echo(f"  {idx}. {step}")
+    if plan.browser_url:
+        typer.echo(f"  Browser URL: {plan.browser_url}")
+
+
+@mcp_app.command("inspect")
+def mcp_inspect(
+    provider: str = typer.Argument(..., help="Provider to inspect"),
+) -> None:
+    """Inspect the resolved MCP configuration for a provider."""
+
+    path = _resolve_server_paths(provider)[0]
+    try:
+        config = load_server_config(path)
+    except Exception as exc:  # noqa: BLE001
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+
+    for line in inspection_as_lines(config):
+        typer.echo(line)
 
 
 @wt_app.command("new")

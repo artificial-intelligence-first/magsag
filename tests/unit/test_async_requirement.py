@@ -138,6 +138,7 @@ class TestAsyncRequirement:
         # Mock registry to return our sync skill
         skill_desc = Mock()
         skill_desc.id = "test-sync-mcp-skill"
+        skill_desc.permissions = []
         mock_registry.load_skill.return_value = skill_desc
         mock_registry.resolve_entrypoint.return_value = sync_skill_with_mcp
 

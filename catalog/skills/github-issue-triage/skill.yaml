@@ -1,0 +1,19 @@
+version: 0.1.0
+id: skill.github-issue-triage
+name: GitHubIssueTriage
+description: Fetch open GitHub issues for triage workflows using the GitHub MCP server.
+
+entrypoint: catalog/skills/github-issue-triage/impl/issue_triage.py:run
+
+permissions:
+  - mcp:github
+
+resource_config:
+  estimated_duration: short
+  timeout_ms: 20000
+  cost_category: low
+
+observability:
+  logs: true
+  metrics: true
+  traces: basic

@@ -1,0 +1,17 @@
+id: notion
+version: "1"
+description: "Notion MCP (HTTP first; SSE/STDIO fallback)"
+transport:
+  type: http
+  url: "https://mcp.notion.com/mcp"
+fallback:
+  - type: sse
+    url: "https://mcp.notion.com/sse"
+  - type: stdio
+    command: "npx"
+    args: ["-y", "mcp-remote", "https://mcp.notion.com/mcp"]
+permissions:
+  scope:
+    - "read:pages"
+    - "read:databases"
+notes: "Streamable HTTP is primary. SSE/STDIO are compatibility and rescue fallbacks."

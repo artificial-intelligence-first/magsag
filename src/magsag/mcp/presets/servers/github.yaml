@@ -1,0 +1,11 @@
+id: github
+version: "1"
+description: "GitHub MCP (remote HTTP; OAuth preferred, PAT fallback)"
+transport:
+  type: http
+  url: "https://api.githubcopilot.com/mcp/"
+  headers:
+    Authorization: "${MAGSAG_MCP_GITHUB_PAT:+Bearer ${MAGSAG_MCP_GITHUB_PAT}}"
+permissions:
+  write_requires_approval: true
+notes: "Some tools require a GitHub Copilot license. Use the least-privileged PAT when OAuth is unavailable."
