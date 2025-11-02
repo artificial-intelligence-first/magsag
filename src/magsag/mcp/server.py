@@ -494,7 +494,11 @@ class MCPServer:
             if call_result.structuredContent is not None:
                 output = call_result.structuredContent
             else:
-                output = [item.model_dump(by_alias=True) for item in call_result.content]
+                content = getattr(call_result, "content", None)
+                if content is None:
+                    output = [] if not call_result.isError else None
+                else:
+                    output = [item.model_dump(by_alias=True) for item in content]
 
             if connection.session_id_cb is not None:
                 with contextlib.suppress(Exception):

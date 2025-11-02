@@ -38,6 +38,17 @@ class _StubConnection:
         self.retries = 0
 
 
+class _StubErrorSessionNoContent:
+    async def call_tool(self, tool_name: str, arguments: dict[str, object]) -> SimpleNamespace:
+        return SimpleNamespace(
+            isError=True,
+            structuredContent=None,
+            content=None,
+            meta={"message": "failure"},
+            error=None,
+        )
+
+
 @pytest.mark.asyncio
 async def test_execute_tool_without_meta_message_uses_fallback_error() -> None:
     config = MCPServerConfig(
@@ -62,6 +73,47 @@ async def test_execute_tool_without_meta_message_uses_fallback_error() -> None:
 
     assert not result.success
     assert result.error == "MCP tool returned an error"
+
+
+@pytest.mark.asyncio
+async def test_execute_tool_error_without_content_is_handled() -> None:
+    config = MCPServerConfig(
+        server_id="stub",
+        type="mcp",
+        command="npx",
+        args=["-y", "stub"],
+    )
+    server = MCPServer(config)
+    server._started = True  # noqa: SLF001
+    server._connection = cast(
+        ActiveConnection | None,
+        cast(
+            Any,
+            SimpleNamespace(
+                transport=SimpleNamespace(type="http"),
+                stack=None,
+                session=_StubErrorSessionNoContent(),
+                session_id_cb=None,
+                session_id=None,
+                protocol_version="1.0",
+                retries=0,
+            ),
+        ),
+    )
+    server._tools = {  # noqa: SLF001
+        "echo": MCPTool(
+            name="echo",
+            description="",
+            input_schema=MCPToolSchema(),
+            server_id="stub",
+        )
+    }
+
+    result = await server.execute_tool("echo", {})
+
+    assert not result.success
+    assert result.error == "failure"
+    assert result.output is None
 
 
 @pytest.mark.asyncio
