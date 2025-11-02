@@ -1,8 +1,12 @@
 server_id: pg-readonly
+version: "1"
 type: postgres
-scopes: ["read:tables"]
+description: Read-only PostgreSQL database access
+permissions:
+  scope:
+    - read:tables
 conn:
-  url_env: "PG_RO_URL"    # Store the value in a secret manager or equivalent
+  url_env: "PG_RO_URL"
 limits:
   rate_per_min: 120
   timeout_s: 20
