@@ -42,6 +42,11 @@ class StubRegistry:
         return []
 
 
+class FailingObserver(ObservabilityLogger):
+    def log_mcp_call(self, record: dict[str, Any]) -> None:  # type: ignore[override]
+        raise ValueError("boom")
+
+
 @pytest.mark.asyncio
 async def test_policy_deny_blocks_execution() -> None:
     registry = StubRegistry()
@@ -97,3 +102,17 @@ async def test_observer_logging_called(tmp_path: Path) -> None:
     assert observer.run_dir.exists()
     ledger_path = observer.run_dir / "mcp_calls.jsonl"
     assert ledger_path.exists()
+
+
+@pytest.mark.asyncio
+async def test_observer_failure_does_not_break_execution(tmp_path: Path) -> None:
+    observer = FailingObserver(run_id="fail", base_dir=tmp_path)
+    mcp_result = MCPToolResult(success=True, output={"ok": True}, metadata={"transport": "stdio"})
+    registry = StubRegistry(result=mcp_result)
+    runtime = MCPRuntime(registry=registry, observer=observer)
+    runtime.grant_permissions(["mcp:github"])
+
+    result = await runtime.execute_tool("github", "list_issues", {})
+
+    assert result is mcp_result
+    assert len(registry.calls) == 1

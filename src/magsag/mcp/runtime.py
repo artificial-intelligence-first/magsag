@@ -138,7 +138,10 @@ class MCPRuntime:
         if meta_payload is not None:
             record["meta"] = meta_payload
 
-        self._observer.log_mcp_call(record)
+        try:
+            self._observer.log_mcp_call(record)
+        except Exception:  # noqa: BLE001 - observability must be best-effort
+            logger.warning("Failed to log MCP call for %s.%s", server_id, tool_name, exc_info=True)
 
     def list_available_tools(self) -> list[MCPTool]:
         """List all tools available with current permissions.
