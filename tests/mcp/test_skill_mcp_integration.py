@@ -6,6 +6,7 @@ including async skill execution, permission management, and backward compatibili
 
 import importlib.util
 import inspect
+import json
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
@@ -13,7 +14,6 @@ from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-import yaml
 
 from magsag.mcp import MCPRegistry, MCPRuntime
 from magsag.mcp.tool import MCPToolResult
@@ -31,18 +31,24 @@ class TestSkillWithMCPParameter:
             servers_dir = Path(tmpdir)
 
             # Create a test MCP server config
-            config_file = servers_dir / "test-server.yaml"
-            with open(config_file, "w") as f:
-                yaml.dump(
+            config_file = servers_dir / "test-server.json"
+            config_file.write_text(
+                json.dumps(
                     {
                         "server_id": "test-server",
                         "type": "mcp",
-                        "command": "npx",
-                        "args": ["-y", "@test/server"],
-                        "scopes": ["read:data"],
+                        "transport": {
+                            "type": "stdio",
+                            "command": "npx",
+                            "args": ["-y", "@test/server"],
+                        },
+                        "permissions": {"scope": ["mcp:test-server"]},
                     },
-                    f,
+                    indent=2,
                 )
+                + "\n",
+                encoding="utf-8",
+            )
 
             registry = MCPRegistry(servers_dir=servers_dir)
             registry.discover_servers()
@@ -488,17 +494,24 @@ class TestMCPRuntimePermissionIsolation:
 
             # Create multiple server configs
             for server_id in ["server1", "server2", "server3"]:
-                config_file = servers_dir / f"{server_id}.yaml"
-                with open(config_file, "w") as f:
-                    yaml.dump(
+                config_file = servers_dir / f"{server_id}.json"
+                config_file.write_text(
+                    json.dumps(
                         {
                             "server_id": server_id,
                             "type": "mcp",
-                            "command": "npx",
-                            "args": ["-y", f"@test/{server_id}"],
+                            "transport": {
+                                "type": "stdio",
+                                "command": "npx",
+                                "args": ["-y", f"@test/{server_id}"],
+                            },
+                            "permissions": {"scope": [f"mcp:{server_id}"]},
                         },
-                        f,
+                        indent=2,
                     )
+                    + "\n",
+                    encoding="utf-8",
+                )
 
             registry = MCPRegistry(servers_dir=servers_dir)
             registry.discover_servers()
@@ -734,17 +747,24 @@ class TestSkillMCPIntegrationEdgeCases:
         # Add a valid server
         with tempfile.TemporaryDirectory() as tmpdir:
             servers_dir = Path(tmpdir)
-            config_file = servers_dir / "valid.yaml"
-            with open(config_file, "w") as f:
-                yaml.dump(
+            config_file = servers_dir / "valid.json"
+            config_file.write_text(
+                json.dumps(
                     {
                         "server_id": "valid-server",
                         "type": "mcp",
-                        "command": "test",
-                        "args": [],
+                        "transport": {
+                            "type": "stdio",
+                            "command": "test",
+                            "args": [],
+                        },
+                        "permissions": {"scope": ["mcp:valid-server"]},
                     },
-                    f,
+                    indent=2,
                 )
+                + "\n",
+                encoding="utf-8",
+            )
 
             registry = MCPRegistry(servers_dir=servers_dir)
             registry.discover_servers()

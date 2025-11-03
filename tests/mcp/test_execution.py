@@ -9,10 +9,10 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import yaml
+import json
 
 from magsag.mcp import MCPRegistry, MCPRuntime, MCPToolResult
-from magsag.mcp.config import MCPServerConfig
+from magsag.mcp.config import MCPServerConfig, TransportDefinition
 from magsag.mcp.server import MCPServer
 
 
@@ -62,14 +62,15 @@ async def test_mcp_stdio_server_tool_execution(
         "            message = json.loads(line)",
         '            method = message.get("method")',
         '            if method == "initialize":',
-        "                send({",
-        '                    "jsonrpc": "2.0",',
-        '                    "id": message["id"],',
-        '                    "result": {',
-        '                        "capabilities": {},',
-        '                        "serverInfo": {"name": "fake-mcp", "version": "0.1"},',
-        "                    },",
-        "                })",
+            "                send({",
+            '                    "jsonrpc": "2.0",',
+            '                    "id": message["id"],',
+            '                    "result": {',
+            '                        "protocolVersion": "2025-06-18",',
+            '                        "capabilities": {},',
+            '                        "serverInfo": {"name": "fake-mcp", "version": "0.1"},',
+            "                    },",
+            "                })",
         '            elif method == "notifications/initialized":',
         "                continue",
         '            elif method == "tools/list":',
@@ -82,18 +83,25 @@ async def test_mcp_stdio_server_tool_execution(
         '                params = message.get("params", {})',
         '                name = params.get("name")',
         '                args = params.get("arguments", {})',
-        '                if name == "echo":',
-        "                    send({",
-        '                        "jsonrpc": "2.0",',
-        '                        "id": message["id"],',
-        '                        "result": {"success": True, "output": {"echo": args}},',
-        "                    })",
-        "                else:",
-        "                    send({",
-        '                        "jsonrpc": "2.0",',
-        '                        "id": message["id"],',
-        '                        "result": {"success": False, "error": f"unknown tool {name}"},',
-        "                    })",
+            '                if name == "echo":',
+            "                    send({",
+            '                        "jsonrpc": "2.0",',
+            '                        "id": message["id"],',
+            '                        "result": {',
+            '                            "content": [{"type": "text", "text": args.get("value", "")}],',
+            '                            "structuredContent": {"echo": args},',
+            '                            "isError": False,',
+            "                        },",
+            "                    })",
+            "                else:",
+            "                    send({",
+            '                        "jsonrpc": "2.0",',
+            '                        "id": message["id"],',
+            '                        "result": {',
+            '                            "content": [{"type": "text", "text": f"unknown tool {name}"}],',
+            '                            "isError": True,',
+            "                        },",
+            "                    })",
         "            else:",
         '                if message.get("id") is not None:',
         "                    send({",
@@ -116,9 +124,11 @@ async def test_mcp_stdio_server_tool_execution(
     config = MCPServerConfig(
         server_id="test-stdio",
         type="mcp",
-        scopes=[],
-        command=sys.executable,
-        args=["-u", str(script_path)],
+        transport=TransportDefinition(
+            type="stdio",
+            command=sys.executable,
+            args=["-u", str(script_path)],
+        ),
     )
 
     server = MCPServer(config)
@@ -157,19 +167,22 @@ class TestMCPToolExecution:
     @pytest.fixture
     def postgres_registry(self, temp_servers_dir: Path) -> MCPRegistry:
         """Create a registry with PostgreSQL server config."""
-        pg_file = temp_servers_dir / "pg.yaml"
-        with open(pg_file, "w") as f:
-            yaml.dump(
+        pg_file = temp_servers_dir / "pg.json"
+        pg_file.write_text(
+            json.dumps(
                 {
                     "server_id": "test-pg",
                     "type": "postgres",
-                    "scopes": ["read:tables"],
+                    "permissions": {"scope": ["mcp:test-pg"]},
                     "conn": {
                         "url_env": "TEST_PG_URL",
                     },
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()

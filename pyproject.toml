@@ -122,7 +122,7 @@ disallow_incomplete_defs = false
 strict = false
 
 [tool.pytest.ini_options]
-addopts = "-q -n auto -k 'not slow'"
+addopts = "-q -n auto"
 pythonpath = [
     ".",
     "src",

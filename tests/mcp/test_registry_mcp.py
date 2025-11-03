@@ -1,13 +1,13 @@
 """Tests for MCP Registry auto-discovery functionality."""
 
+import json
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
 
 import pytest
-import yaml
 
-from magsag.mcp import MCPRegistry, MCPRegistryError
+from magsag.mcp import MCPRegistry, MCPRegistryError, list_local_servers
 
 pytestmark = pytest.mark.slow
 
@@ -27,10 +27,12 @@ class TestMCPRegistryDiscovery:
         return {
             "server_id": "test-mcp",
             "type": "mcp",
-            "command": "npx",
-            "args": ["-y", "@test/server@1.0.0"],
             "description": "Test MCP server",
-            "scopes": ["read:test"],
+            "transport": {
+                "type": "http",
+                "url": "https://example.test/mcp",
+            },
+            "permissions": {"scope": ["mcp:test-mcp"]},
             "limits": {
                 "rate_per_min": 60,
                 "timeout_s": 30,
@@ -43,10 +45,10 @@ class TestMCPRegistryDiscovery:
         return {
             "server_id": "test-pg",
             "type": "postgres",
-            "scopes": ["read:tables"],
             "conn": {
                 "url_env": "TEST_PG_URL",
             },
+            "permissions": {"scope": ["mcp:test-pg"]},
             "limits": {
                 "rate_per_min": 120,
                 "timeout_s": 20,
@@ -66,9 +68,8 @@ class TestMCPRegistryDiscovery:
         sample_mcp_config: dict[str, object],
     ) -> None:
         """Test discovery of a single MCP server."""
-        config_file = temp_servers_dir / "test.yaml"
-        with open(config_file, "w") as f:
-            yaml.dump(sample_mcp_config, f)
+        config_file = temp_servers_dir / "test.json"
+        config_file.write_text(json.dumps(sample_mcp_config, indent=2) + "\n", encoding="utf-8")
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()
@@ -85,13 +86,11 @@ class TestMCPRegistryDiscovery:
     ) -> None:
         """Test discovery of multiple servers."""
         # Create two config files
-        mcp_file = temp_servers_dir / "mcp.yaml"
-        with open(mcp_file, "w") as f:
-            yaml.dump(sample_mcp_config, f)
+        mcp_file = temp_servers_dir / "mcp.json"
+        mcp_file.write_text(json.dumps(sample_mcp_config, indent=2) + "\n", encoding="utf-8")
 
-        pg_file = temp_servers_dir / "postgres.yaml"
-        with open(pg_file, "w") as f:
-            yaml.dump(sample_postgres_config, f)
+        pg_file = temp_servers_dir / "postgres.json"
+        pg_file.write_text(json.dumps(sample_postgres_config, indent=2) + "\n", encoding="utf-8")
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()
@@ -101,21 +100,20 @@ class TestMCPRegistryDiscovery:
         assert "test-mcp" in servers
         assert "test-pg" in servers
 
-    def test_discover_supports_yml_extension(
+    def test_discover_ignores_non_json_configs(
         self,
         temp_servers_dir: Path,
         sample_mcp_config: dict[str, object],
     ) -> None:
-        """Ensure discovery loads .yml configs."""
-        config_file = temp_servers_dir / "with_yml.yml"
-        with open(config_file, "w") as f:
-            yaml.dump(sample_mcp_config, f)
+        """Ensure discovery ignores legacy YAML configs."""
+        legacy_file = temp_servers_dir / "legacy.yaml"
+        legacy_file.write_text(json.dumps(sample_mcp_config, indent=2) + "\n", encoding="utf-8")
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()
 
         servers = registry.list_servers()
-        assert servers == ["test-mcp"]
+        assert servers == []
 
     def test_discover_ignores_invalid_configs(
         self,
@@ -123,27 +121,31 @@ class TestMCPRegistryDiscovery:
     ) -> None:
         """Test that discovery continues despite invalid configs."""
         # Valid config
-        valid_file = temp_servers_dir / "valid.yaml"
-        with open(valid_file, "w") as f:
-            yaml.dump(
+        valid_file = temp_servers_dir / "valid.json"
+        valid_file.write_text(
+            json.dumps(
                 {
                     "server_id": "valid",
                     "type": "mcp",
-                    "command": "test",
-                    "args": [],
+                    "transport": {
+                        "type": "http",
+                        "url": "https://example.test/api",
+                    },
+                    "permissions": {"scope": ["mcp:valid"]},
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         # Invalid config (missing required fields)
-        invalid_file = temp_servers_dir / "invalid.yaml"
-        with open(invalid_file, "w") as f:
-            yaml.dump({"invalid": "config"}, f)
+        invalid_file = temp_servers_dir / "invalid.json"
+        invalid_file.write_text(json.dumps({"invalid": "config"}, indent=2) + "\n", encoding="utf-8")
 
         # Empty config
-        empty_file = temp_servers_dir / "empty.yaml"
-        with open(empty_file, "w") as f:
-            f.write("")
+        empty_file = temp_servers_dir / "empty.json"
+        empty_file.write_text("", encoding="utf-8")
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()
@@ -166,9 +168,8 @@ class TestMCPRegistryDiscovery:
         sample_mcp_config: dict[str, object],
     ) -> None:
         """Test permission validation against discovered servers."""
-        config_file = temp_servers_dir / "test.yaml"
-        with open(config_file, "w") as f:
-            yaml.dump(sample_mcp_config, f)
+        config_file = temp_servers_dir / "test.json"
+        config_file.write_text(json.dumps(sample_mcp_config, indent=2) + "\n", encoding="utf-8")
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()
@@ -206,17 +207,23 @@ class TestMCPRegistryLifecycle:
     def registry_with_servers(self, temp_servers_dir: Path) -> MCPRegistry:
         """Create a registry with sample server configs."""
         # MCP server config
-        mcp_file = temp_servers_dir / "mcp.yaml"
-        with open(mcp_file, "w") as f:
-            yaml.dump(
+        mcp_file = temp_servers_dir / "mcp.json"
+        mcp_file.write_text(
+            json.dumps(
                 {
                     "server_id": "test-mcp",
                     "type": "mcp",
-                    "command": "npx",
-                    "args": ["-y", "@test/server"],
+                    "transport": {
+                        "type": "http",
+                        "url": "https://example.test/mcp",
+                    },
+                    "permissions": {"scope": ["mcp:test-mcp"]},
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()
@@ -273,3 +280,20 @@ class TestMCPRegistryLifecycle:
         """Test getting tools from a stopped server."""
         tools = registry_with_servers.get_tools("test-mcp")
         assert tools == []  # Server not started yet
+
+
+@pytest.mark.slow
+def test_repository_servers_validate_json_layout() -> None:
+    """Ensure repository JSON artefacts remain deterministic and traceable."""
+    registry = MCPRegistry()
+    registry.discover_servers()
+
+    servers = registry.list_servers()
+    assert servers, "Expected generated JSON artefacts under .mcp/servers/"
+
+    for config_path in list_local_servers():
+        assert config_path.suffix == ".json"
+        payload = json.loads(config_path.read_text(encoding="utf-8"))
+        metadata = payload.get("metadata") or {}
+        assert metadata.get("source"), f"missing metadata.source in {config_path}"
+        assert metadata.get("source_digest"), f"missing metadata.source_digest in {config_path}"

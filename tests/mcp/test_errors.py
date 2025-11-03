@@ -1,12 +1,12 @@
 """Tests for MCP error handling and edge cases."""
 
+import json
 import tempfile
 from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-import yaml
 
 from magsag.mcp import (
     MCPRegistry,
@@ -16,7 +16,7 @@ from magsag.mcp import (
     MCPServerConfig,
     MCPServerError,
 )
-from magsag.mcp.config import PostgresConnection
+from magsag.mcp.config import PostgresConnection, TransportDefinition
 
 
 pytestmark = pytest.mark.slow
@@ -32,15 +32,15 @@ except ImportError:
 class TestMCPConfigValidation:
     """Test cases for configuration validation."""
 
-    def test_mcp_server_without_command(self) -> None:
-        """Test that MCP servers must specify command."""
+    def test_mcp_server_without_transport(self) -> None:
+        """Test that MCP servers must specify at least one transport."""
         config = MCPServerConfig(
             server_id="test",
             type="mcp",
-            # Missing command field
+            # Missing transport field
         )
 
-        with pytest.raises(ValueError, match="must specify 'command'"):
+        with pytest.raises(ValueError, match="must specify at least one transport definition"):
             config.validate_type_fields()
 
     def test_postgres_server_without_conn(self) -> None:
@@ -59,8 +59,7 @@ class TestMCPConfigValidation:
         config = MCPServerConfig(
             server_id="test",
             type="mcp",
-            command="npx",
-            args=["-y", "@test/server"],
+            transport=TransportDefinition(type="stdio", command="npx", args=["-y", "@test/server"]),
         )
 
         # Should not raise
@@ -82,7 +81,7 @@ class TestMCPConfigValidation:
         config = MCPServerConfig(
             server_id="my-server",
             type="mcp",
-            command="test",
+            transport=TransportDefinition(type="stdio", command="test"),
         )
 
         assert config.get_permission_name() == "mcp:my-server"
@@ -97,14 +96,13 @@ class TestMCPServerErrors:
         config = MCPServerConfig(
             server_id="test",
             type="mcp",
-            command="npx",
-            args=["-y", "@test/server"],
+            transport=TransportDefinition(type="stdio", command="npx", args=["-y", "@test/server"]),
         )
 
         server = MCPServer(config)
 
         async_mock = AsyncMock(return_value=None)
-        with patch.object(server, "_start_mcp_server", async_mock):
+        with patch.object(server, "_start_mcp_connection", async_mock):
             await server.start()
             assert server.is_started
 
@@ -119,8 +117,7 @@ class TestMCPServerErrors:
         config = MCPServerConfig(
             server_id="test",
             type="mcp",
-            command="npx",
-            args=["-y", "@test/server"],
+            transport=TransportDefinition(type="stdio", command="npx", args=["-y", "@test/server"]),
         )
 
         server = MCPServer(config)
@@ -139,8 +136,7 @@ class TestMCPServerErrors:
         config = MCPServerConfig(
             server_id="test",
             type="mcp",
-            command="npx",
-            args=["-y", "@test/server"],
+            transport=TransportDefinition(type="stdio", command="npx", args=["-y", "@test/server"]),
         )
 
         server = MCPServer(config)
@@ -184,13 +180,12 @@ class TestMCPServerErrors:
         config = MCPServerConfig(
             server_id="test",
             type="mcp",
-            command="npx",
-            args=["-y", "@test/server"],
+            transport=TransportDefinition(type="stdio", command="npx", args=["-y", "@test/server"]),
         )
 
         server = MCPServer(config)
 
-        with patch.object(server, "_start_mcp_server", AsyncMock(return_value=None)):
+        with patch.object(server, "_start_mcp_connection", AsyncMock(return_value=None)):
             await server.start()
 
         result = await server.execute_tool("nonexistent_tool", {})
@@ -223,11 +218,10 @@ class TestMCPRegistryErrors:
         with pytest.raises(MCPRegistryError, match="Not a directory"):
             registry.discover_servers()
 
-    def test_load_malformed_yaml(self, temp_servers_dir: Path) -> None:
-        """Test loading a malformed YAML file."""
-        malformed_file = temp_servers_dir / "malformed.yaml"
-        with open(malformed_file, "w") as f:
-            f.write("invalid: yaml: content: [[[")
+    def test_load_malformed_json(self, temp_servers_dir: Path) -> None:
+        """Test loading a malformed JSON file."""
+        malformed_file = temp_servers_dir / "malformed.json"
+        malformed_file.write_text("{invalid json", encoding="utf-8")
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
 
@@ -238,27 +232,39 @@ class TestMCPRegistryErrors:
     def test_duplicate_server_ids(self, temp_servers_dir: Path) -> None:
         """Test handling of duplicate server IDs."""
         # Create two files with same server_id
-        config1 = temp_servers_dir / "server1.yaml"
-        with open(config1, "w") as f:
-            yaml.dump(
+        config1 = temp_servers_dir / "server1.json"
+        config1.write_text(
+            json.dumps(
                 {
                     "server_id": "duplicate",
                     "type": "mcp",
-                    "command": "cmd1",
+                    "transport": {
+                        "type": "stdio",
+                        "command": "cmd1",
+                    },
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
-        config2 = temp_servers_dir / "server2.yaml"
-        with open(config2, "w") as f:
-            yaml.dump(
+        config2 = temp_servers_dir / "server2.json"
+        config2.write_text(
+            json.dumps(
                 {
                     "server_id": "duplicate",
                     "type": "mcp",
-                    "command": "cmd2",
+                    "transport": {
+                        "type": "stdio",
+                        "command": "cmd2",
+                    },
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()
@@ -274,35 +280,44 @@ class TestMCPRegistryErrors:
     ) -> None:
         """Test starting all servers when some fail."""
         # Valid MCP server
-        valid_file = temp_servers_dir / "valid.yaml"
-        with open(valid_file, "w") as f:
-            yaml.dump(
+        valid_file = temp_servers_dir / "valid.json"
+        valid_file.write_text(
+            json.dumps(
                 {
                     "server_id": "valid",
                     "type": "mcp",
-                    "command": "npx",
-                    "args": ["-y", "@test/server"],
+                    "transport": {
+                        "type": "stdio",
+                        "command": "npx",
+                        "args": ["-y", "@test/server"],
+                    },
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         # PostgreSQL server without env var (will fail)
-        invalid_file = temp_servers_dir / "invalid.yaml"
-        with open(invalid_file, "w") as f:
-            yaml.dump(
+        invalid_file = temp_servers_dir / "invalid.json"
+        invalid_file.write_text(
+            json.dumps(
                 {
                     "server_id": "invalid",
                     "type": "postgres",
                     "conn": {"url_env": "NONEXISTENT_VAR"},
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         registry = MCPRegistry(servers_dir=temp_servers_dir)
         registry.discover_servers()
 
         # Should not raise, but some servers may fail to start
-        with patch.object(MCPServer, "_start_mcp_server", AsyncMock(return_value=None)):
+        with patch.object(MCPServer, "_start_mcp_connection", AsyncMock(return_value=None)):
             await registry.start_all_servers()
 
         # Valid server should be started, invalid should not

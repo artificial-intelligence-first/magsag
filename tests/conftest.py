@@ -72,3 +72,28 @@ def disable_mcp_for_tests() -> Iterator[None]:
             os.environ.pop("MAGSAG_ENABLE_MCP", None)
         else:
             os.environ["MAGSAG_ENABLE_MCP"] = previous
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Register custom CLI options."""
+    parser.addoption(
+        "--run-slow",
+        action="store_true",
+        default=False,
+        help="Run tests marked as slow (defaults to skipping them).",
+    )
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Skip slow tests unless explicitly enabled."""
+    if config.getoption("--run-slow"):
+        return
+
+    mark_expr = getattr(config.option, "markexpr", "") or ""
+    if "slow" in mark_expr:
+        return
+
+    skip_slow = pytest.mark.skip(reason="slow tests require --run-slow or -m slow")
+    for item in items:
+        if "slow" in item.keywords:
+            item.add_marker(skip_slow)
