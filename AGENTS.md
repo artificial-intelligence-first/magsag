@@ -2,7 +2,7 @@
 title: MAGSAG Agent Playbook
 slug: agents
 status: living
-last_updated: 2025-11-03
+last_updated: 2025-11-04
 last_synced: '2025-11-03'
 tags:
 - agents
@@ -39,6 +39,20 @@ sources:
   - API server: `uv run python -m magsag.api.server`
   - Flow validation: `uv run magsag flow validate <flow>`
 - Configure secrets through environment variables prefixed with `MAGSAG_`. Never commit credentials.
+- When `MAGSAG_ENGINE_MODE` is unset or `auto`, Codex/Claude CLIs are used; set `MAGSAG_ENGINE_MODE=api` to require SDK mode.
+
+## Engine Runtime
+
+- `MAGSAG_ENGINE_MODE` accepts `auto|subscription|api|oss`; `auto` selects subscription mode unless both OpenAI and Anthropic keys are configured.
+- Use `MAGSAG_ENGINE_MAG` / `MAGSAG_ENGINE_SAG` to reassign roles to `codex-cli`, `claude-cli`, `openai-api`, or `anthropic-api` as needed.
+- Codex CLI runs with `--ask-for-approval on-failure` and `--sandbox workspace-write`. Claude CLI runs with `--allowedTools "Read,Bash,Edit"` and `--permission-mode acceptEdits`.
+- Session metadata persists to `.magsag/sessions/<engine>.json`. Provide notes with `--notes` (CLI) or `notes` in API requests.
+- Typical commands:
+  - `uv run magsag agent --repo . "Investigate flaky CI"`
+  - `uv run magsag agent --mode api --mag openai-api --sag anthropic-api --repo . "Draft release summary"`
+  - `uv run magsag agent --resume last --repo . "Continue prior Codex session"`
+- Legacy slug execution is available via `uv run magsag agent -- run <slug>`.
+- API parity via `POST /api/v1/agent/run`; aggregated health metrics available at `GET /api/v1/health/metrics`.
 
 ## Quality Gates
 
@@ -113,6 +127,7 @@ uv run python ops/tools/check_docs.py
 
 ## Update Log
 
+- 2025-11-04: Added MAG/SAG runtime guidance (subscription-first defaults, session storage, metrics endpoint).
 - 2025-11-03: Documented MCP YAML sources under `ops/adk/servers/` and JSON-only runtime artefacts.
 - 2025-11-02: Linked workflow guides, templates, and taxonomy reference.
 - 2025-11-01: Migrated to the unified documentation standard and refreshed metadata.

@@ -11,6 +11,31 @@ from typing import Iterator
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def reset_engine_caches() -> Iterator[None]:
+    """Clear engine configuration caches between tests."""
+    from magsag import settings
+
+    settings.get_engine_settings.cache_clear()
+    settings._resolve_engine_config_cached.cache_clear()
+    try:
+        yield
+    finally:
+        settings.get_engine_settings.cache_clear()
+        settings._resolve_engine_config_cached.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def reset_observability_metrics() -> Iterator[None]:
+    from magsag.observability.metrics import reset_metrics
+
+    reset_metrics()
+    try:
+        yield
+    finally:
+        reset_metrics()
+
+
 # Project-wide initialization: strip tests/ from sys.path and reset MCP modules
 def _strip_tests_from_sys_path() -> None:
     """Remove tests directory from sys.path to avoid import conflicts."""

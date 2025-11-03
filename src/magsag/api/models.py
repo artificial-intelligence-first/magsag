@@ -37,6 +37,93 @@ class AgentRunResponse(BaseModel):
     )
 
 
+class AgentExecuteRequest(BaseModel):
+    """Request payload for unified MAG/SAG execution."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    prompt: str = Field(..., description="Prompt or task for the engines.")
+    repo: str | None = Field(default=None, description="Repository root (defaults to server cwd).")
+    mode: str | None = Field(
+        default=None,
+        description="Engine mode override (subscription|api|oss).",
+    )
+    mag: str | None = Field(
+        default=None,
+        description="Engine assignment for MAG role.",
+    )
+    sag: str | None = Field(
+        default=None,
+        description="Engine assignment for SAG role.",
+    )
+    resume: str | None = Field(
+        default=None,
+        description="Resume token or 'last' forwarded to engines.",
+    )
+    session_id: str | None = Field(
+        default=None,
+        description="Session identifier hint for runners supporting continuation.",
+    )
+    notes: str | None = Field(
+        default=None,
+        description="Optional notes persisted with session metadata.",
+    )
+    metadata: dict[str, Any] | None = Field(
+        default=None,
+        description="Additional metadata forwarded to the run specification.",
+    )
+    extra: dict[str, Any] | None = Field(
+        default=None,
+        description="Implementation-specific extras forwarded to engines.",
+    )
+
+
+class EngineExecutionModel(BaseModel):
+    """Normalized engine execution payload returned by /agent/run."""
+
+    role: str = Field(..., description="Role executed (mag or sag).")
+    engine: str = Field(..., description="Engine identifier.")
+    ok: bool = Field(..., description="Whether execution succeeded.")
+    returncode: int = Field(..., description="Underlying return code.")
+    duration_ms: float = Field(..., description="Execution duration in milliseconds.")
+    session_id: str | None = Field(
+        default=None, description="Session identifier returned by the engine."
+    )
+    resume_token: str | None = Field(
+        default=None, description="Opaque token for resuming the session."
+    )
+    cost_usd: float | None = Field(default=None, description="Reported cost in USD.")
+    approvals_used: int = Field(default=0, description="Approvals consumed during execution.")
+    token_usage: dict[str, Any] = Field(
+        default_factory=dict, description="Token usage metrics reported by the engine."
+    )
+    stdout: str = Field(default="", description="Standard output captured from execution.")
+    stderr: str = Field(default="", description="Standard error captured from execution.")
+    error: str | None = Field(default=None, description="Error message when execution failed.")
+    events: list[dict[str, Any]] = Field(
+        default_factory=list, description="Raw event stream emitted by the engine."
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata returned by the engine."
+    )
+
+
+class AgentExecuteResponse(BaseModel):
+    """Response from unified MAG/SAG execution."""
+
+    run_id: str = Field(..., description="Generated run identifier.")
+    mode: str = Field(..., description="Resolved engine mode.")
+    engines: dict[str, str] = Field(..., description="Resolved engine assignments.")
+    started_at: float = Field(..., description="Wall clock timestamp when execution started.")
+    ended_at: float = Field(..., description="Wall clock timestamp when execution finished.")
+    duration_ms: float = Field(..., description="Total execution duration in milliseconds.")
+    prompt: str = Field(..., description="Prompt provided to the run.")
+    results: list[EngineExecutionModel] = Field(
+        default_factory=list, description="Engine execution outputs."
+    )
+    errors: list[str] = Field(default_factory=list, description="Execution-level errors.")
+
+
 class ExternalHandoffRequest(BaseModel):
     """Request payload for delegating work to external SDK drivers."""
 

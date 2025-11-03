@@ -1,7 +1,8 @@
 .PHONY: help install test test-unit test-agents test-integration \
         setup-flowrunner clean-flowrunner agent-run flow-run \
         docs-check vendor-check build install-dev \
-        api-server api-test api-examples bench bench-cache
+        api-server api-test api-examples bench bench-cache \
+        qa agent-codex agent-claude
 
 # Default target
 help:
@@ -20,6 +21,7 @@ help:
 	@echo "  make test-agents      - Run agent tests only"
 	@echo "  make test-integration - Run integration tests only"
 	@echo "  make test-coverage    - Run tests with coverage report"
+	@echo "  make qa               - Run ruff, mypy, pytest, check_docs"
 	@echo ""
 	@echo "Quality Checks:"
 	@echo "  make docs-check       - Validate documentation"
@@ -27,6 +29,8 @@ help:
 	@echo ""
 	@echo "Agent Execution:"
 	@echo "  make agent-run        - Run sample MAG execution"
+	@echo "  make agent-codex      - Subscription run via Codex/Claude CLI"
+	@echo "  make agent-claude     - Subscription run with Claude as MAG"
 	@echo "  make flow-run         - Run sample flow (requires Flow Runner)"
 	@echo ""
 	@echo "HTTP API:"
@@ -98,6 +102,23 @@ agent-run:
 	@echo "Running sample MAG execution..."
 	@echo '{"role":"Senior Engineer","level":"Senior","experience_years":8}' | \
 		uv run magsag agent run offer-orchestrator-mag
+
+qa:
+	@echo "Running ruff, mypy, pytest, and documentation checks..."
+	uv run ruff check .
+	uv run mypy src tests
+	uv run pytest -q -m "not slow"
+	uv run python ops/tools/check_docs.py
+
+agent-codex:
+	@PROMPT=$${PROMPT:-"Summarise current CI failures"}; \
+	 echo "Running subscription MAG/SAG via Codex and Claude CLIs..."; \
+	 uv run magsag agent --mode subscription --mag codex-cli --sag claude-cli --repo . "$$PROMPT"
+
+agent-claude:
+	@PROMPT=$${PROMPT:-"Propose regression tests for latest change"}; \
+	 echo "Running subscription MAG/SAG with Claude as primary..."; \
+	 uv run magsag agent --mode subscription --mag claude-cli --sag codex-cli --repo . "$$PROMPT"
 
 flow-run:
 	@echo "Running sample flow..."

@@ -119,6 +119,47 @@ uv run magsag agent --help
 uv run magsag flow --help
 ```
 
+#### Agent Runtime (MAG/SAG)
+
+`magsag agent` now routes tasks through configurable MAG/SAG engines with
+subscription-first defaults. The runtime resolves engines using:
+
+- `MAGSAG_ENGINE_MODE` &mdash; `auto` (default), `subscription`, `api`, `oss`
+- `MAGSAG_ENGINE_MAG`, `MAGSAG_ENGINE_SAG` &mdash; engine assignments per role
+- OpenAI/Anthropic API keys &mdash; trigger API mode unless overridden
+
+Examples:
+
+```bash
+# Run with Codex CLI (MAG) and Claude CLI (SAG) without API keys
+uv run magsag agent --repo . "Review failing CI jobs and propose fixes"
+
+# Force API mode even when CLIs are available
+MAGSAG_ENGINE_MODE=api \
+MAGSAG_ENGINE_MAG=openai-api \
+MAGSAG_ENGINE_SAG=anthropic-api \
+uv run magsag agent --repo . "Draft a test plan for the new feature"
+
+# Resume the most recent Codex session in subscription mode
+uv run magsag agent --mode subscription --resume last \
+  --repo . "Continue the previous investigation"
+
+# Legacy slug-based execution remains available via the compatibility shim
+uv run magsag agent -- run offer-orchestrator-mag < payload.json
+```
+
+The corresponding FastAPI endpoint mirrors the CLI surface:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/agent/run \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "prompt": "Summarise failing tests",
+        "mode": "subscription",
+        "repo": "."
+      }' | jq
+```
+
 ### Worktree Workflow (Recommended)
 
 1. Create an isolated branch/worktree:

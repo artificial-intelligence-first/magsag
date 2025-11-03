@@ -21,6 +21,7 @@ from magsag.storage.models import (
     MetricEvent,
     Run,
 )
+from magsag.storage.session_store import SessionStore, create_session_meta
 
 __all__ = [
     "StorageBackend",
@@ -36,4 +37,6 @@ __all__ = [
     "create_storage_backend",
     "get_storage_backend",
     "close_storage_backend",
+    "SessionStore",
+    "create_session_meta",
 ]

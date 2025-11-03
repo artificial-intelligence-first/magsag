@@ -1,17 +1,23 @@
 from __future__ import annotations
 
 import asyncio
-import anyio
 import json
 import pathlib
+import time
+import uuid
 from typing import TYPE_CHECKING, Any, Iterable, Optional
 
+import anyio
 import typer
 
+from magsag.agent.factory import create_spec
+from magsag.agent.runner import execute_run
+from magsag.agent.spec import RunOutcome
 from magsag.mcp import MCPPresetError, bootstrap_presets, list_local_servers, load_server_config
 from magsag.mcp.doctor import diagnose_many
 from magsag.mcp.inspector import inspection_as_lines
 from magsag.mcp.login import build_login_plan, launch_login_flow
+from magsag.observability.logger import ObservabilityLogger
 from magsag.worktree import (
     WorktreeError,
     WorktreeManager,
@@ -20,7 +26,12 @@ from magsag.worktree import (
 
 app = typer.Typer(no_args_is_help=True)
 flow_app = typer.Typer(help="Flow Runner integration commands")
-agent_app = typer.Typer(help="Agent orchestration commands (MAG runtime & external handoffs)")
+agent_app = typer.Typer(
+    help="Agent orchestration commands (MAG runtime & external handoffs)",
+    invoke_without_command=True,
+    no_args_is_help=False,
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
 data_app = typer.Typer(help="Data management commands")
 mcp_app = typer.Typer(help="Model Context Protocol commands and ADK sync")
 wt_app = typer.Typer(help="Git worktree orchestration commands")
@@ -53,6 +64,85 @@ DOCTOR_HINTS = {
     "auth-failed": "Credential rejected; refresh token or adjust scopes.",
     "unreachable": "Transport failed; check network, endpoint, or fallback options.",
 }
+
+
+def _format_duration_ms(value: float) -> str:
+    seconds = value / 1000.0
+    if seconds >= 1:
+        return f"{seconds:.2f}s"
+    return f"{value:.0f}ms"
+
+
+def _serialize_outcome(outcome: RunOutcome, run_id: str) -> dict[str, Any]:
+    return {
+        "run_id": run_id,
+        "mode": outcome.spec.mode,
+        "prompt": outcome.spec.prompt,
+        "engines": {
+            "mag": outcome.spec.engine_mag,
+            "sag": outcome.spec.engine_sag,
+        },
+        "started_at": outcome.started_at,
+        "ended_at": outcome.ended_at,
+        "duration_ms": (outcome.ended_at - outcome.started_at) * 1000,
+        "results": [
+            {
+                "role": result.role,
+                "engine": result.engine,
+                "ok": result.ok,
+                "returncode": result.returncode,
+                "duration_ms": result.duration_ms,
+                "session_id": result.session_id,
+                "resume_token": result.resume_token,
+                "cost_usd": result.cost_usd,
+                "token_usage": dict(result.token_usage),
+                "approvals_used": result.approvals_used,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "error": result.error,
+                "events": [
+                    event if isinstance(event, dict) else {"value": event}
+                    for event in result.events
+                ],
+                "metadata": dict(result.metadata),
+            }
+            for result in outcome.results
+        ],
+        "errors": outcome.errors,
+    }
+
+
+def _render_outcome(outcome: RunOutcome, *, run_id: str) -> None:
+    typer.echo(f"Run ID: {run_id}")
+    typer.echo(
+        f"Mode: {outcome.spec.mode} • MAG={outcome.spec.engine_mag} • SAG={outcome.spec.engine_sag}"
+    )
+
+    for result in outcome.results:
+        status_symbol = "✅" if result.ok else "❌"
+        header = (
+            f"{status_symbol} {result.role.upper()} [{result.engine}] "
+            f"{_format_duration_ms(result.duration_ms)}"
+        )
+        typer.echo(header)
+        if result.session_id:
+            typer.echo(f"    Session: {result.session_id}")
+        if result.resume_token:
+            typer.echo(f"    Resume Token: {result.resume_token}")
+
+        if result.error:
+            typer.echo(f"    Error: {result.error}")
+        else:
+            preview_lines = (result.stdout or "").strip().splitlines()
+            for line in preview_lines[:3]:
+                typer.echo(f"    {line}")
+            if len(preview_lines) > 3:
+                typer.echo("    …")
+
+    if outcome.errors:
+        typer.echo("Errors:")
+        for err in outcome.errors:
+            typer.echo(f"  - {err}")
 
 
 def _format_transport(probe_transport: Any) -> str:
@@ -93,6 +183,122 @@ def _render_doctor_report(report: Any) -> None:
             typer.echo(f"    protocol_version: {probe.protocol_version}")
         if probe.http_status:
             typer.echo(f"    http_status: {probe.http_status}")
+
+
+@agent_app.callback()
+def agent_main(
+    ctx: typer.Context,
+    prompt: Optional[str] = typer.Argument(
+        None, help="Prompt or task description for MAG/SAG execution."
+    ),
+    repo: pathlib.Path = typer.Option(
+        pathlib.Path.cwd(),
+        "--repo",
+        "-r",
+        help="Repository root passed to engines (defaults to current directory).",
+    ),
+    mode: Optional[str] = typer.Option(
+        None,
+        "--mode",
+        help="Engine mode override (subscription|api|oss).",
+    ),
+    mag: Optional[str] = typer.Option(
+        None,
+        "--mag",
+        help="Engine assignment for MAG role (codex-cli|openai-api|...).",
+    ),
+    sag: Optional[str] = typer.Option(
+        None,
+        "--sag",
+        help="Engine assignment for SAG role (claude-cli|anthropic-api|...).",
+    ),
+    resume: Optional[str] = typer.Option(
+        None,
+        "--resume",
+        help="Resume token or 'last' forwarded to the engines when supported.",
+    ),
+    session_id: Optional[str] = typer.Option(
+        None,
+        "--session",
+        "--session-id",
+        help="Session identifier hint for runners supporting continuation.",
+    ),
+    json_output: bool = typer.Option(
+        False,
+        "--json",
+        help="Emit structured JSON summary instead of human-readable output.",
+    ),
+    notes: Optional[str] = typer.Option(
+        None,
+        "--notes",
+        help="Attach free-form notes stored alongside session metadata.",
+    ),
+) -> None:
+    """Execute MAG/SAG runtimes with configurable engines."""
+    if ctx.invoked_subcommand:
+        return
+
+    if prompt is None:
+        typer.echo(ctx.get_help())
+        raise typer.Exit(0)
+
+    legacy_args = list(ctx.args)
+    if prompt in {"run", "handoff"} and legacy_args:
+        if prompt == "run":
+            slug = legacy_args[0]
+            ctx.invoke(agent_run, slug=slug)
+            return
+        if prompt == "handoff":
+            ctx.invoke(agent_handoff)
+            return
+
+    repo_path = repo.resolve()
+    if not repo_path.exists():
+        typer.echo(f"Error: repository not found at {repo_path}", err=True)
+        raise typer.Exit(1)
+
+    run_id = f"run-{uuid.uuid4().hex[:12]}"
+    metadata: dict[str, object] = {}
+    if notes:
+        metadata["notes"] = notes
+
+    spec = create_spec(
+        prompt,
+        repo_root=repo_path,
+        mode=mode,
+        mag=mag,
+        sag=sag,
+        resume=resume,
+        session_hint=session_id,
+        metadata=metadata,
+    )
+    spec.metadata["run_id"] = run_id
+
+    observer = ObservabilityLogger(run_id=run_id, slug="magsag-agent")
+
+    start_wall = time.time()
+    try:
+        outcome = execute_run(spec, observer=observer)
+    except Exception as exc:  # noqa: BLE001
+        observer.log(
+            "engine.execution_failed",
+            {"run_id": run_id, "error": str(exc), "mode": spec.mode},
+        )
+        observer.finalize()
+        typer.echo(f"Execution failed: {exc}", err=True)
+        raise typer.Exit(1) from exc
+    else:
+        observer.metric("runtime_ms", (time.time() - start_wall) * 1000)
+        observer.finalize()
+
+    if json_output:
+        payload = _serialize_outcome(outcome, run_id)
+        typer.echo(json.dumps(payload, ensure_ascii=False, indent=2))
+    else:
+        _render_outcome(outcome, run_id=run_id)
+
+    if not outcome.ok:
+        raise typer.Exit(1)
 
 
 @mcp_app.command("bootstrap")

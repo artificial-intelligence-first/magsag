@@ -2,7 +2,7 @@
 title: MAGSAG Changelog
 slug: changelog
 status: living
-last_updated: 2025-11-03
+last_updated: 2025-11-04
 last_synced: '2025-11-03'
 tags:
 - magsag
@@ -50,6 +50,7 @@ sources:
 ### [Unreleased]
 
 #### Added
+- Subscription-first MAG/SAG execution runtime with `RunSpec`, Codex/Claude CLI runners, OpenAI/Anthropic SDK adapters, Typer `magsag agent` options (`--mode/--mag/--sag/--resume`), REST endpoint `POST /api/v1/agent/run`, session metadata store, and health metrics (`GET /api/v1/health/metrics`).
 - External handoff pipeline linking OpenAI Agents SDK to Claude Agent SDK and Codex drivers via `ExternalHandoffTool`, `POST /api/v1/agents/handoff`, and `magsag agent handoff`.
 - Google ADK sync workflow (`magsag mcp sync`) rendering `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json` from `ops/adk/catalog.yaml` + `ops/adk/servers/*.yaml`.
 - BudgetController for provider spend limits with environment-driven configuration and integration into external handoffs.
@@ -62,6 +63,7 @@ sources:
 - MCP observability ledger (`mcp_calls.jsonl`) and OTel span attributes capturing transport, session ID, protocol version, and policy outcomes.
 
 #### Changed
+- README/AGENTS playbook refreshed for subscription-vs-API engine selection, session persistence, and new Makefile helpers (`make qa`, `make agent-codex`, `make agent-claude`).
 - PlanIR expanded to capture versioning, capability requirements, budgets, and audit metadata; AgentRunner now resolves external targets and enforces approvals/budgets before delegation.
 - External handoff CLI/API resolve targets automatically when `--target auto` or capability hints are supplied, and the runtime ensures Claude/Codex dispatchers are always registered.
 - Claude and Codex drivers register with the external dispatcher registry, apply sandbox enforcement, and propagate trace context for Langfuse/OTel correlation.
@@ -74,6 +76,8 @@ sources:
 - Fetch sample server now uses `@pulsemcp/pulse-fetch`, and the legacy git preset was removed from `.mcp/servers/` to avoid broken npx installs.
 
 #### Fixed
+- Session metadata store now acquires cross-process locks to prevent concurrent writers from truncating or overwriting sibling sessions during CLI/API runs.
+- Claude CLI runner positions `-p` directly before the prompt, keeping stream-output flags active and restoring correct SAG prompt handling.
 - `AgentRunner.delegate_external()` now raises a clear error when invoked inside a running event loop, preventing illegal loop reuse.
 - External handoff budget enforcement accepts zero-cent limits, ensuring budget guards trigger even for no-spend delegations.
 - Approval gating for external handoffs normalizes risk tags, so mixed-case values still require review.
