@@ -1,0 +1,32 @@
+{
+  "name": "@magsag/cli",
+  "version": "2.0.0-alpha.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "magsag": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest --run --passWithNoTests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@magsag/core": "workspace:*",
+    "@magsag/schema": "workspace:*",
+    "@magsag/governance": "workspace:*",
+    "@magsag/observability": "workspace:*",
+    "@magsag/runner-adk": "workspace:*",
+    "@magsag/runner-claude-agent": "workspace:*",
+    "@magsag/runner-claude-cli": "workspace:*",
+    "@magsag/runner-codex-cli": "workspace:*",
+    "@magsag/runner-openai-agents": "workspace:*",
+    "@oclif/core": "3.27.0"
+  }
+}

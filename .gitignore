@@ -14,6 +14,9 @@ env/
 magsag.egg-info/
 dist/
 build/
+node_modules/
+pnpm-debug.log
+.turbo/
 
 # Testing
 .pytest_cache/

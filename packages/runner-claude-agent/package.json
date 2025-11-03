@@ -1,0 +1,22 @@
+{
+  "name": "@magsag/runner-claude-agent",
+  "version": "2.0.0-alpha.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest --run --passWithNoTests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@magsag/core": "workspace:*",
+    "@magsag/schema": "workspace:*",
+    "@anthropic-ai/claude-agent-sdk": "^0.1.30"
+  }
+}

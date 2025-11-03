@@ -1,0 +1,25 @@
+{
+  "name": "@magsag/runner-adk",
+  "version": "2.0.0-alpha.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest --run --passWithNoTests",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@magsag/core": "workspace:*",
+    "@magsag/schema": "workspace:*",
+    "@google/adk": "^0.1.2",
+    "@google/genai": "1.14.0",
+    "@modelcontextprotocol/sdk": "1.17.5",
+    "@opentelemetry/api": "^1.9.0"
+  }
+}
