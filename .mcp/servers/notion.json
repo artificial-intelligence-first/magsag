@@ -1,14 +1,41 @@
 {
-  "description": "Access Notion databases and pages via REST endpoints.",
+  "description": "Notion MCP (HTTP first; SSE/STDIO fallback)",
+  "fallback": [
+    {
+      "args": [],
+      "env": {},
+      "headers": {},
+      "type": "sse",
+      "url": "https://mcp.notion.com/sse"
+    },
+    {
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.notion.com/mcp"
+      ],
+      "command": "npx",
+      "env": {},
+      "headers": {},
+      "type": "stdio"
+    }
+  ],
+  "id": "notion",
+  "limits": {
+    "rate_per_min": 60,
+    "timeout_s": 30
+  },
   "metadata": {
-    "source": "ops/adk/catalog.yaml",
-    "source_digest": "396fd790e12157fd27913867a2e8ae3cf11e24b8f8270c6bb9018ef00e1fc980",
+    "registry_source": "ops/adk/catalog.yaml",
+    "source": "ops/adk/servers/notion.yaml",
+    "source_digest": "d4a40a7b9f763313c48ecda0efd3380a32b3e8cdba0bb72875fcedfb198d977e",
     "tags": [
       "notion",
       "workspace"
     ],
     "title": "Notion Workspace API"
   },
+  "notes": "Streamable HTTP is primary. SSE/STDIO are compatibility and rescue fallbacks.",
   "options": {
     "capabilities": [
       "http",
@@ -17,16 +44,24 @@
     "healthcheck": "https://api.notion.com/v1/status"
   },
   "permissions": {
+    "extra": {},
     "scope": [
       "databases.read",
-      "databases.write"
-    ]
+      "databases.write",
+      "read:databases",
+      "read:pages"
+    ],
+    "tools": {}
   },
+  "scopes": [],
   "server_id": "notion",
   "transport": {
+    "args": [],
+    "env": {},
+    "headers": {},
     "type": "http",
-    "url": "https://api.notion.com"
+    "url": "https://mcp.notion.com/mcp"
   },
   "type": "mcp",
-  "version": "2025-11-03"
+  "version": "1"
 }

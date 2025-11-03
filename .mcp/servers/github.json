@@ -1,14 +1,22 @@
 {
-  "description": "Interact with GitHub repositories and issues.",
+  "description": "GitHub MCP (remote HTTP; OAuth推奨/PAT可)",
+  "fallback": [],
+  "id": "github",
+  "limits": {
+    "rate_per_min": 60,
+    "timeout_s": 30
+  },
   "metadata": {
-    "source": "ops/adk/catalog.yaml",
-    "source_digest": "47cb3c75ee2d7049780804b3c5ec10b44dae607e1adb05cf59b160c1c61096eb",
+    "registry_source": "ops/adk/catalog.yaml",
+    "source": "ops/adk/servers/github.yaml",
+    "source_digest": "805573ce5e750a99ce75cc5ecaa90d853c4d9db0704750fe7aa7113cd2b08933",
     "tags": [
-      "github",
-      "code"
+      "code",
+      "github"
     ],
     "title": "GitHub REST API"
   },
+  "notes": "Some tools require a GitHub Copilot license. Use the least-privileged PAT when OAuth is unavailable.",
   "options": {
     "capabilities": [
       "http",
@@ -17,15 +25,22 @@
     "healthcheck": "https://api.github.com/meta"
   },
   "permissions": {
+    "extra": {},
     "scope": [
       "repo"
-    ]
+    ],
+    "tools": {},
+    "write_requires_approval": true
   },
+  "scopes": [],
   "server_id": "github",
   "transport": {
+    "args": [],
+    "env": {},
+    "headers": {},
     "type": "http",
-    "url": "https://api.github.com"
+    "url": "https://api.githubcopilot.com/mcp/"
   },
   "type": "mcp",
-  "version": "2025-11-03"
+  "version": "1"
 }
