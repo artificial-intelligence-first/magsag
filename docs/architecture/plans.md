@@ -76,11 +76,7 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 
 ## Active Plans
 
-- None.
-
-## Completed Plans
-
-- [SDK Unification and Parallel Worktrees Rollout](../development/plans/sdk-unification.md) - Completed 2025-11-05 (Agents SDK unification, ADK sync, observability, governance hardening).
+- [MCP Preset JSON Unification](../development/plans/mcp-json-unification.md) — Standardise runtime artefacts on generated JSON and relocate human-authored sources.
 
 ## See Also
 
@@ -89,7 +85,7 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 
 ## Update Log
 
-- 2025-11-05: Marked SDK unification plan completed and moved to Completed Plans.
+- 2025-11-05: Added MCP JSON unification plan and retired SDK unification plan.
 - 2025-11-03: Logged SDK unification plan under Active Plans.
 - 2025-11-02: Linked workflow and template references.
 - 2025-11-01: Adopted the unified documentation format and clarified audience guidance.

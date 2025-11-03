@@ -30,7 +30,6 @@ sources: []
 
 ## Active Plans
 
-- [SDK Unification and Parallel Worktrees Rollout](docs/development/plans/sdk-unification.md) — Coordinate parallel worktrees for Agents, SAGs, ADK sync, observability, and cleanup.
 
 ## Template
 
