@@ -24,4 +24,4 @@ def test_list_local_servers(tmp_path: Path) -> None:
 
     servers = list_local_servers(tmp_path)
     assert notion_yaml in servers
-    assert all(path.suffix in {".yaml", ".yml"} for path in servers)
+    assert all(path.suffix in {".yaml", ".yml", ".json"} for path in servers)

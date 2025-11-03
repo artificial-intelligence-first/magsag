@@ -4,7 +4,7 @@ import asyncio
 import anyio
 import json
 import pathlib
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Iterable, Optional
 
 import typer
 
@@ -20,11 +20,13 @@ from magsag.worktree import (
 
 app = typer.Typer(no_args_is_help=True)
 flow_app = typer.Typer(help="Flow Runner integration commands")
-agent_app = typer.Typer(help="Agent orchestration commands (MAG, Claude, Codex)")
+agent_app = typer.Typer(help="Agent orchestration commands (MAG runtime & external handoffs)")
 data_app = typer.Typer(help="Data management commands")
 mcp_app = typer.Typer(help="Model Context Protocol commands and ADK sync")
 wt_app = typer.Typer(help="Git worktree orchestration commands")
 
+if TYPE_CHECKING:
+    from magsag.sdks.google_adk.sync import GeneratedArtifact
 
 def _handle_worktree_error(exc: WorktreeError) -> None:
     typer.echo(f"Error: {exc}", err=True)
@@ -100,8 +102,10 @@ def mcp_bootstrap(
 ) -> None:
     """Copy bundled MCP server presets into the local workspace."""
 
+    target_dir = pathlib.Path("ops/adk/servers")
+
     try:
-        results = bootstrap_presets(provider=provider, force=force)
+        results = bootstrap_presets(provider=provider, force=force, target_dir=target_dir)
     except MCPPresetError as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
@@ -112,6 +116,18 @@ def mcp_bootstrap(
 
     for name, action in sorted(results.items()):
         typer.echo(f"{name}: {action}")
+
+    typer.echo("Regenerating MCP artefacts …")
+    from magsag.sdks.google_adk.sync import sync_adk_catalog
+
+    try:
+        artifacts = sync_adk_catalog(servers_dir=target_dir)
+    except Exception as exc:  # noqa: BLE001
+        typer.echo(f"Sync failed: {exc}", err=True)
+        raise typer.Exit(1)
+
+    for artifact in sorted(artifacts, key=lambda item: item.path):
+        typer.echo(f"- {artifact.path}")
 
 
 @mcp_app.command("ls")
@@ -191,6 +207,11 @@ def mcp_sync(
         "--registry",
         help="Path to ADK registry YAML",
     ),
+    servers: pathlib.Path = typer.Option(
+        pathlib.Path("ops/adk/servers"),
+        "--servers",
+        help="Directory containing authorable MCP server YAML sources",
+    ),
     dry_run: bool = typer.Option(False, "--dry-run", help="Preview outputs without writing files"),
 ) -> None:
     """Generate MCP server and catalog tool docs using the ADK registry."""
@@ -198,7 +219,11 @@ def mcp_sync(
     from magsag.sdks.google_adk.sync import sync_adk_catalog
 
     try:
-        paths = sync_adk_catalog(registry_path=registry, dry_run=dry_run)
+        artifacts = sync_adk_catalog(
+            registry_path=registry,
+            servers_dir=servers,
+            dry_run=dry_run,
+        )
     except FileNotFoundError as exc:
         typer.echo(f"Error: {exc}", err=True)
         raise typer.Exit(1)
@@ -206,10 +231,60 @@ def mcp_sync(
         typer.echo(f"Sync failed: {exc}", err=True)
         raise typer.Exit(1)
 
-    header = "Planned outputs:" if dry_run else "Generated artefacts:"
-    typer.echo(header)
-    for path in paths:
-        typer.echo(f"- {path}")
+    if dry_run:
+        _report_drift(artifacts)
+        return
+
+    typer.echo("Generated artefacts:")
+    for artifact in artifacts:
+        typer.echo(f"- {artifact.path}")
+
+
+def _report_drift(artifacts: Iterable["GeneratedArtifact"]) -> None:
+    """Compare generated artefacts with existing files and report drift."""
+    missing: list[pathlib.Path] = []
+    drifted: list[pathlib.Path] = []
+
+    expected_paths = set()
+    for artifact in artifacts:
+        path = pathlib.Path(artifact.path)
+        expected_paths.add(path.resolve())
+        if not path.exists():
+            missing.append(path)
+            continue
+        actual = path.read_text(encoding="utf-8")
+        if actual != artifact.content:
+            drifted.append(path)
+
+    extra: list[pathlib.Path] = []
+    roots = [
+        (pathlib.Path.cwd() / ".mcp" / "servers").resolve(),
+        (pathlib.Path.cwd() / "catalog" / "tools").resolve(),
+    ]
+    for root in roots:
+        if not root.exists():
+            continue
+        for candidate in root.rglob("*.json"):
+            if candidate.resolve() not in expected_paths:
+                extra.append(candidate)
+
+    if not missing and not drifted and not extra:
+        typer.echo("MCP artefacts are up-to-date.")
+        return
+
+    if missing:
+        typer.echo("Missing artefacts detected:")
+        for path in sorted(missing):
+            typer.echo(f"- {path}")
+    if drifted:
+        typer.echo("Out-of-date artefacts detected:")
+        for path in sorted(drifted):
+            typer.echo(f"- {path}")
+    if extra:
+        typer.echo("Unexpected artefacts detected:")
+        for path in sorted(extra):
+            typer.echo(f"- {path}")
+    raise typer.Exit(1)
 
 
 @mcp_app.command("login")
@@ -601,7 +676,7 @@ def agent_run(
 def agent_handoff(
     target: str = typer.Argument(
         "auto",
-        help="External target to delegate (claude/codex/auto). Defaults to auto for capability-based routing.",
+        help="External dispatcher for the ExternalHandoffTool (claude/codex/auto).",
     ),
     skill: str = typer.Argument(..., help="Skill identifier on the external target"),
     input_path: pathlib.Path | None = typer.Option(
@@ -617,9 +692,13 @@ def agent_handoff(
         [],
         "--capability",
         "-c",
-        help="Capability hint for auto target resolution (repeatable).",
+        help="Capability hint for auto target resolution (repeatable; forwarded to ExternalHandoffTool).",
     ),
-    budget_cents: int | None = typer.Option(None, "--budget", help="Budget guard in cents"),
+    budget_cents: int | None = typer.Option(
+        None,
+        "--budget",
+        help="Budget guard in cents enforced by BudgetController",
+    ),
     timeout_sec: int | None = typer.Option(None, "--timeout", help="Timeout in seconds"),
     trace_id: str | None = typer.Option(None, "--trace-id", help="Existing trace identifier"),
     step_id: str | None = typer.Option(None, "--step-id", help="Plan step identifier"),
@@ -629,7 +708,7 @@ def agent_handoff(
         help="Preferred target (claude/codex) when resolving automatically.",
     ),
 ) -> None:
-    """Delegate work to external SDK drivers using the agent runtime."""
+    """Delegate work through the ExternalHandoffTool with BudgetController enforcement."""
 
     import json
     import sys

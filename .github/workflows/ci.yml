@@ -28,6 +28,9 @@ jobs:
       - name: Documentation guard
         run: uv run python ops/tools/check_docs.py
 
+      - name: Validate MCP artefacts
+        run: uv run magsag mcp sync --dry-run
+
       - name: Verify vendor assets
         run: uv run python ops/tools/verify_vendor.py
 

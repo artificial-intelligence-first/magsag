@@ -2,8 +2,8 @@
 title: ExecPlan Workflow
 slug: workflows-plans
 status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+last_updated: 2025-11-03
+last_synced: '2025-11-03'
 tags:
 - documentation
 - workflow
@@ -86,10 +86,12 @@ Store plans under `docs/development/plans/<slug>.md` using this outline:
 ```bash
 uv run python ops/tools/check_docs.py
 uv run ruff check docs
+uv run magsag mcp sync --dry-run  # Run after editing ops/adk/ sources
 ```
 
 Log pass/fail results and remediation notes in delivery updates or the plan’s `Validation` section.
 
 ## Update Log
 
+- 2025-11-03: Added MCP sync dry-run to validation checklist.
 - 2025-11-02: Established workflow outlining plan triggers, canonical structure, review cadence, and validation commands.

@@ -76,19 +76,14 @@ def test_placeholder_expansion_in_transport(monkeypatch: pytest.MonkeyPatch, env
         assert config.options["read_only"] == "false"
 
 
-def test_transport_override_preserved_for_websocket() -> None:
+def test_transport_string_payload_is_rejected() -> None:
     payload = {
         "server_id": "ws-server",
         "transport": "websocket",
         "url": "wss://example.com/socket",
     }
-    config = MCPServerConfig.model_validate(payload)
-
-    chain = config.transport_chain()
-    assert len(chain) == 1
-    transport = chain[0]
-    assert transport.type == "websocket"
-    assert transport.url == "wss://example.com/socket"
+    with pytest.raises(ValueError, match="transport must be an object"):
+        MCPServerConfig.model_validate(payload)
 
 
 @pytest.mark.parametrize(
@@ -149,6 +144,19 @@ def test_model_validate_expands_transport_placeholders(
         assert fallback.args == ["-y", "tool"]
         assert "TOKEN" not in fallback.env
         assert config.options["read_only"] == "false"
+
+
+def test_websocket_transport_roundtrip() -> None:
+    config = MCPServerConfig(
+        server_id="ws-server",
+        transport=TransportDefinition(type="websocket", url="wss://example.com/socket"),
+    )
+
+    chain = config.transport_chain()
+    assert len(chain) == 1
+    transport = chain[0]
+    assert transport.type == "websocket"
+    assert transport.url == "wss://example.com/socket"
 
 
 def test_timeout_placeholder_expansion(monkeypatch: pytest.MonkeyPatch) -> None:

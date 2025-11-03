@@ -2,8 +2,8 @@
 title: MAGSAG Agent Playbook
 slug: agents
 status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+last_updated: 2025-11-03
+last_synced: '2025-11-03'
 tags:
 - agents
 - workflow
@@ -34,6 +34,7 @@ sources:
 - Use Python 3.12 with [`uv`](https://docs.astral.sh/uv/) for dependency management: `uv sync --extra dev`.
 - Run the Typer CLI via `uv run magsag --help` to explore supported commands.
 - Keep new source modules under `src/magsag/`; catalog assets live in `catalog/`; documentation resides in `docs/`.
+- Manage MCP configurations by editing YAML under `ops/adk/servers/` and regenerating runtime JSON with `uv run magsag mcp sync`.
 - Start local services when needed:
   - API server: `uv run python -m magsag.api.server`
   - Flow validation: `uv run magsag flow validate <flow>`
@@ -112,6 +113,7 @@ uv run python ops/tools/check_docs.py
 
 ## Update Log
 
+- 2025-11-03: Documented MCP YAML sources under `ops/adk/servers/` and JSON-only runtime artefacts.
 - 2025-11-02: Linked workflow guides, templates, and taxonomy reference.
 - 2025-11-01: Migrated to the unified documentation standard and refreshed metadata.
 - 2025-11-01: Expanded guidance on placement, machine-first writing, and best practices.

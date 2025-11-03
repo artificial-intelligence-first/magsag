@@ -54,8 +54,7 @@ async def test_execute_tool_without_meta_message_uses_fallback_error() -> None:
     config = MCPServerConfig(
         server_id="stub",
         type="mcp",
-        command="npx",
-        args=["-y", "stub"],
+        transport=TransportDefinition(type="stdio", command="npx", args=["-y", "stub"]),
     )
     server = MCPServer(config)
     server._started = True  # noqa: SLF001 - internal setup for unit test
@@ -80,8 +79,7 @@ async def test_execute_tool_error_without_content_is_handled() -> None:
     config = MCPServerConfig(
         server_id="stub",
         type="mcp",
-        command="npx",
-        args=["-y", "stub"],
+        transport=TransportDefinition(type="stdio", command="npx", args=["-y", "stub"]),
     )
     server = MCPServer(config)
     server._started = True  # noqa: SLF001
@@ -198,8 +196,6 @@ async def test_stdio_transport_allows_empty_args_override(monkeypatch: pytest.Mo
 
     config_override = MCPServerConfig(
         server_id="stdio-override",
-        command="base-command",
-        args=["--default"],
         transport=TransportDefinition(
             type="stdio",
             command="base-command",
@@ -214,15 +210,16 @@ async def test_stdio_transport_allows_empty_args_override(monkeypatch: pytest.Mo
 
     config_inherit = MCPServerConfig(
         server_id="stdio-inherit",
-        command="base-command",
-        args=["--default"],
+        transport=TransportDefinition(
+            type="stdio",
+            command="base-command",
+            args=["--default"],
+        ),
     )
     server_inherit = MCPServer(config_inherit)
-    transport_inherit = TransportDefinition(
-        type="stdio",
-        command="base-command",
-    )
-    assert "args" not in transport_inherit.model_fields_set
+    transport_inherit = config_inherit.transport
+    assert transport_inherit is not None
+    assert "args" in transport_inherit.model_fields_set
     await server_inherit._connect_transport(transport_inherit)
 
     assert captured_args[0] == []

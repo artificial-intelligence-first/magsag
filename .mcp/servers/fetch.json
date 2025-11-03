@@ -1,0 +1,34 @@
+{
+  "description": "Web content fetching and conversion for efficient LLM usage",
+  "fallback": [],
+  "limits": {
+    "rate_per_min": 30,
+    "timeout_s": 45
+  },
+  "metadata": {
+    "source": "ops/adk/servers/fetch.yaml",
+    "source_digest": "c6249d820be24611eff2c4ee4433c376710652821caf37031064202fb577e3b8"
+  },
+  "options": {},
+  "permissions": {
+    "extra": {},
+    "scope": [
+      "read:web"
+    ],
+    "tools": {}
+  },
+  "scopes": [],
+  "server_id": "fetch",
+  "transport": {
+    "args": [
+      "-y",
+      "@pulsemcp/pulse-fetch@0.3.0"
+    ],
+    "command": "npx",
+    "env": {},
+    "headers": {},
+    "type": "stdio"
+  },
+  "type": "mcp",
+  "version": "1"
+}

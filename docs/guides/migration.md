@@ -2,15 +2,15 @@
 title: MAGSAG Migration Guide
 slug: guide-migration
 status: living
-last_updated: 2025-11-02
+last_updated: 2025-11-03
 tags:
 - migration
 - upgrades
-summary: Steps for moving from legacy features to current MAGSAG conventions.
+summary: Steps for adopting the current MAGSAG conventions.
 authors: []
 sources: []
 last_synced: '2025-11-02'
-description: Steps for moving from legacy features to current MAGSAG conventions.
+description: End-to-end checklist for adopting the current MAGSAG conventions.
 ---
 
 # MAGSAG Migration Guide
@@ -19,7 +19,7 @@ description: Steps for moving from legacy features to current MAGSAG conventions
 >
 > **For AI Agents**: Apply these migration patterns when refactoring code. Document deviations in SSOT and the changelog.
 
-This guide helps you migrate from legacy features to the current implementation.
+This guide helps you migrate from previous implementations to the current stack.
 
 ## Breaking Changes Summary
 
@@ -179,6 +179,7 @@ These changes are effective immediately. There is no grace period for legacy sup
 
 ## Update Log
 
+- 2025-11-03: Clarified migration guidance for the current stack and refreshed summary/description.
 - 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter and audience guidance.
 - 2025-10-30: Documented async migration path and SDK consolidation.

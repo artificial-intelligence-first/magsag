@@ -51,7 +51,7 @@ sources:
 
 #### Added
 - External handoff pipeline linking OpenAI Agents SDK to Claude Agent SDK and Codex drivers via `ExternalHandoffTool`, `POST /api/v1/agents/handoff`, and `magsag agent handoff`.
-- Google ADK sync workflow (`magsag mcp sync`) rendering `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json` from `ops/adk/catalog.yaml`.
+- Google ADK sync workflow (`magsag mcp sync`) rendering `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json` from `ops/adk/catalog.yaml` + `ops/adk/servers/*.yaml`.
 - BudgetController for provider spend limits with environment-driven configuration and integration into external handoffs.
 - Traceparent helper (`observability.tracing.current_traceparent`) for downstream integrations needing explicit context strings.
 - Durable runner snapshot store now auto-creates run metadata, persists snapshots to configured storage backends, and emits `run.snapshot.saved` / `run.resume` events.

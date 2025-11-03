@@ -1,0 +1,36 @@
+{
+  "description": "Secure file operations with configurable access controls",
+  "fallback": [],
+  "limits": {
+    "rate_per_min": 60,
+    "timeout_s": 30
+  },
+  "metadata": {
+    "source": "ops/adk/servers/filesystem.yaml",
+    "source_digest": "4168eefe419ce9fc770949e793573a34ee0aee5ea2a8fb53ad0cc01a55aa097c"
+  },
+  "options": {},
+  "permissions": {
+    "extra": {},
+    "scope": [
+      "read:files",
+      "write:files"
+    ],
+    "tools": {}
+  },
+  "scopes": [],
+  "server_id": "filesystem",
+  "transport": {
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-filesystem@2025.8.21",
+      "."
+    ],
+    "command": "npx",
+    "env": {},
+    "headers": {},
+    "type": "stdio"
+  },
+  "type": "mcp",
+  "version": "1"
+}

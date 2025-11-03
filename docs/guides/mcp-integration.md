@@ -42,11 +42,11 @@ uv run magsag mcp ls
 uv run magsag mcp doctor
 ```
 
-Use `uv run magsag mcp bootstrap --force` to refresh existing YAMLs when presets change upstream.
+Use `uv run magsag mcp bootstrap --force` to refresh `ops/adk/servers/*.yaml` when presets change upstream, then run `uv run magsag mcp sync` to regenerate JSON artefacts.
 
 ## Bundled Preset Reference
 
-Each preset lives in `src/magsag/mcp/presets/servers/` and is copied into `.mcp/servers/<provider>.yaml`.
+Each preset lives in `src/magsag/mcp/presets/servers/` and is copied into `ops/adk/servers/<provider>.yaml` before `magsag mcp sync` emits `.mcp/servers/<provider>.json`.
 
 ### Notion (`notion.yaml`)
 

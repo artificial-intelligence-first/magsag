@@ -4,6 +4,7 @@ from magsag.sdks.google_adk import (
     ADKSource,
     ADKTool,
     ADKSyncError,
+    GeneratedArtifact,
     filter_tools,
     render_catalog_tools,
     render_mcp_server,
@@ -18,6 +19,7 @@ def test_google_adk_package_exports() -> None:
     assert ADKSource is not None
     assert ADKTool is not None
     assert ADKSyncError is not None
+    assert GeneratedArtifact is not None
     assert callable(filter_tools)
     assert callable(sync_adk_catalog)
     assert callable(render_catalog_tools)

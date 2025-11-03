@@ -187,7 +187,7 @@ async def delegate_external_handoff(
     req: ExternalHandoffRequest,
     _: str = Depends(require_scope(["agents:run"])),
 ) -> ExternalHandoffResponse:
-    """Delegate execution to external SDK drivers (Claude or Codex)."""
+    """Delegate execution via ExternalHandoffTool with BudgetController enforcement."""
 
     runner = AgentRunner()
 
@@ -239,4 +239,6 @@ async def delegate_external_handoff(
         trace_id=result_map.get("trace_id"),
         span_id=result_map.get("span_id"),
         parent_span_id=result_map.get("parent_span_id"),
+        budget_cents=result_map.get("budget_cents"),
+        timeout_sec=result_map.get("timeout_sec"),
     )

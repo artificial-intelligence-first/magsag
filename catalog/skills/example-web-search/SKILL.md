@@ -45,7 +45,7 @@ Demonstrates integration with the fetch MCP server to retrieve and process web c
 - Building workflows that combine web data with other skills
 
 ## Prerequisites
-- The `fetch` MCP server must be configured in `.mcp/servers/fetch.yaml`
+- The `fetch` MCP server source must live in `ops/adk/servers/fetch.yaml` and generate `.mcp/servers/fetch.json`
 - Internet connectivity for accessing web resources
 - Input conforms to `contracts/web_search_query.schema.json`
 - Rate limits configured to respect web service constraints
@@ -98,7 +98,7 @@ Demonstrates integration with the fetch MCP server to retrieve and process web c
 ## Implementation Notes
 
 ### MCP Server Integration
-This skill uses the `fetch` MCP server configured in `.mcp/servers/fetch.yaml`. The fetch server provides tools for:
+This skill uses the `fetch` MCP server generated to `.mcp/servers/fetch.json` from `ops/adk/servers/fetch.yaml`. The fetch server provides tools for:
 - Fetching web content from URLs
 - Converting HTML to markdown or plain text
 - Handling redirects and error responses
@@ -115,7 +115,8 @@ The implementation demonstrates:
 - Metadata extraction (status codes, content types, etc.)
 
 ## Additional Resources
-- `.mcp/servers/fetch.yaml` - Fetch MCP server configuration
+- `ops/adk/servers/fetch.yaml` - Fetch MCP server source definition
+- `.mcp/servers/fetch.json` - Generated runtime configuration
 - MCP Fetch Server Documentation: https://github.com/modelcontextprotocol/servers/tree/main/src/fetch
 - `catalog/skills/_template/mcp-tool-template/` - Template for creating new MCP tools
 
@@ -123,7 +124,7 @@ The implementation demonstrates:
 - **URL Not Accessible**: Verify the URL is reachable and not behind a firewall
 - **Rate Limit Errors**: Reduce request frequency or increase rate limit in configuration
 - **Content Extraction Failures**: Check if the target website has changed its HTML structure
-- **MCP Server Not Available**: Ensure fetch server is configured in `.mcp/servers/fetch.yaml`
+- **MCP Server Not Available**: Ensure `ops/adk/servers/fetch.yaml` exists and `.mcp/servers/fetch.json` is regenerated
 - **MCP Runtime Missing**: This Phase 3 release no longer provides a mock fallback. If the runtime is absent, the skill returns an error payload so orchestration can pause execution.
 - **Timeout Errors**: Increase latency threshold for slow websites
 

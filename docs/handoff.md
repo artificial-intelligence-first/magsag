@@ -2,8 +2,8 @@
 title: Handoff-as-a-Tool
 slug: handoff-tool
 status: living
-last_updated: '2025-11-02'
-last_synced: '2025-11-02'
+last_updated: '2025-11-03'
+last_synced: '2025-11-03'
 tags:
 - governance
 - workflow
@@ -30,6 +30,7 @@ Handoff-as-a-Tool provides a standardized interface for agents to delegate work 
 - **Multi-Platform Support**: MAGSAG, ADK, OpenAI, Anthropic
 - **Platform-Specific Adapters**: Automatic format translation
 - **Policy Enforcement**: Approval requirements for sensitive handoffs
+- **Spend Governance**: BudgetController enforces target-specific budget caps
 - **Request Tracking**: Complete audit trail of delegation requests
 - **Error Handling**: Graceful failure and retry capabilities
 
@@ -129,6 +130,22 @@ print(f"Result: {result['result']}")
 ```
 
 `payload` is optional for non-MAGSAG integrations, but when an `AgentRunner` instance is supplied it is passed directly to the delegated MAG entrypoint.
+
+### CLI Delegation (`magsag agent handoff`)
+
+```bash
+uv run magsag agent handoff auto <skill-name> \
+  --budget 500 \
+  --capability fs --capability "cli:pytest" \
+  --meta preferred_target=codex \
+  --timeout 120 \
+  --input payload.json
+```
+
+- Pass `auto` as the target (default) to let the runtime resolve Claude vs Codex based on capabilities.
+- `--budget` values (cents) are enforced by `BudgetController`; exceeding the limit raises `BudgetExceededError`.
+- Attach governance metadata with `--meta key=value` and audit tags with `--tag key=value`.
+- Provide capability hints via repeated `--capability` flags to steer auto-resolution.
 
 ### Multi-Platform Handoff
 
@@ -637,5 +654,6 @@ Handoff events are logged for observability:
 
 ## Update Log
 
+- 2025-11-03: Added CLI delegation guidance and documented BudgetController spend governance.
 - 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added frontmatter, audience guidance, and refreshed related documentation.

@@ -2,7 +2,7 @@
 title: MAGSAG SSOT Reference
 slug: architecture-ssot
 status: living
-last_updated: 2025-11-02
+last_updated: 2025-11-03
 tags:
 - governance
 - ssot
@@ -135,7 +135,7 @@ MAGSAG provides:
 |-------------|-------|-------|
 | Flow Runner CLI (`flowctl`) | Optional external orchestrator | Detected via `magsag flow available` |
 | OpenAI / Anthropic / Google | LLM providers | Selected via routing policy or environment overrides |
-| MCP Servers | Expose agents/skills or consume external tools | Configured in `.mcp/servers/*.yaml` |
+| MCP Servers | Expose agents/skills or consume external tools | Authored in `ops/adk/servers/*.yaml`, generated to `.mcp/servers/*.json` |
 | Postgres / Redis | Storage & caching backends | Enabled via extras `magsag[postgres]`, `magsag[redis]` |
 
 ## Related Documentation
@@ -148,6 +148,7 @@ MAGSAG provides:
 
 ## Update Log
 
+- 2025-11-03: Documented MCP source/artefact split between `ops/adk/servers/` and `.mcp/servers/`.
 - 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Adopted unified documentation format and aligned metadata with root SSOT.
 - 2025-11-01: Linked canonical SSOT repository and enumerated key data contracts and workflows.

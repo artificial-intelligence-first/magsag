@@ -2,7 +2,7 @@
 
 from .registry import ADKRegistry, ADKServer, ADKSource, ADKTool, filter_tools
 from .renderers import render_catalog_tools, render_mcp_server
-from .sync import ADKSyncError, sync_adk_catalog
+from .sync import ADKSyncError, GeneratedArtifact, sync_adk_catalog
 
 __all__ = [
     "ADKRegistry",
@@ -10,6 +10,7 @@ __all__ = [
     "ADKSource",
     "ADKTool",
     "ADKSyncError",
+    "GeneratedArtifact",
     "filter_tools",
     "render_catalog_tools",
     "render_mcp_server",

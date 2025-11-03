@@ -322,21 +322,13 @@ class MCPServer:
                 )
                 get_session_id = None
             elif transport.type == "stdio":
-                command = transport.command or self.config.command
+                command = transport.command
                 if not command:
                     raise MCPServerError("STDIO transport requires 'command'")
                 if stdio_client is None or StdioServerParameters is None:
                     raise MCPServerError("STDIO transport requires MCP stdio client support")
-                merged_env: dict[str, str] | None = None
-                if self.config.env or transport.env:
-                    merged_env = {**self.config.env}
-                    if transport.env:
-                        merged_env.update(transport.env)
-                args = (
-                    transport.args
-                    if "args" in getattr(transport, "model_fields_set", set())
-                    else self.config.args
-                )
+                merged_env = dict(transport.env)
+                args = list(transport.args)
                 params = StdioServerParameters(
                     command=command,
                     args=args,

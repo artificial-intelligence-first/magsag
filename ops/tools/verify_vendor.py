@@ -25,6 +25,10 @@ class VendoredFile:
 
 
 ROOT = Path(__file__).resolve().parents[2]
+JSON_ONLY_DIRS: dict[Path, set[str]] = {
+    ROOT / ".mcp" / "servers": {".json"},
+    ROOT / "catalog" / "tools": {".json"},
+}
 VENDORED_FILES = (
     VendoredFile(
         path=ROOT / "src" / "magsag" / "assets" / "contracts" / "agent.schema.json",
@@ -52,6 +56,18 @@ def main() -> int:
         if not ok:
             print(f"ERROR: {message}")
             all_ok = False
+    for directory, allowed_suffixes in JSON_ONLY_DIRS.items():
+        if not directory.exists():
+            print(f"ERROR: required directory missing: {directory}")
+            all_ok = False
+            continue
+        for path in directory.rglob("*"):
+            if not path.is_file():
+                continue
+            if path.suffix not in allowed_suffixes:
+                allowed = ", ".join(sorted(allowed_suffixes)) or "<no extension>"
+                print(f"ERROR: unexpected artefact {path} (allowed suffixes: {allowed})")
+                all_ok = False
     if all_ok:
         print("Vendor verification passed.")
         return 0

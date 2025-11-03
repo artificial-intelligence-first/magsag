@@ -1,16 +1,15 @@
 """MCP Registry for auto-discovery and server management.
 
 This module provides centralized management of all MCP servers,
-including auto-discovery from .mcp/servers/*.yaml and *.yml files.
+including auto-discovery from .mcp/servers/*.json artefacts.
 """
 
 from __future__ import annotations
 
 import logging
+import json
 from pathlib import Path
 from typing import Any
-
-import yaml
 
 from magsag.mcp.config import MCPServerConfig
 from magsag.mcp.server import MCPServer
@@ -20,6 +19,7 @@ from magsag.mcp.presets import available_presets, load_presets
 logger = logging.getLogger(__name__)
 
 DEFAULT_SERVERS_DIR = Path(".mcp") / "servers"
+DEFAULT_PRESET_SOURCE_DIR = Path("ops") / "adk" / "servers"
 
 
 class MCPPresetError(Exception):
@@ -44,9 +44,17 @@ def _resolve_providers(provider: str) -> list[str]:
 
 
 def load_server_config(path: Path) -> MCPServerConfig:
-    """Load a single MCP server configuration from YAML."""
-    with path.open(encoding="utf-8") as handle:
-        data = yaml.safe_load(handle) or {}
+    """Load a single MCP server configuration from JSON artefact."""
+    if path.suffix.lower() != ".json":
+        raise ValueError(
+            f"Runtime MCP artefacts must be .json files (got {path.name}). "
+            "Regenerate configs via 'magsag mcp sync'."
+        )
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Failed to parse MCP server artefact {path}: {exc}") from exc
 
     config = MCPServerConfig(**data)
     config.validate_type_fields()
@@ -75,7 +83,7 @@ def bootstrap_presets(
     except ValueError as exc:  # pragma: no cover - defensive
         raise MCPPresetError(str(exc)) from exc
 
-    destination_dir = target_dir or DEFAULT_SERVERS_DIR
+    destination_dir = target_dir or DEFAULT_PRESET_SOURCE_DIR
     destination_dir.mkdir(parents=True, exist_ok=True)
 
     results: dict[str, str] = {}
@@ -97,13 +105,12 @@ def bootstrap_presets(
 
 
 def list_local_servers(servers_dir: Path | None = None) -> list[Path]:
-    """List YAML server configs available in the local workspace."""
+    """List JSON server artefacts available in the local workspace."""
     directory = servers_dir or DEFAULT_SERVERS_DIR
     if not directory.exists():
         return []
 
-    candidates = set(directory.glob("*.yaml")) | set(directory.glob("*.yml"))
-    return sorted(candidates)
+    return sorted(directory.glob("*.json"))
 
 
 class MCPRegistryError(Exception):
@@ -126,7 +133,7 @@ class MCPRegistry:
         """Initialize MCP registry.
 
         Args:
-            servers_dir: Directory containing server YAML configs.
+            servers_dir: Directory containing server JSON artefacts.
                         Defaults to .mcp/servers/ in project root.
         """
         self._servers: dict[str, MCPServer] = {}
@@ -139,7 +146,7 @@ class MCPRegistry:
     def discover_servers(self) -> None:
         """Discover and load all MCP server configurations.
 
-        This method scans the servers directory for *.yaml and *.yml files
+        This method scans the servers directory for *.json files
         and loads their configurations.
 
         Raises:
@@ -152,28 +159,28 @@ class MCPRegistry:
         if not self._servers_dir.is_dir():
             raise MCPRegistryError(f"Not a directory: {self._servers_dir}")
 
-        yaml_files = list_local_servers(self._servers_dir)
-        logger.info(f"Discovering MCP servers from {len(yaml_files)} config files")
+        config_files = list_local_servers(self._servers_dir)
+        logger.info(f"Discovering MCP servers from {len(config_files)} config files")
 
-        for yaml_file in yaml_files:
+        for config_file in config_files:
             try:
-                self._load_server_config(yaml_file)
+                self._load_server_config(config_file)
             except Exception as e:
-                logger.error(f"Failed to load config {yaml_file}: {e}")
+                logger.error(f"Failed to load config {config_file}: {e}")
                 # Continue with other configs
 
         logger.info(f"Discovered {len(self._configs)} MCP servers")
 
-    def _load_server_config(self, yaml_file: Path) -> None:
+    def _load_server_config(self, config_file: Path) -> None:
         """Load a single server configuration file.
 
         Args:
-            yaml_file: Path to YAML configuration file
+            config_file: Path to JSON configuration file
 
         Raises:
             MCPRegistryError: If loading or validation fails
         """
-        config = load_server_config(yaml_file)
+        config = load_server_config(config_file)
 
         if config.server_id in self._configs:
             logger.warning(f"Duplicate server ID '{config.server_id}', overwriting")

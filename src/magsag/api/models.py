@@ -51,7 +51,9 @@ class ExternalHandoffRequest(BaseModel):
     files: list[str] = Field(default_factory=list, description="Optional files passed through")
     trace_id: str | None = Field(default=None, description="Existing trace identifier to continue")
     step_id: str | None = Field(default=None, description="Plan step identifier for auditing")
-    budget_cents: int | None = Field(default=None, description="Spend guard in cents")
+    budget_cents: int | None = Field(
+        default=None, description="Budget guard in cents enforced by BudgetController"
+    )
     timeout_sec: int | None = Field(default=None, description="Timeout in seconds")
     audit_tags: dict[str, str] | None = Field(
         default=None, description="Audit tags influencing approval and governance"
@@ -81,6 +83,12 @@ class ExternalHandoffResponse(BaseModel):
     span_id: str | None = Field(default=None, description="Span identifier when available")
     parent_span_id: str | None = Field(
         default=None, description="Parent span identifier if provided by dispatcher"
+    )
+    budget_cents: int | None = Field(
+        default=None, description="Budget guard enforced by BudgetController (cents)"
+    )
+    timeout_sec: int | None = Field(
+        default=None, description="Timeout budget applied during external execution"
     )
 
 

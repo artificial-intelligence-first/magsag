@@ -86,8 +86,8 @@ Document skipped steps or deferred updates in delivery notes so follow-up action
 
 ## MCP Standard Support
 
-- **Canonical presets** – `.mcp/servers/` (runtime) and `src/magsag/mcp/presets/servers/` (bundled defaults) define HTTP-first configurations for Notion, Supabase, GitHub, and Obsidian.
-- **Generated artefacts** – `magsag mcp sync` renders Google ADK registry entries into `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json`, capturing `generated_at` stamps for audit trails.
+- **Canonical presets** – `ops/adk/servers/*.yaml` store editable MCP definitions; `src/magsag/mcp/presets/servers/` provides bundled defaults for bootstrapping.
+- **Generated artefacts** – `magsag mcp sync` renders deterministic JSON into `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json`, tagging each document with `metadata.source` and `metadata.source_digest` for provenance checks.
 - **Transports** – Streamable HTTP is primary, Server-Sent Events provide backward compatibility, and stdio (`mcp-remote` / `mcp-obsidian`) acts as a rescue path.
 - **CLI workflow** – `magsag mcp bootstrap|ls|doctor|login|inspect` bootstraps configs, diagnoses connectivity, and documents authentication flows.
 - **Observability** – MCP calls emit entries to `.runs/<run_id>/mcp_calls.jsonl` and attach transport/session attributes to OTel spans.
@@ -192,6 +192,7 @@ Use this checklist during review to prevent drift and retain SSOT integrity.
 
 ## Update Log
 
+- 2025-11-03: Migrated MCP workflow to JSON runtime artefacts with YAML sources under `ops/adk/servers/`.
 - 2025-11-03: Documented external SDK drivers, ADK sync pipeline, and CLI touchpoints.
 - 2025-11-02: Added documentation workflows to the canonical map.
 - 2025-11-01: Expanded SSOT guidance with glossary, data contracts, policies, and workflows aligned to ssot reference.

@@ -1,25 +1,31 @@
 {
-  "name": "github",
-  "title": "GitHub REST API",
   "description": "Interact with GitHub repositories and issues.",
-  "version": "2025-11-03",
-  "generated_at": "2025-11-03T05:30:12.766595+00:00",
-  "server": {
-    "type": "http",
-    "entrypoint": "https://api.github.com",
-    "healthcheck": "https://api.github.com/meta",
-    "scopes": [
-      "repo"
-    ],
-    "capabilities": [
-      "http",
-      "pat"
-    ]
-  },
   "metadata": {
+    "source": "ops/adk/catalog.yaml",
+    "source_digest": "47cb3c75ee2d7049780804b3c5ec10b44dae607e1adb05cf59b160c1c61096eb",
     "tags": [
       "github",
       "code"
+    ],
+    "title": "GitHub REST API"
+  },
+  "options": {
+    "capabilities": [
+      "http",
+      "pat"
+    ],
+    "healthcheck": "https://api.github.com/meta"
+  },
+  "permissions": {
+    "scope": [
+      "repo"
     ]
-  }
+  },
+  "server_id": "github",
+  "transport": {
+    "type": "http",
+    "url": "https://api.github.com"
+  },
+  "type": "mcp",
+  "version": "2025-11-03"
 }

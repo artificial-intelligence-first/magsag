@@ -1,9 +1,17 @@
 {
-  "package": "github",
-  "name": "github.list_issues",
   "description": "List issues for a repository.",
+  "metadata": {
+    "operationId": "listIssues",
+    "source": "github",
+    "source_digest": "783aadf7a3e300fe5d2f4025b41d0680d1383e546d9b88a167608460c47714e0",
+    "tags": [
+      "github",
+      "issues"
+    ]
+  },
+  "name": "github.list_issues",
+  "package": "github",
   "schema": {
-    "type": "object",
     "properties": {
       "owner": {
         "type": "string"
@@ -12,27 +20,19 @@
         "type": "string"
       },
       "state": {
-        "type": "string",
+        "default": "open",
         "enum": [
           "open",
           "closed",
           "all"
         ],
-        "default": "open"
+        "type": "string"
       }
     },
     "required": [
       "owner",
       "repo"
-    ]
-  },
-  "metadata": {
-    "source": "github",
-    "generated_at": "2025-11-03T05:30:12.766691+00:00",
-    "tags": [
-      "github",
-      "issues"
     ],
-    "operationId": "listIssues"
+    "type": "object"
   }
 }

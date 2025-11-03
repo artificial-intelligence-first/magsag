@@ -1,0 +1,35 @@
+{
+  "description": "Knowledge graph-based persistent memory system",
+  "fallback": [],
+  "limits": {
+    "rate_per_min": 120,
+    "timeout_s": 20
+  },
+  "metadata": {
+    "source": "ops/adk/servers/memory.yaml",
+    "source_digest": "5866361b71a798909c371a2079645f282a29aec32e0626e2af7ac927ad659bb4"
+  },
+  "options": {},
+  "permissions": {
+    "extra": {},
+    "scope": [
+      "read:memory",
+      "write:memory"
+    ],
+    "tools": {}
+  },
+  "scopes": [],
+  "server_id": "memory",
+  "transport": {
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-memory@2025.9.25"
+    ],
+    "command": "npx",
+    "env": {},
+    "headers": {},
+    "type": "stdio"
+  },
+  "type": "mcp",
+  "version": "1"
+}

@@ -17,8 +17,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, TypeVar
 
-import yaml
-
 from magsag.api.config import get_settings
 from magsag.core.permissions import ToolPermission, mask_tool_args
 from magsag.governance.approval_gate import ApprovalGate
@@ -31,6 +29,7 @@ from magsag.mcp.client import (
     TransportType,
 )
 from magsag.mcp.config import MCPServerConfig, TransportDefinition
+from magsag.mcp.registry import load_server_config
 from magsag.storage import get_storage_backend
 
 
@@ -54,19 +53,19 @@ def _servers_dir() -> Path:
 def _load_server_config(server_id: str) -> MCPServerConfig:
     if server_id in _SERVER_CONFIG_CACHE:
         return _SERVER_CONFIG_CACHE[server_id]
+    servers_dir = _servers_dir()
+    candidate = servers_dir / f"{server_id}.json"
 
-    config_path = _servers_dir() / f"{server_id}.yaml"
-    if not config_path.exists():
-        raise MCPClientError(f"MCP server config not found: {config_path}")
+    if candidate.exists():
+        config = load_server_config(candidate)
+        config.validate_type_fields()
+        _SERVER_CONFIG_CACHE[server_id] = config
+        return config
 
-    with open(config_path, "r", encoding="utf-8") as handle:
-        raw_data = yaml.safe_load(handle) or {}
-
-    config = MCPServerConfig(**raw_data)
-    config.validate_type_fields()
-
-    _SERVER_CONFIG_CACHE[server_id] = config
-    return config
+    raise MCPClientError(
+        f"MCP server config not found. Expected JSON artefact at {candidate}. "
+        "Regenerate MCP outputs via 'magsag mcp sync'."
+    )
 
 
 def _get_permission_evaluator() -> PermissionEvaluator:
@@ -134,15 +133,14 @@ async def _get_mcp_client(server_id: str, retry_attempts: Optional[int]) -> Asyn
         retry_config = RetryConfig(max_attempts=retry_attempts) if retry_attempts else None
 
         if transport_name == "stdio":
+            if not selected_transport.command:
+                raise MCPClientError(f"STDIO transport for '{server_id}' requires 'command'")
             env_vars: dict[str, str] = {}
-            if config.env:
-                env_vars.update(config.env)
             if selected_transport.env:
                 env_vars.update(selected_transport.env)
-            args_override = "args" in getattr(selected_transport, "model_fields_set", set())
             client_config = {
-                "command": selected_transport.command or config.command,
-                "args": selected_transport.args if args_override else config.args,
+                "command": selected_transport.command,
+                "args": list(selected_transport.args),
                 "limits": config.limits.model_dump(),
                 "env": env_vars,
             }
@@ -153,11 +151,11 @@ async def _get_mcp_client(server_id: str, retry_attempts: Optional[int]) -> Asyn
                 retry_config=retry_config,
             )
         elif transport_name == "http":
-            if not selected_transport.url and not config.url:
+            if not selected_transport.url:
                 raise MCPClientError(f"HTTP transport for '{server_id}' requires 'url'")
             client_config = {
-                "url": selected_transport.url or config.url,
-                "headers": selected_transport.headers or config.headers,
+                "url": selected_transport.url,
+                "headers": dict(selected_transport.headers),
                 "limits": config.limits.model_dump(),
             }
             client = AsyncMCPClient(
@@ -167,9 +165,11 @@ async def _get_mcp_client(server_id: str, retry_attempts: Optional[int]) -> Asyn
                 retry_config=retry_config,
             )
         elif transport_name == "websocket":
+            if not selected_transport.url:
+                raise MCPClientError(f"Websocket transport for '{server_id}' requires 'url'")
             client_config = {
-                "url": selected_transport.url or config.url,
-                "headers": selected_transport.headers or config.headers,
+                "url": selected_transport.url,
+                "headers": dict(selected_transport.headers),
                 "limits": config.limits.model_dump(),
             }
             client = AsyncMCPClient(

@@ -1,43 +1,43 @@
 {
-  "package": "notion",
-  "name": "notion.query_database",
   "description": "Query a Notion database using optional filters and sorts.",
+  "metadata": {
+    "operationId": "queryDatabase",
+    "source": "notion",
+    "source_digest": "10d8bce43b145e47bf82c12bee49faa6e938c589827ed60a633a99184ebdcdb7",
+    "tags": [
+      "notion",
+      "database"
+    ]
+  },
+  "name": "notion.query_database",
+  "package": "notion",
   "schema": {
-    "type": "object",
     "properties": {
       "database_id": {
-        "type": "string",
-        "description": "Target database identifier."
+        "description": "Target database identifier.",
+        "type": "string"
       },
       "filter": {
-        "type": "object",
-        "description": "Optional filter object following Notion API format."
-      },
-      "sorts": {
-        "type": "array",
-        "items": {
-          "type": "object"
-        },
-        "description": "Optional array of sort descriptors."
-      },
-      "start_cursor": {
-        "type": "string"
+        "description": "Optional filter object following Notion API format.",
+        "type": "object"
       },
       "page_size": {
         "type": "integer"
+      },
+      "sorts": {
+        "description": "Optional array of sort descriptors.",
+        "items": {
+          "type": "object"
+        },
+        "type": "array"
+      },
+      "start_cursor": {
+        "type": "string"
       }
     },
     "required": [
       "database_id"
-    ]
-  },
-  "metadata": {
-    "source": "notion",
-    "generated_at": "2025-11-03T05:30:12.765982+00:00",
-    "tags": [
-      "notion",
-      "database"
     ],
-    "operationId": "queryDatabase"
+    "type": "object"
   }
 }

@@ -2,8 +2,8 @@
 title: Changelog Workflow
 slug: workflows-changelog
 status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+last_updated: 2025-11-03
+last_synced: '2025-11-03'
 tags:
 - documentation
 - workflow
@@ -63,11 +63,13 @@ This document codifies how changelog entries are authored, reviewed, published, 
 ```bash
 uv run python ops/tools/check_docs.py
 uv run ruff check docs
+uv run magsag mcp sync --dry-run  # Run when changelog touches MCP assets
 ```
 
 Log results in delivery notes or `docs/development/validation-memo.md`. Record reasons when checks are skipped.
 
 ## Update Log
 
+- 2025-11-03: Added MCP sync dry-run to validation guidance.
 - 2025-11-02: Adopted American English spelling throughout the workflow.
 - 2025-11-02: Added initial workflow covering canonical surfaces, entry structure, maintenance cadence, and validation.

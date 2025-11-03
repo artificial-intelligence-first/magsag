@@ -40,12 +40,12 @@ MCP Tool Template provides a standardized structure for creating skills that wra
 
 ## When to Use
 - You need to integrate an external MCP tool as a reusable skill
-- The MCP server is configured in `.mcp/servers/<server-id>.yaml`
+- The MCP server source lives in `ops/adk/servers/<server-id>.yaml` and produces `.mcp/servers/<server-id>.json`
 - Input and output data structures are defined via JSON Schema contracts
 - The tool will be invoked by agents or other orchestration workflows
 
 ## Prerequisites
-- MCP server configured in `.mcp/servers/<server-id>.yaml` with appropriate scopes
+- MCP server configured via `ops/adk/servers/<server-id>.yaml` and regenerated to `.mcp/servers/<server-id>.json`
 - Input schema defined at `catalog/contracts/<input-contract>.json`
 - Output schema defined at `catalog/contracts/<output-contract>.json`
 - Environment variables required by the MCP server (if any) are set
@@ -123,7 +123,7 @@ MCP Tool Template provides a standardized structure for creating skills that wra
 - MCP Official Documentation: https://modelcontextprotocol.io/
 
 ## Troubleshooting
-- **MCP Server Not Found**: Verify the server is configured in `.mcp/servers/<server-id>.yaml`
+- **MCP Server Not Found**: Verify `ops/adk/servers/<server-id>.yaml` exists and `.mcp/servers/<server-id>.json` is up to date
 - **Rate Limit Exceeded**: Check the `limits.rate_per_min` setting in SKILL.md and MCP server config
 - **Schema Validation Errors**: Ensure contracts match actual payload structure
 - **Timeout Errors**: Increase latency threshold or optimize MCP tool query

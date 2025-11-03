@@ -198,8 +198,6 @@ async def test_get_mcp_client_stdio_allows_empty_args_override(monkeypatch: pyte
 
     config = MCPServerConfig(
         server_id="stdio-empty",
-        command="run",
-        args=["--default"],
         transport=TransportDefinition(
             type="stdio",
             command="run",
@@ -246,13 +244,10 @@ async def test_get_mcp_client_stdio_includes_env(monkeypatch: pytest.MonkeyPatch
         transport=TransportDefinition(
             type="stdio",
             command="run",
-            env={"TOKEN": "transport-token"},
+            env={"TOKEN": "transport-token", "BASE": "transport-base"},
             args=["--flag"],
         ),
-        env={"BASE": "base-value"},
     )
-    config.env["TOKEN"] = "base-token"
-    config.env["BASE"] = "base-value"
 
     class DummyClient:
         def __init__(self, *, server_name: str, transport: TransportType, config: dict[str, Any], retry_config: RetryConfig | None) -> None:
@@ -272,7 +267,7 @@ async def test_get_mcp_client_stdio_includes_env(monkeypatch: pytest.MonkeyPatch
         client = await _get_mcp_client("stdio-env", retry_attempts=None)
         assert isinstance(client, DummyClient)
         assert client._config_payload["env"] == {
-            "BASE": "base-value",
+            "BASE": "transport-base",
             "TOKEN": "transport-token",
         }
         assert client._config_payload["args"] == ["--flag"]

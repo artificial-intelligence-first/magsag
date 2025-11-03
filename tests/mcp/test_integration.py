@@ -12,7 +12,7 @@ from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import pytest
-import yaml
+import json
 
 from magsag.mcp import MCPRegistry, MCPRuntime, MCPToolResult
 
@@ -45,17 +45,21 @@ class TestSkillsMCPIntegration:
         """Create a registry with PostgreSQL server."""
         servers_dir, _ = temp_dirs
 
-        pg_file = servers_dir / "pg-readonly.yaml"
-        with open(pg_file, "w") as f:
-            yaml.dump(
+        pg_file = servers_dir / "pg-readonly.json"
+        pg_file.write_text(
+            json.dumps(
                 {
                     "server_id": "pg-readonly",
                     "type": "postgres",
-                    "scopes": ["read:tables"],
+                    "description": "Test PostgreSQL server",
+                    "permissions": {"scope": ["mcp:pg-readonly"]},
                     "conn": {"url_env": "PG_RO_URL"},
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         registry = MCPRegistry(servers_dir=servers_dir)
         registry.discover_servers()
@@ -193,28 +197,39 @@ class TestSkillsMCPIntegration:
         servers_dir, _ = temp_dirs
 
         # Create multiple server configs
-        pg_file = servers_dir / "pg.yaml"
-        with open(pg_file, "w") as f:
-            yaml.dump(
+        pg_file = servers_dir / "pg.json"
+        pg_file.write_text(
+            json.dumps(
                 {
                     "server_id": "pg-readonly",
                     "type": "postgres",
                     "conn": {"url_env": "PG_URL"},
+                    "permissions": {"scope": ["mcp:pg-readonly"]},
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
-        fs_file = servers_dir / "fs.yaml"
-        with open(fs_file, "w") as f:
-            yaml.dump(
+        fs_file = servers_dir / "fs.json"
+        fs_file.write_text(
+            json.dumps(
                 {
                     "server_id": "filesystem",
                     "type": "mcp",
-                    "command": "npx",
-                    "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+                    "transport": {
+                        "type": "stdio",
+                        "command": "npx",
+                        "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+                    },
+                    "permissions": {"scope": ["mcp:filesystem"]},
                 },
-                f,
+                indent=2,
             )
+            + "\n",
+            encoding="utf-8",
+        )
 
         registry = MCPRegistry(servers_dir=servers_dir)
         registry.discover_servers()
@@ -288,17 +303,24 @@ class TestMCPRuntimeLifecycle:
             servers_dir = Path(tmpdir)
 
             # Create a test server config
-            test_file = servers_dir / "test.yaml"
-            with open(test_file, "w") as f:
-                yaml.dump(
+            test_file = servers_dir / "test.json"
+            test_file.write_text(
+                json.dumps(
                     {
                         "server_id": "test-server",
                         "type": "mcp",
-                        "command": "npx",
-                        "args": ["-y", "@test/server"],
+                        "transport": {
+                            "type": "stdio",
+                            "command": "npx",
+                            "args": ["-y", "@test/server"],
+                        },
+                        "permissions": {"scope": ["mcp:test-server"]},
                     },
-                    f,
+                    indent=2,
                 )
+                + "\n",
+                encoding="utf-8",
+            )
 
             registry = MCPRegistry(servers_dir=servers_dir)
             registry.discover_servers()

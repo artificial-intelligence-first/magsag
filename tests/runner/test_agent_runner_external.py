@@ -12,12 +12,20 @@ class DummyExternalTool:
 
     async def __call__(self, **kwargs: Any) -> Dict[str, Any]:
         self.calls.append(kwargs)
+        budget = kwargs.get("budget_cents")
+        timeout = kwargs.get("timeout_sec")
         return {
             "status": "success",
             "target": kwargs["target"],
             "skill": kwargs["skill_name"],
             "output": {},
             "metadata": {},
+            "traceparent": "00-dummmytrace-0000000000000000-0000000000000000-01",
+            "trace_id": kwargs.get("trace_id"),
+            "span_id": "dummy-span",
+            "parent_span_id": None,
+            "budget_cents": budget,
+            "timeout_sec": timeout,
         }
 
 
@@ -106,6 +114,31 @@ async def test_delegate_external_auto_resolves_from_metadata(monkeypatch: pytest
 
     assert result["target"] == "claude"
     assert dummy_tool.calls[0]["target"] == "claude"
+
+
+@pytest.mark.asyncio
+async def test_delegate_external_includes_trace_budget_and_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    runner = AgentRunner()
+    dummy_tool = DummyExternalTool()
+    monkeypatch.setattr(runner, "_get_external_handoff_tool", lambda: dummy_tool)
+
+    result = await runner.delegate_external_async(
+        target="codex",
+        skill_name="code.exec",
+        payload={"input": "print('ok')"},
+        budget_cents=500,
+        timeout_sec=120,
+        trace_id="trace-xyz",
+    )
+
+    call = dummy_tool.calls[0]
+    assert call["budget_cents"] == 500
+    assert call["timeout_sec"] == 120
+    assert call["trace_id"] == "trace-xyz"
+
+    assert result["budget_cents"] == 500
+    assert result["timeout_sec"] == 120
+    assert "traceparent" in result and isinstance(result["traceparent"], str)
 
 
 class RecordingApprovalGate:

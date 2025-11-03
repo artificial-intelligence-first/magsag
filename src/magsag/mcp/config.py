@@ -1,7 +1,7 @@
 """MCP Server configuration data models.
 
 This module defines the data models for MCP server configurations,
-which are loaded from .mcp/servers/*.yaml files.
+which are loaded from generated .mcp/servers/*.json artefacts.
 """
 
 from __future__ import annotations
@@ -183,7 +183,7 @@ class PermissionSettings(BaseModel):
 class MCPServerConfig(BaseModel):
     """Configuration for a single MCP server.
 
-    This model represents the structure of .mcp/servers/*.yaml files.
+    This model represents the structure of .mcp/servers/*.json artefacts.
     """
 
     server_id: str = Field(
@@ -221,39 +221,13 @@ class MCPServerConfig(BaseModel):
         default_factory=dict,
         description="Additional preset options (transport-specific)",
     )
-    url: str | None = Field(
-        default=None,
-        description="Legacy transport endpoint",
-    )
-    headers: Dict[str, str] = Field(
-        default_factory=dict,
-        description="Legacy transport headers",
-    )
-    transport_override: str | None = Field(
-        default=None,
-        description="Legacy transport override (http/sse/websocket/stdio)",
-    )
-
-    # MCP server specific fields (type="mcp")
-    command: str | None = Field(
-        default=None,
-        description="Command to execute for MCP server (e.g., npx)",
-    )
-    args: list[str] = Field(
-        default_factory=list,
-        description="Arguments for the MCP server command",
-    )
-    env: Dict[str, str] = Field(
-        default_factory=dict,
-        description="Environment variables for MCP command execution",
-    )
 
     # PostgreSQL specific fields (type="postgres")
     conn: PostgresConnection | None = Field(
         default=None,
         description="PostgreSQL connection configuration",
     )
-    raw: Dict[str, Any] = Field(default_factory=dict, description="Original YAML payload")
+    raw: Dict[str, Any] = Field(default_factory=dict, description="Original payload copy")
 
     model_config = {
         "populate_by_name": True,
@@ -272,12 +246,12 @@ class MCPServerConfig(BaseModel):
             normalized["server_id"] = normalized["id"]
 
         transport_value = normalized.get("transport")
-        if isinstance(transport_value, str):
-            # Legacy transport override (stdio/http/websocket)
-            normalized["transport_override"] = transport_value
-            normalized["transport"] = None
+        if isinstance(transport_value, TransportDefinition):
+            normalized["transport"] = transport_value
         elif isinstance(transport_value, dict):
             normalized["transport"] = transport_value
+        elif transport_value is not None:
+            raise ValueError("transport must be an object describing the primary connection")
 
         fallback_value = normalized.get("fallback")
         if fallback_value is None:
@@ -300,32 +274,12 @@ class MCPServerConfig(BaseModel):
             else:
                 self.type = "mcp"
 
-        # Backfill legacy top-level fields when transport definitions are provided
-        if self.transport and not self.url:
-            if self.transport.type in {"http", "sse", "websocket"}:
-                self.url = self.transport.url
-                self.headers = self.transport.headers
-            elif self.transport.type == "stdio":
-                self.command = self.transport.command
-                self.args = self.transport.args
-                self.env = self.transport.env
-
         return self
 
     @model_validator(mode="after")
     def _expand_environment(self) -> "MCPServerConfig":
         env_vars = os.environ
 
-        if self.url:
-            self.url = _expand_string(self.url, env_vars)
-        if self.headers:
-            self.headers = _expand_mapping(self.headers, env_vars, drop_empty=True)
-        if self.command:
-            self.command = _expand_string(self.command, env_vars)
-        if self.args:
-            self.args = _expand_list(self.args, env_vars)
-        if self.env:
-            self.env = _expand_mapping(self.env, env_vars, drop_empty=True)
         if self.options:
             self.options = _expand_nested(self.options, env_vars)
         if self.transport:
@@ -355,9 +309,9 @@ class MCPServerConfig(BaseModel):
     def validate_type_fields(self) -> None:
         """Validate that required fields are present based on server type."""
         if self.type == "mcp":
-            if not self.transport and not self.url and not self.command:
+            if not self.transport and not self.fallback:
                 raise ValueError(
-                    "MCP servers must specify a transport definition, HTTP url, or stdio command"
+                    "MCP servers must specify at least one transport definition"
                 )
         elif self.type == "postgres":
             if not self.conn:
@@ -380,50 +334,8 @@ class MCPServerConfig(BaseModel):
 
         if self.transport is not None:
             chain.append(self.transport)
-        else:
-            if self.url:
-                transport_type: Literal["http", "sse", "websocket"] = "http"
-                if self.transport_override:
-                    override = self.transport_override.strip().lower()
-                    if override == "sse":
-                        transport_type = "sse"
-                    elif override == "websocket":
-                        transport_type = "websocket"
-                    elif override == "http":
-                        transport_type = "http"
-                chain.append(
-                    TransportDefinition(
-                        type=transport_type,
-                        url=self.url,
-                        headers=self.headers,
-                        timeout=float(self.limits.timeout_s),
-                    )
-                )
-
-            if self.command:
-                chain.append(
-                    TransportDefinition(
-                        type="stdio",
-                        command=self.command,
-                        args=self.args,
-                        env=self.env,
-                        timeout=float(self.limits.timeout_s),
-                    )
-                )
 
         for fallback in self.fallback:
             chain.append(fallback)
-
-        # Ensure stdio fallback exists for legacy configs
-        if not chain and self.command:
-            chain.append(
-                TransportDefinition(
-                    type="stdio",
-                    command=self.command,
-                    args=self.args,
-                    env=self.env,
-                    timeout=float(self.limits.timeout_s),
-                )
-            )
 
         return chain

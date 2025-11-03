@@ -2,7 +2,7 @@
 title: MAGSAG Storage Layer
 slug: storage-layer
 status: living
-last_updated: 2025-11-02
+last_updated: 2025-11-03
 tags:
 - storage
 - observability
@@ -37,7 +37,6 @@ The storage layer provides CLI and API tools for managing observability data gen
 
 - **Agent developers**: Continue using `ObservabilityLogger` (injected via `obs` parameter in agent code)
 - **Data analysts/operators**: Use the storage layer CLI commands to query and manage execution data
-- **Migration tool**: Imports legacy `.runs/agents/` data into the storage layer for analysis
 
 The storage layer complements (not replaces) the existing agent observability system.
 Cost tracking is handled separately by `magsag.observability.cost_tracker` and persists artifacts under `.runs/costs/` (JSONL ledger and SQLite database).
@@ -157,26 +156,6 @@ magsag data vacuum --hot-days 7
 # Archive old data to S3 (future)
 magsag data archive s3://my-bucket/magsag-archive --since 30
 ```
-
-## Migration from Legacy Storage
-
-If you have existing data in `.runs/agents/`, migrate it:
-
-```bash
-# Preview migration
-python ops/scripts/migrate_to_storage.py --source .runs/agents --dry-run
-
-# Perform migration
-python ops/scripts/migrate_to_storage.py --source .runs/agents
-
-# Custom database path
-python ops/scripts/migrate_to_storage.py \
-  --source .runs/agents \
-  --backend sqlite \
-  --db-path /var/magsag/storage.db
-```
-
-Cost ledgers produced after the migration live in `.runs/costs/` and do not require conversion; back up both `costs.jsonl` and `costs.db` for historical analysis.
 
 ## Programmatic Access
 
@@ -410,5 +389,6 @@ Database is growing too large. Solutions:
 
 ## Update Log
 
+- 2025-11-03: Removed legacy `.runs/agents` migration guidance and aligned storage docs with JSON MCP workflow.
 - 2025-11-02: Updated metadata and aligned tags with documentation taxonomy.
 - 2025-11-01: Applied the unified documentation standard and refreshed metadata.
