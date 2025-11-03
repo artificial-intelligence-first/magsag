@@ -105,12 +105,17 @@ def bootstrap_presets(
 
 
 def list_local_servers(servers_dir: Path | None = None) -> list[Path]:
-    """List JSON server artefacts available in the local workspace."""
+    """List server configuration files available in the local workspace."""
     directory = servers_dir or DEFAULT_SERVERS_DIR
     if not directory.exists():
         return []
 
-    return sorted(directory.glob("*.json"))
+    candidates = (
+        set(directory.glob("*.json"))
+        | set(directory.glob("*.yaml"))
+        | set(directory.glob("*.yml"))
+    )
+    return sorted(candidates)
 
 
 class MCPRegistryError(Exception):
