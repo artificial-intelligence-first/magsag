@@ -76,7 +76,7 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 
 ## Active Plans
 
-- [MCP Preset JSON Unification](../development/plans/mcp-json-unification.md) — Standardise runtime artefacts on generated JSON and relocate human-authored sources.
+- [SDK & ADK Unified Runtime Migration](../development/plans/sdk-adk-runtime-migration.md) — Remove legacy workflows, standardise MCP artefacts, and refresh tooling/docs/tests for the new stack.
 
 ## See Also
 
@@ -85,7 +85,7 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 
 ## Update Log
 
-- 2025-11-05: Added MCP JSON unification plan and retired SDK unification plan.
+- 2025-11-05: Added SDK & ADK runtime migration plan and retired SDK unification plan.
 - 2025-11-03: Logged SDK unification plan under Active Plans.
 - 2025-11-02: Linked workflow and template references.
 - 2025-11-01: Adopted the unified documentation format and clarified audience guidance.

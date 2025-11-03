@@ -30,6 +30,7 @@ sources: []
 
 ## Active Plans
 
+- [SDK & ADK Unified Runtime Migration](docs/development/plans/sdk-adk-runtime-migration.md) — Complete post-rollout cleanup for the new SDK/ADK workflows.
 
 ## Template
 
@@ -88,5 +89,6 @@ sources: []
 
 ## Update Log
 
+- 2025-11-05: Replaced SDK unification entry with SDK & ADK runtime migration plan.
 - 2025-11-03: Added Active Plans section and linked the SDK unification rollout ExecPlan.
 - 2025-11-01: Converted template to the unified documentation format.
