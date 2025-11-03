@@ -2,8 +2,8 @@
 title: MAGSAG Changelog
 slug: changelog
 status: living
-last_updated: 2025-11-01
-last_synced: '2025-11-01'
+last_updated: 2025-11-03
+last_synced: '2025-11-03'
 tags:
 - magsag
 - changelog
@@ -50,6 +50,10 @@ sources:
 ### [Unreleased]
 
 #### Added
+- External handoff pipeline linking OpenAI Agents SDK to Claude Agent SDK and Codex drivers via `ExternalHandoffTool`, `POST /api/v1/agents/handoff`, and `magsag agent handoff`.
+- Google ADK sync workflow (`magsag mcp sync`) rendering `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json` from `ops/adk/catalog.yaml`.
+- BudgetController for provider spend limits with environment-driven configuration and integration into external handoffs.
+- Traceparent helper (`observability.tracing.current_traceparent`) for downstream integrations needing explicit context strings.
 - Durable runner snapshot store now auto-creates run metadata, persists snapshots to configured storage backends, and emits `run.snapshot.saved` / `run.resume` events.
 - Async MCP client and decorators gained full JSON-RPC transport support (stdio/websocket/http), approval-gated invocation flow, and dedicated unit coverage.
 - Handoff tool now records `handoff.requested` / `handoff.completed` events via the storage backend with regression tests covering the event path.
@@ -58,6 +62,9 @@ sources:
 - MCP observability ledger (`mcp_calls.jsonl`) and OTel span attributes capturing transport, session ID, protocol version, and policy outcomes.
 
 #### Changed
+- PlanIR expanded to capture versioning, capability requirements, budgets, and audit metadata; AgentRunner now resolves external targets and enforces approvals/budgets before delegation.
+- External handoff CLI/API resolve targets automatically when `--target auto` or capability hints are supplied, and the runtime ensures Claude/Codex dispatchers are always registered.
+- Claude and Codex drivers register with the external dispatcher registry, apply sandbox enforcement, and propagate trace context for Langfuse/OTel correlation.
 - AgentRunner automatically captures session `input`/`output` memories when memory IR is enabled and routes MAGSAG handoffs through the configured runner payload.
 - Catalog skills (`doc-gen`, `salary-band-lookup`, `example-web-search`) now require the configured MCP runtime, query governed data sources, and surface errors when MCP is unavailable; associated docs, YAML policies, and tests were updated.
 - FastMCP server integration executes real skills via `AgentRunner`/`SkillRuntime`, replacing the Phase 2 placeholder response pipeline.
@@ -65,6 +72,13 @@ sources:
 - Documentation workflows, templates, and tag taxonomy were consolidated (`docs/workflows/*`, `docs/_templates/*`, `docs/governance/taxonomy.md`) with cross-references added across AGENTS/SSOT/CONTRIBUTING.
 - MCP integration guide and `.mcp/README` were refreshed for HTTP-first presets, Typer CLI tooling, and provider-specific authentication guidance.
 - Fetch sample server now uses `@pulsemcp/pulse-fetch`, and the legacy git preset was removed from `.mcp/servers/` to avoid broken npx installs.
+
+#### Fixed
+- `AgentRunner.delegate_external()` now raises a clear error when invoked inside a running event loop, preventing illegal loop reuse.
+- External handoff budget enforcement accepts zero-cent limits, ensuring budget guards trigger even for no-spend delegations.
+- Approval gating for external handoffs normalizes risk tags, so mixed-case values still require review.
+- `observability.tracing.current_traceparent()` and `sdks.base.build_trace_context()` no longer treat `is_valid` as callable, avoiding runtime errors when spans are active.
+- Planner lazily imports `PlanIR`/`PlanStep` at runtime so `Planner.plan()` returns a valid PlanIR instead of raising `TypeError`.
 
 ### [0.2.0] - 2025-10-31
 

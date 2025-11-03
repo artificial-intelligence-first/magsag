@@ -343,6 +343,30 @@ def trace_span(name: str, attributes: Optional[Dict[str, Any]] = None) -> Iterat
         yield span
 
 
+def current_traceparent() -> Optional[str]:
+    """Return the current traceparent string when tracing is active."""
+    if not OTEL_AVAILABLE:
+        return None
+
+    span = trace.get_current_span()
+    if span is None:
+        return None
+
+    try:
+        ctx = span.get_span_context()
+    except AttributeError:
+        return None
+
+    is_valid_attr = getattr(ctx, "is_valid", False)
+    is_valid = is_valid_attr() if callable(is_valid_attr) else bool(is_valid_attr)
+    if not is_valid:
+        return None
+
+    trace_id = f"{ctx.trace_id:032x}"
+    span_id = f"{ctx.span_id:016x}"
+    return f"00-{trace_id}-{span_id}-01"
+
+
 # Re-export Langfuse decorator for convenience
 __all__ = [
     "ObservabilityConfig",
@@ -353,5 +377,6 @@ __all__ = [
     "get_langfuse_client",
     "shutdown_observability",
     "trace_span",
+    "current_traceparent",
     "observe",
 ]

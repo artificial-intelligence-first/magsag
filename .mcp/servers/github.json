@@ -1,0 +1,25 @@
+{
+  "name": "github",
+  "title": "GitHub REST API",
+  "description": "Interact with GitHub repositories and issues.",
+  "version": "2025-11-03",
+  "generated_at": "2025-11-03T05:30:12.766595+00:00",
+  "server": {
+    "type": "http",
+    "entrypoint": "https://api.github.com",
+    "healthcheck": "https://api.github.com/meta",
+    "scopes": [
+      "repo"
+    ],
+    "capabilities": [
+      "http",
+      "pat"
+    ]
+  },
+  "metadata": {
+    "tags": [
+      "github",
+      "code"
+    ]
+  }
+}

@@ -20,9 +20,9 @@ from magsag.worktree import (
 
 app = typer.Typer(no_args_is_help=True)
 flow_app = typer.Typer(help="Flow Runner integration commands")
-agent_app = typer.Typer(help="Agent orchestration commands")
+agent_app = typer.Typer(help="Agent orchestration commands (MAG, Claude, Codex)")
 data_app = typer.Typer(help="Data management commands")
-mcp_app = typer.Typer(help="Model Context Protocol server commands")
+mcp_app = typer.Typer(help="Model Context Protocol commands and ADK sync")
 wt_app = typer.Typer(help="Git worktree orchestration commands")
 
 
@@ -182,6 +182,34 @@ def mcp_doctor(
 
     for report in reports:
         _render_doctor_report(report)
+
+
+@mcp_app.command("sync")
+def mcp_sync(
+    registry: pathlib.Path = typer.Option(
+        pathlib.Path("ops/adk/catalog.yaml"),
+        "--registry",
+        help="Path to ADK registry YAML",
+    ),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview outputs without writing files"),
+) -> None:
+    """Generate MCP server and catalog tool docs using the ADK registry."""
+
+    from magsag.sdks.google_adk.sync import sync_adk_catalog
+
+    try:
+        paths = sync_adk_catalog(registry_path=registry, dry_run=dry_run)
+    except FileNotFoundError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1)
+    except Exception as exc:  # noqa: BLE001
+        typer.echo(f"Sync failed: {exc}", err=True)
+        raise typer.Exit(1)
+
+    header = "Planned outputs:" if dry_run else "Generated artefacts:"
+    typer.echo(header)
+    for path in paths:
+        typer.echo(f"- {path}")
 
 
 @mcp_app.command("login")
@@ -567,6 +595,112 @@ def agent_run(
     except Exception as e:
         typer.echo(f"Execution failed: {e}", err=True)
         raise typer.Exit(2)
+
+
+@agent_app.command("handoff")
+def agent_handoff(
+    target: str = typer.Argument(
+        "auto",
+        help="External target to delegate (claude/codex/auto). Defaults to auto for capability-based routing.",
+    ),
+    skill: str = typer.Argument(..., help="Skill identifier on the external target"),
+    input_path: pathlib.Path | None = typer.Option(
+        None,
+        "--input",
+        "-i",
+        help="JSON file with payload (reads stdin when omitted or '-')",
+    ),
+    file_ref: list[str] = typer.Option([], "--file", help="Attach file path or URI"),
+    tag: list[str] = typer.Option([], "--tag", help="Audit tag in key=value format"),
+    meta: list[str] = typer.Option([], "--meta", help="Metadata entry in key=value format"),
+    capability: list[str] = typer.Option(
+        [],
+        "--capability",
+        "-c",
+        help="Capability hint for auto target resolution (repeatable).",
+    ),
+    budget_cents: int | None = typer.Option(None, "--budget", help="Budget guard in cents"),
+    timeout_sec: int | None = typer.Option(None, "--timeout", help="Timeout in seconds"),
+    trace_id: str | None = typer.Option(None, "--trace-id", help="Existing trace identifier"),
+    step_id: str | None = typer.Option(None, "--step-id", help="Plan step identifier"),
+    preferred_target: str | None = typer.Option(
+        None,
+        "--preferred",
+        help="Preferred target (claude/codex) when resolving automatically.",
+    ),
+) -> None:
+    """Delegate work to external SDK drivers using the agent runtime."""
+
+    import json
+    import sys
+
+    from magsag.governance.approval_gate import ApprovalGateError
+    from magsag.governance.budget_controller import BudgetExceededError
+    from magsag.runners.agent_runner import AgentRunner
+
+    payload_data: dict[str, Any]
+    if input_path is None or str(input_path) == "-":
+        try:
+            payload_data = json.load(sys.stdin)
+        except json.JSONDecodeError as exc:
+            typer.echo(f"Invalid JSON payload from stdin: {exc}", err=True)
+            raise typer.Exit(1)
+    else:
+        try:
+            payload_data = json.loads(input_path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            typer.echo(f"Input file not found: {input_path}", err=True)
+            raise typer.Exit(1)
+        except json.JSONDecodeError as exc:
+            typer.echo(f"Invalid JSON in {input_path}: {exc}", err=True)
+            raise typer.Exit(1)
+
+    audit_tags: dict[str, str] = {}
+    for item in tag:
+        if "=" not in item:
+            typer.echo(f"Invalid tag '{item}', expected key=value", err=True)
+            raise typer.Exit(1)
+        key, value = item.split("=", 1)
+        audit_tags[key] = value
+
+    metadata: dict[str, Any] = {}
+    for item in meta:
+        if "=" not in item:
+            typer.echo(f"Invalid metadata '{item}', expected key=value", err=True)
+            raise typer.Exit(1)
+        key, value = item.split("=", 1)
+        metadata[key] = value
+
+    runner = AgentRunner()
+    target_normalized = target.strip().lower() if target else ""
+    preferred_normalized = preferred_target.strip().lower() if preferred_target else None
+
+    try:
+        result = runner.delegate_external(
+            target=target_normalized or None,
+            skill_name=skill,
+            payload=payload_data,
+            files=file_ref,
+            trace_id=trace_id,
+            step_id=step_id,
+            budget_cents=budget_cents,
+            timeout_sec=timeout_sec,
+            audit_tags=audit_tags,
+            metadata=metadata,
+            capabilities_required=[cap.strip() for cap in capability if cap.strip()],
+            preferred_target=preferred_normalized,
+        )
+    except BudgetExceededError as exc:
+        typer.echo(f"Budget exceeded: {exc}", err=True)
+        raise typer.Exit(3)
+    except ApprovalGateError as exc:
+        typer.echo(f"Approval required: {exc}", err=True)
+        raise typer.Exit(4)
+    except Exception as exc:  # noqa: BLE001
+        typer.echo(f"External handoff failed: {exc}", err=True)
+        raise typer.Exit(5)
+
+    typer.echo(json.dumps(result, ensure_ascii=False, indent=2))
 
 
 @data_app.command("init")

@@ -2,14 +2,14 @@
 title: ExecPlan Quick Reference
 slug: architecture-plans
 status: living
-last_updated: 2025-11-02
+last_updated: 2025-11-05
 tags:
 - plans
 - workflow
 summary: Lightweight framework for creating, maintaining, and closing ExecPlans.
 authors: []
 sources: []
-last_synced: '2025-11-02'
+last_synced: '2025-11-05'
 description: Lightweight framework for creating, maintaining, and closing ExecPlans.
 ---
 
@@ -74,6 +74,14 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 - Attach supporting scripts or diagrams next to the plan under the same slug.
 - Reflect key learnings in `docs/architecture/ssot.md` or other canonical surfaces.
 
+## Active Plans
+
+- None.
+
+## Completed Plans
+
+- [SDK Unification and Parallel Worktrees Rollout](../development/plans/sdk-unification.md) - Completed 2025-11-05 (Agents SDK unification, ADK sync, observability, governance hardening).
+
 ## See Also
 
 - `docs/workflows/plans.md` — End-to-end ExecPlan workflow and maintenance cadence.
@@ -81,5 +89,7 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 
 ## Update Log
 
+- 2025-11-05: Marked SDK unification plan completed and moved to Completed Plans.
+- 2025-11-03: Logged SDK unification plan under Active Plans.
 - 2025-11-02: Linked workflow and template references.
 - 2025-11-01: Adopted the unified documentation format and clarified audience guidance.

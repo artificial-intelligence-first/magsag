@@ -1,0 +1,43 @@
+{
+  "package": "notion",
+  "name": "notion.query_database",
+  "description": "Query a Notion database using optional filters and sorts.",
+  "schema": {
+    "type": "object",
+    "properties": {
+      "database_id": {
+        "type": "string",
+        "description": "Target database identifier."
+      },
+      "filter": {
+        "type": "object",
+        "description": "Optional filter object following Notion API format."
+      },
+      "sorts": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "description": "Optional array of sort descriptors."
+      },
+      "start_cursor": {
+        "type": "string"
+      },
+      "page_size": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "database_id"
+    ]
+  },
+  "metadata": {
+    "source": "notion",
+    "generated_at": "2025-11-03T05:30:12.765982+00:00",
+    "tags": [
+      "notion",
+      "database"
+    ],
+    "operationId": "queryDatabase"
+  }
+}

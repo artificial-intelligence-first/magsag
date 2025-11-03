@@ -4,12 +4,13 @@ This module defines the foundational data structures for agent execution:
 - CapabilityMatrix: Provider feature support matrix
 - PolicySnapshot: Immutable policy version reference
 - PlanIR: Execution plan with provider selection and configuration
+- PlanStep: Individual step descriptor inside a plan
 - RunIR: Complete agent run specification with tracing metadata
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -50,38 +51,81 @@ class PolicySnapshot(BaseModel):
 class PlanIR(BaseModel):
     """Execution plan intermediate representation.
 
-    Describes how an agent run should be executed, including provider selection,
-    model configuration, optimization flags, and fallback strategies.
-
-    This model is frozen to ensure plan consistency throughout execution.
+    Describes how an agent run should be executed, including ordered steps,
+    dependencies, budget constraints, and routing metadata.
     """
 
     model_config = ConfigDict(frozen=True)
 
-    chain: list[dict[str, Any]] = Field(
-        ..., description="Ordered list of fallback steps, each with provider/model config"
+    plan_id: str = Field(..., description="Unique identifier for this execution plan")
+    version: str = Field(
+        default="1.0.0", description="Semantic version of the PlanIR schema"
     )
-    provider: str = Field(
-        ..., description="Primary provider identifier (e.g., 'openai', 'anthropic')"
+    goal: str = Field(..., description="High-level goal this plan intends to achieve")
+    constraints: list[str] = Field(
+        default_factory=list, description="Explicit constraints to respect"
     )
-    model: str = Field(..., description="Model identifier within provider namespace")
-    use_batch: bool = Field(
-        ..., description="Whether to use batch API for cost optimization"
+    steps: list["PlanStep"] = Field(
+        ..., description="Ordered collection of execution steps"
     )
-    use_cache: bool = Field(
-        ..., description="Whether to enable prompt caching for repeated prefixes"
+    stop_conditions: list[str] = Field(
+        default_factory=list, description="Conditions signalling plan termination"
     )
-    structured_output: bool = Field(
-        ..., description="Whether to enforce structured output via schema"
+    trace_group_id: str | None = Field(
+        default=None,
+        description="Correlated trace group identifier shared across handoffs",
     )
-    moderation: bool = Field(
-        ..., description="Whether to apply content moderation policies"
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Arbitrary metadata preserved for auditing and orchestration hints",
     )
-    sla_ms: int = Field(
-        ..., description="Service level agreement target latency in milliseconds"
+
+
+class PlanStep(BaseModel):
+    """Single execution step within a PlanIR."""
+
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(..., description="Step identifier unique within the plan")
+    role: Literal["MAG", "SAG"] = Field(
+        ..., description="Executing role for this step (MAG or SAG)"
     )
-    cost_budget: float | None = Field(
-        default=None, description="Optional maximum cost budget in USD"
+    description: str = Field(
+        ..., description="Concise human-readable description of the step"
+    )
+    skill: str | None = Field(
+        default=None,
+        description="Optional skill or handler identifier responsible for the work",
+    )
+    inputs: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Input payload or configuration for the step executor",
+    )
+    outputs: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Expected output schema fragments or placeholders",
+    )
+    depends_on: list[str] = Field(
+        default_factory=list,
+        description="Identifiers of prerequisite steps that must complete first",
+    )
+    retry_policy: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Retry configuration (e.g., max_retries, backoff, retry_on)",
+    )
+    timeout_sec: int | None = Field(
+        default=None, description="Optional timeout budget for this step in seconds"
+    )
+    budget_cents: int | None = Field(
+        default=None, description="Optional monetary budget reserved for this step"
+    )
+    capabilities_required: list[str] = Field(
+        default_factory=list,
+        description="Declared capabilities required by the executor (e.g., fs, cli)",
+    )
+    audit_tags: dict[str, str] = Field(
+        default_factory=dict,
+        description="Key-value tags for compliance and audit trails",
     )
 
 

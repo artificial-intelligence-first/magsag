@@ -17,7 +17,18 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Coroutine, Dict, List, Mapping, Optional, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    cast,
+)
 
 import yaml
 
@@ -28,7 +39,10 @@ from magsag.core.memory import (
     apply_default_ttl,
     create_memory,
 )
+from magsag.core.permissions import ToolPermission
 from magsag.evaluation.runtime import EvalRuntime
+from magsag.governance.approval_gate import ApprovalGate, ApprovalGateError
+from magsag.governance.budget_controller import BudgetController
 from magsag.governance.permission_evaluator import PermissionEvaluator
 from magsag.mcp import MCPRegistry, MCPRuntime
 from magsag.observability.context import (
@@ -47,6 +61,9 @@ from magsag.storage.memory_store import (
     PostgresMemoryStore,
     SQLiteMemoryStore,
 )
+
+if TYPE_CHECKING:
+    from magsag.sdks.openai_agents.external_handoff import ExternalHandoffTool
 
 logger = logging.getLogger(__name__)
 
@@ -448,6 +465,16 @@ class AgentRunner:
         else:
             self.handoff_tool = None
 
+        self._external_handoff_tool: Optional["ExternalHandoffTool"] = None
+        self.budget_controller: Optional[BudgetController] = BudgetController.from_env()
+        if self.approvals_enabled and self.permission_evaluator is not None:
+            self.approval_gate: Optional[ApprovalGate] = ApprovalGate(
+                permission_evaluator=self.permission_evaluator,
+                default_timeout_minutes=settings.APPROVAL_TTL_MIN,
+            )
+        else:
+            self.approval_gate = None
+
     def get_durable_runner(self) -> Optional[DurableRunner]:
         """Expose durable runner instance when feature flag is enabled."""
         return self.durable_runner
@@ -665,6 +692,246 @@ class AgentRunner:
             payload=payload,
             platform=platform,
             run_id=effective_run_id,
+        )
+
+    def _get_external_handoff_tool(self) -> "ExternalHandoffTool":
+        """Lazily construct the ExternalHandoffTool bridge."""
+        if self._external_handoff_tool is None:
+            from magsag.sdks.openai_agents.external_handoff import ExternalHandoffTool
+
+            self._external_handoff_tool = ExternalHandoffTool()
+        return self._external_handoff_tool
+
+    def _enforce_external_approval(
+        self,
+        *,
+        target: str,
+        skill_name: str,
+        audit_tags: Mapping[str, str],
+        metadata: Mapping[str, Any],
+        trace_id: Optional[str],
+    ) -> None:
+        if not self.approval_gate:
+            return
+
+        risk_value = audit_tags.get("risk") or audit_tags.get("risk_level")
+        risk = risk_value.lower() if isinstance(risk_value, str) else None
+        requires = audit_tags.get("requires_approval")
+        requires_flag = isinstance(requires, str) and requires.lower() in {"true", "1", "yes"}
+
+        if risk not in {"high", "critical"} and not requires_flag:
+            return
+
+        permission = self.approval_gate.evaluate(
+            tool_name=f"external.{target}.{skill_name}",
+            context={
+                "agent_slug": metadata.get("agent", "external"),
+                "run_id": trace_id,
+                "target": target,
+                "skill": skill_name,
+                "audit_tags": audit_tags,
+            },
+        )
+
+        if permission is ToolPermission.NEVER:
+            raise ApprovalGateError(
+                f"External handoff to {target} for {skill_name} is not permitted"
+            )
+        if permission is ToolPermission.REQUIRE_APPROVAL:
+            raise ApprovalGateError(
+                f"Approval required for external handoff to {target} ({skill_name})"
+            )
+
+    def resolve_external_target(
+        self,
+        capabilities_required: Sequence[str],
+        preferred: Optional[str] = None,
+    ) -> Optional[str]:
+        """
+        Resolve an external SDK target based on declared capabilities.
+
+        Args:
+            capabilities_required: Capability hints from PlanIR (e.g., ["fs", "cli:pytest"])
+            preferred: Optional explicit target override ("claude" or "codex")
+
+        Returns:
+            Target identifier ("claude", "codex") or None when no match is found.
+        """
+        if preferred:
+            preferred_normalized = preferred.lower()
+            if preferred_normalized in {"claude", "codex"}:
+                return preferred_normalized
+
+        normalized = [cap.lower() for cap in capabilities_required]
+        if any(cap.startswith("cloud_coding_agent") or cap == "cloud_coding_agent" for cap in normalized):
+            return "codex"
+
+        if any(
+            cap == "fs"
+            or cap.startswith("cli:")
+            or cap.startswith("mcp:")
+            or cap.startswith("sandbox:")
+            for cap in normalized
+        ):
+            return "claude"
+
+        return None
+
+    async def delegate_external_async(
+        self,
+        *,
+        target: Optional[str] = None,
+        skill_name: str,
+        payload: Mapping[str, Any],
+        files: Optional[Sequence[str]] = None,
+        trace_id: Optional[str] = None,
+        step_id: Optional[str] = None,
+        budget_cents: Optional[int] = None,
+        timeout_sec: Optional[int] = None,
+        audit_tags: Optional[Mapping[str, str]] = None,
+        metadata: Optional[Mapping[str, Any]] = None,
+        capabilities_required: Optional[Sequence[str]] = None,
+        preferred_target: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Delegate execution to an external SDK dispatcher (Claude or Codex).
+
+        Args:
+            target: External dispatcher key ("claude" or "codex")
+            skill_name: Skill or task identifier to execute
+            payload: Input payload passed to the dispatcher
+            files: Optional list of file URIs or paths to attach
+            trace_id: Optional trace identifier to propagate (creates one if missing)
+            step_id: Optional PlanIR step identifier
+            budget_cents: Optional spend guard for the dispatcher call
+            timeout_sec: Optional timeout threshold in seconds
+            audit_tags: Optional audit metadata (key/value tags)
+            metadata: Optional opaque metadata forwarded to the dispatcher
+
+        Returns:
+            Dispatcher result payload.
+        """
+        tool = self._get_external_handoff_tool()
+        metadata_dict = dict(metadata or {})
+        audit_tags_dict = dict(audit_tags or {})
+
+        capability_hints: list[str] = []
+        if capabilities_required:
+            capability_hints.extend(str(item) for item in capabilities_required)
+        metadata_caps = metadata_dict.get("capabilities_required")
+        if isinstance(metadata_caps, (list, tuple, set, frozenset)):
+            capability_hints.extend(str(item) for item in metadata_caps)
+
+        preferred = preferred_target or metadata_dict.get("preferred_target")
+        if isinstance(preferred, str):
+            preferred = preferred.strip()
+        else:
+            preferred = None
+
+        resolved_target = (target or "").strip().lower()
+        if not resolved_target or resolved_target == "auto":
+            hint_target = self.resolve_external_target(capability_hints, preferred=preferred)
+            if hint_target:
+                resolved_target = hint_target
+            elif preferred:
+                resolved_target = preferred.lower()
+            else:
+                resolved_target = ""
+
+        if not resolved_target:
+            raise ValueError(
+                "External target could not be resolved. Provide 'target' explicitly or declare capabilities."
+            )
+        if resolved_target not in {"claude", "codex"}:
+            raise ValueError(f"Unsupported external target '{resolved_target}'. Expected claude or codex.")
+        self._enforce_external_approval(
+            target=resolved_target,
+            skill_name=skill_name,
+            audit_tags=audit_tags_dict,
+            metadata=metadata_dict,
+            trace_id=trace_id,
+        )
+
+        controller = self.budget_controller
+        if controller and budget_cents is not None:
+            controller.ensure_within_budget(resolved_target, budget_cents)
+
+        result = await tool(
+            target=resolved_target,
+            skill_name=skill_name,
+            payload=dict(payload),
+            files=list(files or []),
+            trace_id=trace_id,
+            step_id=step_id,
+            budget_cents=budget_cents,
+            timeout_sec=timeout_sec,
+            audit_tags=audit_tags_dict,
+            metadata=metadata_dict,
+        )
+
+        if controller and budget_cents is not None and isinstance(result, Mapping):
+            status = result.get("status")
+            if status and str(status).lower() == "success":
+                controller.record_spend(
+                    resolved_target,
+                    budget_cents,
+                    metadata={
+                        "skill": skill_name,
+                        "step_id": step_id,
+                        "trace_id": trace_id,
+                    },
+                )
+
+        return dict(result)
+
+    def delegate_external(
+        self,
+        *,
+        target: Optional[str] = None,
+        skill_name: str,
+        payload: Mapping[str, Any],
+        files: Optional[Sequence[str]] = None,
+        trace_id: Optional[str] = None,
+        step_id: Optional[str] = None,
+        budget_cents: Optional[int] = None,
+        timeout_sec: Optional[int] = None,
+        audit_tags: Optional[Mapping[str, str]] = None,
+        metadata: Optional[Mapping[str, Any]] = None,
+        capabilities_required: Optional[Sequence[str]] = None,
+        preferred_target: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Synchronous wrapper around delegate_external_async().
+
+        Uses asyncio.run() when no event loop is active; callers already in an event
+        loop should prefer delegate_external_async().
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            raise RuntimeError(
+                "delegate_external() cannot be called while an event loop is running. "
+                "Use delegate_external_async() instead."
+            )
+
+        return asyncio.run(
+            self.delegate_external_async(
+                target=target,
+                skill_name=skill_name,
+                payload=payload,
+                files=files,
+                trace_id=trace_id,
+                step_id=step_id,
+                budget_cents=budget_cents,
+                timeout_sec=timeout_sec,
+                audit_tags=audit_tags,
+                metadata=metadata,
+                capabilities_required=capabilities_required,
+                preferred_target=preferred_target,
+            )
         )
 
     def _load_task_index(self) -> dict[str, list[str]]:

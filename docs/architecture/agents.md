@@ -2,8 +2,8 @@
 title: MAGSAG Agent Guidelines
 slug: architecture-agents
 status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+last_updated: 2025-11-03
+last_synced: '2025-11-03'
 tags:
 - agents
 - workflow
@@ -37,6 +37,7 @@ This guide expands on `AGENTS.md` with deeper context about the development envi
 - Source code lives under `src/magsag/`, catalog assets under `catalog/`, docs in
   `docs/`. Keep new modules inside `src/magsag/` unless instructed otherwise.
 - The Typer CLI is the primary entry point: `uv run magsag --help`.
+- Delegate work to Claude or Codex via `uv run magsag agent handoff` (defaults to auto target resolution; add `--capability` hints as needed), and regenerate MCP artefacts with `uv run magsag mcp sync` before running plans that rely on generated tools.
 - Run the API server locally with `uv run python -m magsag.api.server`.
 - Configuration is namespaced by `MAGSAG_`; defaults are in
   `magsag.api.config.Settings`.
@@ -72,10 +73,10 @@ This guide expands on `AGENTS.md` with deeper context about the development envi
 ## Repository Layout
 
 ```
-src/magsag/          → Core package code (api, runners, worktree, governance, observability)
+src/magsag/          → Core package code (api, runners, sdks, worktree, governance, observability)
 catalog/             → Agents, skills, schemas, policies
 docs/                → Architecture notes, guides, development docs
-ops/                 → Maintenance scripts and tooling
+ops/                 → Maintenance scripts and tooling (ADK registry lives in ops/adk/)
 benchmarks/          → Performance harnesses
 tests/               → Unit, integration, observability, MCP suites
 ```
@@ -121,14 +122,25 @@ If a check is intentionally skipped, state the reason in the delivery message.
 ## Reference Surfaces
 
 - `src/magsag/runners/agent_runner.py` – canonical executor.
+- `src/magsag/sdks/claude_agent/` and `src/magsag/sdks/codex/` – external SDK drivers and sandbox policies.
+- `src/magsag/sdks/google_adk/` – registry parsers and renderers for MCP/catalog generation.
 - `catalog/registry/` – agent and skill registry entries.
 - `docs/guides/` – integration-specific walkthroughs (MCP, moderation, GitHub).
 - `docs/development/worktrees.md` – detailed worktree automation.
 - `docs/workflows/` – changelog and ExecPlan operating procedures.
 - `docs/governance/taxonomy.md` – controlled documentation tags.
 
+## External Execution Drivers
+
+- `ExternalHandoffTool` bridges OpenAI Agents SDK with Claude Agent SDK and Codex drivers.
+- Use `src/magsag/sdks/claude_agent/sandbox.py` to adjust command allowlists or readonly policy.
+- Codex driver supports CLI (`codex run`) and Responses API (`codex-mini-latest`); configure mode via metadata or environment.
+- Google ADK sync (`magsag mcp sync`) renders `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json` from `ops/adk/catalog.yaml`.
+- API endpoint `POST /api/v1/agents/handoff` mirrors CLI behaviour for cloud orchestration.
+
 ## Update Log
 
+- 2025-11-03: Documented external SDK drivers, ADK sync workflow, and new CLI/API surfaces.
 - 2025-11-02: Added workflow and taxonomy references for documentation alignment.
 - 2025-11-01: Migrated to the unified documentation standard and refreshed metadata.
 - 2025-11-01: Linked canonical ssot repository reference and clarified governance pointers.

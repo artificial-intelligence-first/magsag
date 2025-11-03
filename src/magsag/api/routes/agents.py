@@ -12,10 +12,18 @@ from anyio import to_thread
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from magsag.registry import get_registry
-from magsag.runners.agent_runner import invoke_mag
+from magsag.runners.agent_runner import AgentRunner, invoke_mag
+from magsag.governance.approval_gate import ApprovalGateError
+from magsag.governance.budget_controller import BudgetExceededError
 
 from ..config import Settings, get_settings
-from ..models import AgentInfo, AgentRunRequest, AgentRunResponse
+from ..models import (
+    AgentInfo,
+    AgentRunRequest,
+    AgentRunResponse,
+    ExternalHandoffRequest,
+    ExternalHandoffResponse,
+)
 from ..rate_limit import rate_limit_dependency
 from ..run_tracker import find_new_run_id, snapshot_runs
 from ..security import require_scope
@@ -167,4 +175,68 @@ async def run_agent(
         slug=slug,
         output=output,
         artifacts=artifacts,
+    )
+
+
+@router.post(
+    "/agents/handoff",
+    response_model=ExternalHandoffResponse,
+    dependencies=[Depends(rate_limit_dependency)],
+)
+async def delegate_external_handoff(
+    req: ExternalHandoffRequest,
+    _: str = Depends(require_scope(["agents:run"])),
+) -> ExternalHandoffResponse:
+    """Delegate execution to external SDK drivers (Claude or Codex)."""
+
+    runner = AgentRunner()
+
+    try:
+        result = await runner.delegate_external_async(
+            target=req.target,
+            skill_name=req.skill_name,
+            payload=req.payload,
+            files=req.files,
+            trace_id=req.trace_id,
+            step_id=req.step_id,
+            budget_cents=req.budget_cents,
+            timeout_sec=req.timeout_sec,
+            audit_tags=req.audit_tags or {},
+            metadata=req.metadata or {},
+            capabilities_required=req.capabilities_required,
+            preferred_target=req.preferred_target,
+        )
+    except BudgetExceededError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={"code": "budget_exceeded", "message": str(exc)},
+        ) from exc
+    except ApprovalGateError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "approval_required", "message": str(exc)},
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "invalid_payload", "message": str(exc)},
+        ) from exc
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"code": "internal_error", "message": "External handoff failed"},
+        ) from exc
+
+    result_map = dict(result) if isinstance(result, dict) else {}
+
+    return ExternalHandoffResponse(
+        status=str(result_map.get("status", "unknown")),
+        target=str(result_map.get("target", req.target)),
+        skill=str(result_map.get("skill", req.skill_name)),
+        output=dict(result_map.get("output", {})),
+        metadata=dict(result_map.get("metadata", {})),
+        traceparent=result_map.get("traceparent"),
+        trace_id=result_map.get("trace_id"),
+        span_id=result_map.get("span_id"),
+        parent_span_id=result_map.get("parent_span_id"),
     )

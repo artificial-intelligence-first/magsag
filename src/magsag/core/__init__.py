@@ -6,11 +6,12 @@ extensibility points for pluggable providers (LLM, observability, policy).
 
 from __future__ import annotations
 
-from magsag.core.types import CapabilityMatrix, PlanIR, PolicySnapshot, RunIR
+from magsag.core.types import CapabilityMatrix, PlanIR, PlanStep, PolicySnapshot, RunIR
 
 __all__ = [
     "CapabilityMatrix",
     "PlanIR",
+    "PlanStep",
     "PolicySnapshot",
     "RunIR",
 ]

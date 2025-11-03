@@ -2,8 +2,8 @@
 title: ExecPlan Template
 slug: plans-template
 status: living
-last_updated: 2025-11-01
-last_synced: '2025-11-01'
+last_updated: 2025-11-03
+last_synced: '2025-11-03'
 tags:
 - magsag
 - plans
@@ -27,6 +27,10 @@ sources: []
 - Place plan files under `docs/development/plans/`.
 - Reference active plans from `docs/architecture/plans.md` and mark status changes immediately.
 - Keep sections concise; link to supporting artefacts instead of duplicating details.
+
+## Active Plans
+
+- [SDK Unification and Parallel Worktrees Rollout](docs/development/plans/sdk-unification.md) — Coordinate parallel worktrees for Agents, SAGs, ADK sync, observability, and cleanup.
 
 ## Template
 
@@ -85,4 +89,5 @@ sources: []
 
 ## Update Log
 
+- 2025-11-03: Added Active Plans section and linked the SDK unification rollout ExecPlan.
 - 2025-11-01: Converted template to the unified documentation format.

@@ -37,6 +37,53 @@ class AgentRunResponse(BaseModel):
     )
 
 
+class ExternalHandoffRequest(BaseModel):
+    """Request payload for delegating work to external SDK drivers."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    target: Literal["claude", "codex", "auto"] | None = Field(
+        default=None,
+        description="External dispatcher target (claude, codex, or auto for capability-based resolution)",
+    )
+    skill_name: str = Field(..., description="Skill identifier to execute")
+    payload: dict[str, Any] = Field(..., description="Input payload forwarded to the dispatcher")
+    files: list[str] = Field(default_factory=list, description="Optional files passed through")
+    trace_id: str | None = Field(default=None, description="Existing trace identifier to continue")
+    step_id: str | None = Field(default=None, description="Plan step identifier for auditing")
+    budget_cents: int | None = Field(default=None, description="Spend guard in cents")
+    timeout_sec: int | None = Field(default=None, description="Timeout in seconds")
+    audit_tags: dict[str, str] | None = Field(
+        default=None, description="Audit tags influencing approval and governance"
+    )
+    metadata: dict[str, Any] | None = Field(
+        default=None, description="Opaque metadata forwarded to the dispatcher"
+    )
+    capabilities_required: list[str] = Field(
+        default_factory=list,
+        description="Capability hints used when resolving the external target automatically",
+    )
+    preferred_target: Literal["claude", "codex"] | None = Field(
+        default=None, description="Preferred target when multiple dispatchers satisfy the capabilities"
+    )
+
+
+class ExternalHandoffResponse(BaseModel):
+    """Response from external dispatcher execution."""
+
+    status: str = Field(..., description="Execution status string")
+    target: str = Field(..., description="Dispatcher target that executed the work")
+    skill: str = Field(..., description="Executed skill identifier")
+    output: dict[str, Any] = Field(..., description="Dispatcher output payload")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Dispatcher metadata")
+    traceparent: str | None = Field(default=None, description="Traceparent used for propagation")
+    trace_id: str | None = Field(default=None, description="Trace identifier returned by dispatcher")
+    span_id: str | None = Field(default=None, description="Span identifier when available")
+    parent_span_id: str | None = Field(
+        default=None, description="Parent span identifier if provided by dispatcher"
+    )
+
+
 class RunSummary(BaseModel):
     """Summary of a completed agent run."""
 

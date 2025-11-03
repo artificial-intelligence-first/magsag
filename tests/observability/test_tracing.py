@@ -9,10 +9,11 @@ import pytest
 from magsag.observability.tracing import (
     ObservabilityConfig,
     ObservabilityManager,
-    initialize_observability,
-    get_tracer,
-    get_meter,
+    current_traceparent,
     get_langfuse_client,
+    get_meter,
+    get_tracer,
+    initialize_observability,
     shutdown_observability,
     trace_span,
 )
@@ -198,6 +199,98 @@ def test_trace_span_with_attributes() -> None:
         span.set_attribute("result", "completed")
 
     # Verify no crashes
+
+
+def test_current_traceparent_with_valid_span(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Ensure current_traceparent handles boolean is_valid property."""
+    import magsag.observability.tracing as tracing_module
+
+    class FakeSpanContext:
+        def __init__(self) -> None:
+            self.trace_id = int("0123456789abcdef0123456789abcdef", 16)
+            self.span_id = int("89abcdef01234567", 16)
+            self.is_valid = True
+
+    class FakeSpan:
+        def get_span_context(self) -> FakeSpanContext:
+            return FakeSpanContext()
+
+    class FakeTrace:
+        @staticmethod
+        def get_current_span() -> FakeSpan:
+            return FakeSpan()
+
+    monkeypatch.setattr(tracing_module, "OTEL_AVAILABLE", True)
+    monkeypatch.setattr(tracing_module, "trace", FakeTrace, raising=False)
+
+    result = current_traceparent()
+    assert result == "00-0123456789abcdef0123456789abcdef-89abcdef01234567-01"
+
+
+def test_current_traceparent_returns_none_when_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
+    """current_traceparent should return None when span context invalid."""
+    import magsag.observability.tracing as tracing_module
+
+    class FakeSpanContext:
+        def __init__(self) -> None:
+            self.trace_id = 0
+            self.span_id = 0
+            self.is_valid = False
+
+    class FakeSpan:
+        def get_span_context(self) -> FakeSpanContext:
+            return FakeSpanContext()
+
+    class FakeTrace:
+        @staticmethod
+        def get_current_span() -> FakeSpan:
+            return FakeSpan()
+
+    monkeypatch.setattr(tracing_module, "OTEL_AVAILABLE", True)
+    monkeypatch.setattr(tracing_module, "trace", FakeTrace, raising=False)
+
+    assert current_traceparent() is None
+
+
+def test_current_traceparent_callable_is_valid(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Handle callable is_valid attribute (OpenTelemetry default span)."""
+    import magsag.observability.tracing as tracing_module
+
+    class FakeSpanContext:
+        def __init__(self, result: bool) -> None:
+            self._result = result
+            self.trace_id = (
+                int("fedcba98765432100123456789abcdef", 16) if result else 0
+            )
+            self.span_id = int("0123456789abcdef", 16) if result else 0
+
+        def is_valid(self) -> bool:
+            return self._result
+
+    class FakeSpan:
+        def __init__(self, result: bool) -> None:
+            self._result = result
+
+        def get_span_context(self) -> FakeSpanContext:
+            return FakeSpanContext(self._result)
+
+    class FakeTrace:
+        def __init__(self, result: bool) -> None:
+            self._result = result
+
+        def get_current_span(self) -> FakeSpan:
+            return FakeSpan(self._result)
+
+    monkeypatch.setattr(tracing_module, "OTEL_AVAILABLE", True)
+
+    # When callable returns False, expect None
+    monkeypatch.setattr(tracing_module, "trace", FakeTrace(False), raising=False)
+    assert current_traceparent() is None
+
+    # When callable returns True, expect populated traceparent
+    monkeypatch.setattr(tracing_module, "trace", FakeTrace(True), raising=False)
+    result = current_traceparent()
+    assert result == "00-fedcba98765432100123456789abcdef-0123456789abcdef-01"
 
 
 def test_manager_thread_safety() -> None:

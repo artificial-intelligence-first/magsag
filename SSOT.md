@@ -2,8 +2,8 @@
 title: MAGSAG Single Source of Truth
 slug: ssot
 status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+last_updated: 2025-11-03
+last_synced: '2025-11-03'
 tags:
 - governance
 - ssot
@@ -39,6 +39,7 @@ sources:
 | Documentation standards | `docs/governance/` | Frontmatter schema, style, taxonomy |
 | Documentation workflows | `docs/workflows/` | Changelog, ExecPlan, and operational runbooks |
 | Architecture overview | `docs/architecture/` | System design, workflows, skill conventions |
+| External SDK drivers | `src/magsag/sdks/` | OpenAI Agents, Claude Agent SDK, Codex integrations |
 | Development process | `docs/development/` | Roadmap, plans, contributing guides |
 | Catalog assets | `catalog/` | Agent, skill, and policy definitions |
 | Changelog | `CHANGELOG.md`, `docs/development/changelog.md` | Release notes and historical changes |
@@ -86,6 +87,7 @@ Document skipped steps or deferred updates in delivery notes so follow-up action
 ## MCP Standard Support
 
 - **Canonical presets** – `.mcp/servers/` (runtime) and `src/magsag/mcp/presets/servers/` (bundled defaults) define HTTP-first configurations for Notion, Supabase, GitHub, and Obsidian.
+- **Generated artefacts** – `magsag mcp sync` renders Google ADK registry entries into `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json`, capturing `generated_at` stamps for audit trails.
 - **Transports** – Streamable HTTP is primary, Server-Sent Events provide backward compatibility, and stdio (`mcp-remote` / `mcp-obsidian`) acts as a rescue path.
 - **CLI workflow** – `magsag mcp bootstrap|ls|doctor|login|inspect` bootstraps configs, diagnoses connectivity, and documents authentication flows.
 - **Observability** – MCP calls emit entries to `.runs/<run_id>/mcp_calls.jsonl` and attach transport/session attributes to OTel spans.
@@ -190,5 +192,6 @@ Use this checklist during review to prevent drift and retain SSOT integrity.
 
 ## Update Log
 
+- 2025-11-03: Documented external SDK drivers, ADK sync pipeline, and CLI touchpoints.
 - 2025-11-02: Added documentation workflows to the canonical map.
 - 2025-11-01: Expanded SSOT guidance with glossary, data contracts, policies, and workflows aligned to ssot reference.

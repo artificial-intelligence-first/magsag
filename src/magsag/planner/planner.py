@@ -2,18 +2,29 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
-
-if TYPE_CHECKING:
-    try:
-        from magsag.core.types import PlanIR
-    except ImportError:
-        PlanIR = Any  # type: ignore
-else:
-    PlanIR = Any
+import uuid
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Type
 
 from magsag.routing import RoutingPolicy
 from magsag.routing.router import Plan, get_plan
+
+if TYPE_CHECKING:  # pragma: no cover - typing aid
+    from magsag.core.types import PlanIR, PlanStep
+else:
+    PlanIR = Any  # type: ignore
+    PlanStep = Any  # type: ignore
+
+_PLAN_TYPES: Tuple[Type["PlanIR"], Type["PlanStep"]] | None = None
+
+
+def _get_plan_types() -> Tuple[Type["PlanIR"], Type["PlanStep"]]:
+    """Lazily import PlanIR and PlanStep to avoid circular imports."""
+    global _PLAN_TYPES
+    if _PLAN_TYPES is None:
+        from magsag.core.types import PlanIR as PlanIRModel, PlanStep as PlanStepModel
+
+        _PLAN_TYPES = (PlanIRModel, PlanStepModel)
+    return _PLAN_TYPES
 
 
 class Planner:
@@ -41,7 +52,7 @@ class Planner:
         task_type: str,
         overrides: Optional[dict[str, Any]] = None,
         **kwargs: Any,
-    ) -> Optional[PlanIR]:
+    ) -> Optional["PlanIR"]:
         """
         Generate execution plan for given task type.
 
@@ -81,7 +92,7 @@ class Planner:
         # Convert to PlanIR format
         return self._convert_to_plan_ir(route_result)
 
-    def _convert_to_plan_ir(self, plan: Plan) -> PlanIR:
+    def _convert_to_plan_ir(self, plan: Plan) -> "PlanIR":
         """
         Convert Router Plan to PlanIR format.
 
@@ -99,35 +110,72 @@ class Planner:
             which are not present in router Plan. These are extracted from
             metadata or provided as reasonable defaults.
         """
-        # Extract optional fields from metadata
-        sla_ms = plan.metadata.get("sla_ms", 30000)  # Default 30s
-        cost_budget = plan.metadata.get("cost_budget", None)
+        metadata = plan.metadata or {}
+        plan_id = metadata.get("plan_id") or f"{plan.task_type}-{uuid.uuid4().hex[:8]}"
+        version = metadata.get("plan_version") or "1.0.0"
+        goal = metadata.get("goal") or plan.task_type
+        constraints = list(metadata.get("constraints", []))
+        stop_conditions = list(metadata.get("stop_conditions", []))
+        trace_group_id = metadata.get("trace_group_id")
+        metadata_extra = {
+            key: value
+            for key, value in metadata.items()
+            if key
+            not in {
+                "plan_id",
+                "plan_version",
+                "goal",
+                "constraints",
+                "stop_conditions",
+                "trace_group_id",
+                "step_id",
+                "step_description",
+                "step_role",
+                "step_skill",
+                "step_inputs",
+                "step_outputs",
+                "depends_on",
+                "retry_policy",
+                "timeout_sec",
+                "budget_cents",
+                "capabilities_required",
+                "audit_tags",
+            }
+        }
 
-        # Create single-step chain from current plan
-        # Chain represents ordered fallback steps; initially just one step
-        chain = [
-            {
+        PlanIRModel, PlanStepModel = _get_plan_types()
+
+        step = PlanStepModel(
+            id=metadata.get("step_id") or f"{plan.task_type}-step-1",
+            role=metadata.get("step_role") or "MAG",
+            description=metadata.get("step_description")
+            or f"Execute {plan.task_type} via {plan.provider}/{plan.model}",
+            skill=metadata.get("step_skill"),
+            inputs={
                 "provider": plan.provider,
                 "model": plan.model,
                 "use_batch": plan.use_batch,
                 "use_cache": plan.use_cache,
                 "structured_output": plan.structured_output,
                 "moderation": plan.moderation,
-            }
-        ]
+                **metadata.get("step_inputs", {}),
+            },
+            outputs=dict(metadata.get("step_outputs", {})),
+            depends_on=list(metadata.get("depends_on", [])),
+            retry_policy=dict(metadata.get("retry_policy", {})),
+            timeout_sec=metadata.get("timeout_sec"),
+            budget_cents=metadata.get("budget_cents"),
+            capabilities_required=list(metadata.get("capabilities_required", [])),
+            audit_tags=dict(metadata.get("audit_tags", {})),
+        )
 
-        # Construct PlanIR-compatible structure
-        # When actual PlanIR type is available (WS-01), this will return that type
-        plan_ir = {
-            "chain": chain,
-            "provider": plan.provider,
-            "model": plan.model,
-            "use_batch": plan.use_batch,
-            "use_cache": plan.use_cache,
-            "structured_output": plan.structured_output,
-            "moderation": plan.moderation,
-            "sla_ms": sla_ms,
-            "cost_budget": cost_budget,
-        }
-
-        return plan_ir  # type: ignore
+        return PlanIRModel(
+            plan_id=plan_id,
+            version=version,
+            goal=goal,
+            constraints=constraints,
+            steps=[step],
+            stop_conditions=stop_conditions,
+            trace_group_id=trace_group_id,
+            metadata=metadata_extra,
+        )

@@ -1,0 +1,26 @@
+{
+  "name": "notion",
+  "title": "Notion Workspace API",
+  "description": "Access Notion databases and pages via REST endpoints.",
+  "version": "2025-11-03",
+  "generated_at": "2025-11-03T05:30:12.765833+00:00",
+  "server": {
+    "type": "http",
+    "entrypoint": "https://api.notion.com",
+    "healthcheck": "https://api.notion.com/v1/status",
+    "scopes": [
+      "databases.read",
+      "databases.write"
+    ],
+    "capabilities": [
+      "http",
+      "oauth2"
+    ]
+  },
+  "metadata": {
+    "tags": [
+      "notion",
+      "workspace"
+    ]
+  }
+}
