@@ -30,8 +30,8 @@
     },
     "entrypoint": {
       "type": "string",
-      "pattern": "^catalog/skills/[^/]+/impl/[^:]+\\.py:[a-zA-Z_][a-zA-Z0-9_]*$",
-      "description": "Python entrypoint in format: path/to/file.py:function_name"
+      "pattern": "^@magsag/catalog#[a-zA-Z0-9_.]+$",
+      "description": "TypeScript module reference in format: @magsag/catalog#skills.taskHandler"
     },
     "contracts": {
       "type": "object",

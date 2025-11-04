@@ -1,155 +1,81 @@
 ---
-title: MAGSAG SSOT Reference
-slug: architecture-ssot
+title: MAGSAG Single Source of Truth
+slug: ssot
 status: living
-last_updated: 2025-11-03
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - governance
 - ssot
-summary: Canonical terminology, contracts, and policies that underpin the MAGSAG platform.
+- documentation
+summary: Defines canonical documentation surfaces, ownership, and update workflows for the TypeScript monorepo.
+description: Defines canonical documentation surfaces, ownership, and update workflows for MAGSAG.
 authors: []
-source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/SSOT.md
-last_synced: '2025-11-02'
+source_of_truth: https://github.com/artificial-intelligence-first/ssot
 sources:
 - id: R1
-  title: MAGSAG Catalog
-  url: ../../catalog/
-  accessed: '2025-11-01'
+  title: MAGSAG Agent Playbook
+  url: AGENTS.md
+  accessed: '2025-11-06'
 - id: R2
-  title: MAGSAG API Server
-  url: ../../src/magsag/api/server.py
-  accessed: '2025-11-01'
-description: Canonical terminology, contracts, and policies that underpin the MAGSAG
-  platform.
+  title: Contributing to MAGSAG
+  url: CONTRIBUTING.md
+  accessed: '2025-11-06'
 ---
 
-# MAGSAG Single Source of Truth (SSOT)
+# Single Source of Truth
 
-> **For Humans**: Treat this file as authoritative. Update it before changing terminology, contracts, or governance policies, then propagate changes elsewhere.
+> **For Humans**: Use this reference to locate authoritative documents, understand governance expectations, and coordinate updates across the TypeScript monorepo.
 >
-> **For AI Agents**: When instructions conflict, trust SSOT over other docs. Log every change in the Update Log.
+> **For AI Assistants**: Update the canonical surface first, then propagate references. Log every change in the Update Log.
 
-## Scope
+## Canonical Document Map
 
-MAGSAG provides:
-- Typer CLI (`magsag`) with flow, agent, data, and MCP commands.
-- FastAPI HTTP API (`magsag.api.server`) with governance-aware error handling.
-- Agent Runner that orchestrates MAG/SAG lifecycles, skills, and evaluation hooks.
-- Catalog of declarative assets (agents, skills, routing, policies, evals).
-- Observability stack writing run artefacts to `.runs/` and optional Postgres/Redis backends.
+| Domain | SSOT Location | Purpose |
+|--------|---------------|---------|
+| Agent operations | `AGENTS.md` | Operational expectations |
+| Governance policies | `docs/policies/` | Security, conduct, approvals |
+| Documentation standards | `docs/governance/` | Frontmatter schema, style, taxonomy |
+| Documentation workflows | `docs/workflows/` | Changelog and ExecPlan procedures |
+| Architecture overview | `docs/architecture/` | System design, skill conventions |
+| TypeScript packages | `packages/` | CLI, governance, runners, observability, MCP utilities |
+| Demo surfaces | `apps/` | CLI / API demos |
+| Development process | `docs/development/` | Roadmap, plans, contributing guides |
+| Catalog assets | `catalog/` | Agents, skills, policies, contracts |
+| Changelog | `CHANGELOG.md`, `docs/development/changelog.md` | Release notes |
 
-## Terminology
+## Validation Workflow
 
-| Term | Definition | Primary Source |
-|------|------------|----------------|
-| **MAG (Main Agent)** | Orchestrator responsible for task decomposition, delegation, and aggregation. Slug format: `<purpose>-mag`. | `catalog/agents/main/` |
-| **SAG (Sub Agent)** | Specialized agent handling scoped work delegated by a MAG. Slug format: `<purpose>-sag`. | `catalog/agents/sub/` |
-| **Skill** | Reusable capability invoked via `SkillRuntime`. Declared in registry with optional MCP permissions. | `catalog/registry/skills.yaml` |
-| **ExecPlan** | Structured plan document tracking multi-session initiatives. | `docs/development/plans/`, `PLANS.md` |
-| **Run Artefact** | Logs, metrics, and summaries generated per execution. | `.runs/agents/<run-id>/` |
-| **Governance Gate** | Policy evaluation executed via `magsag flow gate`. | `catalog/policies/` |
-| **Plan Router** | Provider/model selection logic for LLM calls. | `magsag.routing.router` |
-| **MCP** | Model Context Protocol integration exposing agents/skills as tools or consuming external systems. | `magsag.mcp.*`, `docs/guides/mcp-integration.md` |
+1. Update the canonical surface listed above.
+2. Propagate references to downstream docs.
+3. Run `pnpm -r lint`, `pnpm -r typecheck`, `pnpm -r test`.
+4. Run `pnpm docs:lint` and `pnpm catalog:validate`.
+5. Log outcomes in delivery notes and the validation memo.
 
 ## Data Contracts
 
-### Candidate Profile (`catalog/contracts/candidate_profile.schema.json`)
-- Used by: `offer-orchestrator-mag`
-- Required fields: `id`, `name`, `role`, `experience_years`
-- Optional: `level`, `location`, `salary_band`, `preferences`
+- `catalog/contracts/candidate_profile.schema.json`
+- `catalog/contracts/offer_packet.schema.json`
+- `catalog/contracts/flow_summary.schema.json`
 
-### Offer Packet (`catalog/contracts/offer_packet.schema.json`)
-- Produced by: `offer-orchestrator-mag`
-- Sections: `offer` (compensation, benefits), `metadata` (run info), `warnings`, `provenance`
-- `metadata.run_id` ties back to observability artefacts
+Keep schemas synchronized with TypeScript implementations (`packages/catalog`, `packages/observability`).
 
-### Compensation Advisor Input (`catalog/contracts/comp_advisor_input.schema.json`)
-- Used by: `compensation-advisor-sag`
-- Contains `candidate_profile` object validated against candidate schema
+## API & Runners
 
-### Flow Summary (`src/magsag/assets/contracts/flow_summary.schema.json`)
-- Input for governance gate evaluations
-- Key metrics: `runs`, `success_rate`, `avg_latency_ms`, `steps[]`, `mcp.calls`
-
-## API Surface
-
-- **Base prefix**: `/api/v1`
-- **Authentication**: Optional bearer token via `MAGSAG_API_KEY`
-- **Endpoints**:
-  - `GET /health` – Liveness probe
-  - `GET /api/v1/agents` – List registered agent descriptors
-  - `POST /api/v1/agents/{slug}/run` – Execute MAG with payload validation
-  - `GET /api/v1/runs/{run_id}` – Retrieve run summary
-  - `GET /api/v1/runs/{run_id}/logs` – Stream logs
-  - `POST /api/v1/github/webhook` – GitHub integration (signature optional)
-- **Error schema**: `{ "code": string, "message": string, "details"?: object }`
-
-## Configuration Matrix
-
-| Setting | Description | Default | Location |
-|---------|-------------|---------|----------|
-| `MAGSAG_API_PREFIX` | HTTP API base path | `/api/v1` | `magsag.api.config.Settings` |
-| `MAGSAG_STORAGE_BACKEND` | `sqlite` or `postgres` | `sqlite` | `magsag.api.config.Settings` |
-| `MAGSAG_STORAGE_DB_PATH` | SQLite file path | `.magsag/storage.db` | `magsag.api.config.Settings` |
-| `MAGSAG_STORAGE_ENABLE_FTS` | Enable SQLite FTS5 | `true` | `magsag.api.config.Settings` |
-| `MAGSAG_MCP_SERVERS_DIR` | MCP server config directory | `.mcp/servers` | `magsag.mcp.registry` |
-| `MAGSAG_PROVIDER` | Default LLM provider hint | `local` | `magsag.router.Router` |
-| `MAGSAG_MODEL` | Default model override | `None` | `magsag.routing.router` |
-| `MAGSAG_RATE_LIMIT_QPS` | API rate limit | `None` | `magsag.api.rate_limit` |
-
-## Governance Policies
-
-- **Flow Runner Gate**: Policies in `catalog/policies/flow_governance.yaml` set thresholds for success rate, latency, required steps, and MCP error rates.
-- **Routing Policies**: `catalog/routing/` describes provider/model selection and fallback tiers.
-- **Moderation**: `magsag.moderation` integrates OpenAI omni-moderation; enable via plan metadata when required.
-- **Storage Retention**: `magsag.storage` supports vacuum policies (`hot_days`, `max_disk_mb`) invoked via `magsag data vacuum`.
+- CLI defaults (`@magsag/cli`) support MAG/SAG invocation via subscription runners.
+- TypeScript server (`@magsag/server`) will expose `/api/v1/agent/run` (Workstream C).
+- Runner packages live under `packages/runner-*`.
 
 ## Observability
 
-- `ObservabilityLogger` (see `src/magsag/observability/logger.py`) writes:
-  - `logs.jsonl`: Event stream with span context
-  - `metrics.json`: Aggregated metrics (latency, cost, tokens)
-  - `summary.json`: Execution metadata (span ids, cost totals)
-- Cost tracking persists to JSONL and optional SQLite when `magsag.observability.cost_tracker` is configured.
-- Integrations with OpenTelemetry and Langfuse activate via `magsag[observability]` extra.
-
-## Skill Lifecycle
-
-1. Define schema contracts (if needed) under `catalog/contracts/`.
-2. Implement async skill function with optional MCP integration.
-3. Register in `catalog/registry/skills.yaml`.
-4. Add tests under `tests/skills/` or `tests/mcp/`.
-5. Document behaviour here and in `SKILL.md`.
-6. Update `CHANGELOG.md` and relevant ExecPlan.
-
-## Release Checklist
-
-- Update ExecPlans and confirm all To-do items complete (`PLANS.md`).
-- Move changelog items from `[Unreleased]` to a dated release section.
-- Tag release (`v<major>.<minor>.<patch>`).
-- Publish release notes referencing CLI/API changes, contracts, and docs.
-
-## Dependencies & Integrations
-
-| Integration | Usage | Notes |
-|-------------|-------|-------|
-| Flow Runner CLI (`flowctl`) | Optional external orchestrator | Detected via `magsag flow available` |
-| OpenAI / Anthropic / Google | LLM providers | Selected via routing policy or environment overrides |
-| MCP Servers | Expose agents/skills or consume external tools | Authored in `ops/adk/servers/*.yaml`, generated to `.mcp/servers/*.json` |
-| Postgres / Redis | Storage & caching backends | Enabled via extras `magsag[postgres]`, `magsag[redis]` |
-
-## Related Documentation
-
-- `AGENTS.md` – Operational instructions for contributors and AI assistants
-- `CONTRIBUTING.md` – Contribution workflow, tests, and review process
-- `SKILL.md` – Skill development handbook
-- `docs/guides/` – Deep dives (MCP integration, cost optimisation, semantic cache, moderation, runner integration)
-- `SSOT.md` – Single source of truth for all terminology and policies
+- Flow summaries and metrics originate from `packages/observability/src/flow-summary.ts`.
+- Store run artefacts in `.runs/` and propagate summaries to reporting surfaces.
 
 ## Update Log
 
-- 2025-11-03: Documented MCP source/artefact split between `ops/adk/servers/` and `.mcp/servers/`.
-- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
-- 2025-11-01: Adopted unified documentation format and aligned metadata with root SSOT.
-- 2025-11-01: Linked canonical SSOT repository and enumerated key data contracts and workflows.
-- 2025-10-30: Reconstructed SSOT with canonical terminology, contracts, governance, and integration tables.
+- 2025-11-06: Logged TypeScript-only cleanup (Python/FastAPI/uv retired) and updated validation commands (`pnpm docs:lint`, `pnpm catalog:validate`).
+- 2025-11-05: Updated canonical surfaces for the TypeScript monorepo and aligned validation commands with pnpm workflows.
+- 2025-11-03: Migrated MCP workflow to JSON runtime artefacts with YAML sources under `ops/adk/servers/`.
+- 2025-11-03: Documented external SDK drivers, ADK sync pipeline, and CLI touchpoints.
+- 2025-11-02: Added documentation workflows to the canonical map.
+- 2025-11-01: Expanded SSOT guidance with glossary, data contracts, policies, and workflows aligned to ssot reference.

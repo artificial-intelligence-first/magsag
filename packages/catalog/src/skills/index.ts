@@ -1,0 +1,9 @@
+export { run as docGen } from './doc-gen.js';
+export { run as githubIssueTriage } from './github-issue-triage.js';
+export { run as notionPageLookup } from './notion-page-lookup.js';
+export { run as obsidianNoteAppend } from './obsidian-note-append.js';
+export { run as resultAggregation } from './result-aggregation.js';
+export { run as salaryBandLookup } from './salary-band-lookup.js';
+export { run as supabaseSqlReadonly } from './supabase-sql-readonly.js';
+export { run as taskDecomposition } from './task-decomposition.js';
+export { run as testHelperTransform } from './test-helper-transform.js';

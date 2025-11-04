@@ -2,7 +2,7 @@ version: 0.1.0
 slug: compensation-advisor-sag
 name: CompensationAdvisorSAG
 role: sub
-entrypoint: catalog/agents/sub/compensation-advisor-sag/code/simple_agent.py:run
+entrypoint: "@magsag/catalog#agents.compensationAdvisorSag"
 depends_on:
   skills:
     - magsag://skill.test-helper-transform@>=0.1.0

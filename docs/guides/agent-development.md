@@ -1,442 +1,61 @@
 ---
 title: Agent Development Guide
 slug: guide-agent-development
-status: deprecated
-last_updated: 2025-11-04
+status: living
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - agents
 - development
-summary: Operational guidance for building, validating, and shipping agents in the
-  MAGSAG repository.
+summary: TypeScript-first guidance for building, validating, and shipping MAGSAG agents.
+description: End-to-end checklist for implementing and validating agents in the TypeScript monorepo.
 authors: []
 source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/docs/core/agents-guide.md
 sources:
 - id: R1
   title: MAGSAG Agent Playbook
   url: ../../AGENTS.md
-  accessed: '2025-11-01'
-last_synced: '2025-11-04'
-description: Operational guidance for building, validating, and shipping agents in
-  the MAGSAG repository.
+  accessed: '2025-11-06'
 ---
-
-> **Notice**: Legacy Python workflows; see AGENTS.md and README.md for the TypeScript toolchain.
 
 # Agent Development Guide
 
-> **For Humans**: Use this guide when implementing or modifying agents in the MAGSAG repository.
+> **For Humans**: Follow this workflow when creating or updating agents in the TypeScript monorepo.
 >
-> **For AI Agents**: Follow these instructions exactly. Keep catalog assets, tests, and docs aligned.
+> **For AI Assistants**: Mirror these steps unless the user explicitly waives a validation gate. Note any skipped commands in delivery notes.
 
-For canonical agent design principles, start with `AGENTS.md`. This guide expands on repository-specific implementation details.
+## TypeScript Workflow Overview
 
-## Dev Environment Tips
-- Use Python 3.12 with the [`uv`](https://docs.astral.sh/uv/) package manager.
-  Install or refresh dependencies with `uv sync`, and include development tools
-  when needed via `uv sync --extra dev`.
-- Test the agent orchestration system early:
-  `echo '{"role":"Engineer","level":"Mid"}' | pnpm --filter @magsag/cli exec magsag agent run offer-orchestrator-mag`
-  ensures the registry, agent runner, contracts, and skills integrate correctly.
-- Flow Runner integration is optional but recommended when working on runner
-  boundaries. Use the automated setup script:
-  ```bash
-  make setup-flowrunner
-  source ops/scripts/flowrunner-env.sh
-  ```
-  Or manually:
-  1. Run `./ops/scripts/setup-flowrunner.sh`
-  2. Source `ops/scripts/flowrunner-env.sh` to configure environment variables
-- Verify vendored Flow Runner assets with
-  `uv run python ops/tools/verify_vendor.py` whenever files under
-  `src/magsag/assets/` or `examples/flowrunner/` change.
-- Keep new skills stateless under `catalog/skills/`,
-  register agents in `catalog/agents/{main,sub}/<agent-slug>/agent.yaml`,
-  and define contracts with JSON Schemas under `catalog/contracts/`. Prefer Typer-based CLIs that
-  invoke agents to maintain the AI-first workflow.
-- **Creating New Agents:** Use the templates in `catalog/agents/_template/`:
-  - `mag-template/` - Template for Main Agents (orchestrators)
-  - `sag-template/` - Template for Sub-Agents (specialists)
-  - Copy template, customize agent.yaml, PERSONA.md, and code, then add tests
-  - **PERSONA.md** (optional): Define agent personality, tone, and behavioral guidelines
-- **Creating New Skills:** Use the template in `catalog/skills/_template/`
+1. **Bootstrap** — Install Node.js 18.18+ (22.x recommended) and pnpm 9. Run `pnpm install` inside each worktree after rebasing.
+2. **Create a branch** — `git checkout -b feature/<slug>` and record worktree commands in the handoff doc when collaborating asynchronously.
+3. **Author agent logic** — Implement MAG/SAG and shared helpers in TypeScript packages (for example `packages/catalog`). Reference exports via registry entrypoints such as `@magsag/catalog#agents.offerOrchestratorMag`.
+4. **Update catalog metadata** — Adjust `catalog/agents/*/agent.yaml` and `catalog/registry/*.yaml` to point at the new TypeScript entrypoints.
+5. **Align documentation** — Refresh AGENTS, SSOT, and any relevant guide when behaviour changes. Append to each Update Log.
+6. **Capture validation evidence** — Run the commands below and paste results into delivery notes or PR descriptions.
 
-## Testing Instructions
+## Validation Checklist
 
-### Test Layers
-
-MAGSAG uses a three-layer testing strategy:
-
-#### 1. Unit Tests (`tests/unit/`)
-Test individual components in isolation:
-- **Registry:** Agent/skill resolution, entrypoint loading
-- **Runner:** ObservabilityLogger, SkillRuntime, delegation logic
-- **Contracts:** JSON Schema validation
-
-Example:
 ```bash
-uv run -m pytest tests/unit/ -v
+pnpm -r lint
+pnpm -r typecheck
+pnpm -r test
+pnpm vitest --run --project e2e     # when flows or runners change
+pnpm docs:lint
+pnpm catalog:validate
+pnpm --filter @magsag/cli exec magsag flow validate <flow>
+pnpm --filter @magsag/cli exec magsag flow gate <summary.json>
 ```
 
-#### 2. Agent Tests (`tests/agents/`)
-Test MAG/SAG behavior with contract validation:
-- **Input/Output Contracts:** Validate against JSON schemas
-- **Fallback Logic:** Test error handling and partial failures
-- **Observability:** Verify logs, metrics, and summaries are generated
+Record each command’s exit status. Document skipped commands and the rationale (for example "e2e suite skipped: no flow changes").
 
-Example:
-```bash
-uv run -m pytest tests/agents/ -v
-```
+## Resources
 
-#### 3. Integration Tests (`tests/integration/`)
-Test end-to-end workflows via CLI:
-- **E2E Flow:** Full MAG→SAG orchestration
-- **Observability Artifacts:** Check `.runs/agents/<RUN_ID>/` contents
-- **CLI Interface:** Test `magsag agent run` command
+- [AGENTS.md](../../AGENTS.md) — Operational playbook and delivery expectations.
+- [SSOT.md](../../SSOT.md) — Canonical glossary, schemas, and documentation map.
+- [packages/catalog](../../packages/catalog/src/index.ts) — Sample MAG/SAG implementations and shared types.
+- [docs/governance/frontmatter.md](../governance/frontmatter.md) — Documentation metadata requirements.
+- [docs/workflows/changelog.md](../workflows/changelog.md) — Release note conventions.
 
-Example:
-```bash
-uv run -m pytest tests/integration/ -v
-```
+## Legacy Python Workflow
 
-### Running Tests
-
-- **All tests:**
-  ```bash
-  pnpm -r test
-  ```
-
-- **With coverage:**
-  ```bash
-  uv run -m pytest --cov=magsag --cov-report=term-missing
-  ```
-
-- **Documentation checks:**
-  ```bash
-  # Manual doc validation (tooling pending Workstream E)
-  ```
-
-### Manual Validation
-
-- Test agent orchestration after changes:
-  ```bash
-  echo '{"role":"Engineer","level":"Mid"}' | pnpm --filter @magsag/cli exec magsag agent run offer-orchestrator-mag
-  ```
-
-- Check observability artifacts:
-  ```bash
-  ls -la .runs/agents/<RUN_ID>/
-  cat .runs/agents/<RUN_ID>/logs.jsonl
-  ```
-
-- When Flow Runner is installed:
-  ```bash
-  # List available flow commands
-  pnpm --filter @magsag/cli exec magsag flow available
-
-  # Validate flow definition
-  pnpm --filter @magsag/cli exec magsag flow validate <flow.yaml> [--schema <schema-path>]
-
-  # Execute flow (with optional dry-run, step selection, or resume)
-  pnpm --filter @magsag/cli exec magsag flow run <flow.yaml> [--dry-run] [--only <step>] [--continue-from <step>]
-
-  # Summarize flow execution results
-  pnpm --filter @magsag/cli exec magsag flow summarize [--base .runs] [--output <path>]
-
-  # Apply governance policy to flow summary
-  pnpm --filter @magsag/cli exec magsag flow gate <summary.json> --policy catalog/policies/flow_governance.yaml
-  ```
-
-- Data management and observability:
-  ```bash
-  # Initialize storage backend (SQLite or PostgreSQL)
-  pnpm --filter @magsag/cli exec magsag data init [--backend sqlite|postgres] [--db-path .magsag/storage.db] [--fts/--no-fts]
-
-  # Query run data with filters
-  pnpm --filter @magsag/cli exec magsag data query [--run-id <id>] [--agent <slug>] [--status <status>] [--limit 10]
-
-  # Full-text search across run data (requires FTS5)
-  pnpm --filter @magsag/cli exec magsag data search "<query>" [--agent <slug>] [--limit 100]
-
-  # Vacuum old run data (with dry-run preview)
-  pnpm --filter @magsag/cli exec magsag data vacuum [--hot-days 7] [--max-disk <mb>] [--dry-run]
-
-  # Archive run data to cold storage
-  pnpm --filter @magsag/cli exec magsag data archive <s3://bucket/prefix> [--since 7] [--format parquet|ndjson]
-  ```
-
-## Running Agents via HTTP API
-
-The FastAPI service mirrors CLI execution with API-key or bearer-token authentication, optional rate limiting, and streaming logs.
-
-1. **Start the server**
-   ```bash
-   uv run uvicorn magsag.api.server:app --host 0.0.0.0 --port 8000
-
-   MAGSAG_API_KEY="local-dev-key" \
-   MAGSAG_RATE_LIMIT_QPS=5 \
-   uv run uvicorn magsag.api.server:app
-   ```
-
-2. **List available agents**
-   ```bash
-   curl -H "Authorization: Bearer $MAGSAG_API_KEY" \
-     http://localhost:8000/api/v1/agents | jq
-   ```
-
-3. **Execute a MAG**
-   ```bash
-   curl -X POST \
-     -H "Authorization: Bearer $MAGSAG_API_KEY" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "payload": {
-         "role": "Senior Engineer",
-         "level": "Senior",
-         "experience_years": 8
-       },
-       "request_id": "dev-env-$(date +%s)",
-       "metadata": {"source": "curl"}
-     }' \
-     http://localhost:8000/api/v1/agents/offer-orchestrator-mag/run | jq
-   ```
-
-4. **Retrieve run results**
-   ```bash
-   RUN_ID="mag-20240101-abcdef"
-   curl -H "Authorization: Bearer $MAGSAG_API_KEY" \
-     http://localhost:8000/api/v1/runs/$RUN_ID | jq
-   ```
-
-5. **Stream logs with SSE**
-   ```bash
-   curl -N -H "Authorization: Bearer $MAGSAG_API_KEY" \
-     "http://localhost:8000/api/v1/runs/$RUN_ID/logs?follow=true&tail=25"
-   ```
-
-### Troubleshooting (API)
-
-- `401 Unauthorized`: confirm `MAGSAG_API_KEY` matches the server configuration or unset the key when auth is disabled.
-- `429 Too Many Requests`: adjust `MAGSAG_RATE_LIMIT_QPS` or stagger requests; rate limiting is keyed by the presented credential.
-- `404 Not Found`: verify the agent slug exists and that run artifacts were written to `.runs/agents/`.
-- `502/504 from proxies`: prefer polling summaries if SSE connections are terminated upstream.
-
-### Adding Tests
-
-When adding new features, ensure coverage at all three layers:
-1. **Unit:** Test the component in isolation
-2. **Agent:** Test contract compliance and error handling
-3. **Integration:** Test the full workflow via CLI
-
-All tests must pass before a pull request is opened.
-
-## Build & Deployment
-- Build distributable artifacts with `uv build`. Run this whenever bundled
-  resources in `magsag/assets/` or packaging configuration changes to confirm the
-  wheel contains the required data files.
-- Spot-check the wheel by installing it into a disposable environment (e.g.,
-  `uv venv --seed .venv-build && uv pip install dist/magsag-*.whl`) when packaging
-  logic or bundled assets change materially.
-
-## Linting & Code Quality
-- Run `pnpm -r lint` to enforce formatting and linting rules (configured
-  in `pyproject.toml`). Use `pnpm -r lint --fix` for safe autofixes.
-- Enforce typing guarantees with `pnpm -r typecheck`.
-- Maintain observability instrumentation under `src/magsag/observability/` so generated
-  summaries expose `runs`, `success_rate`, latency metrics, and MCP statistics.
-- Cost tracking artifacts are persisted under `.runs/costs/` for downstream governance.
-
-## PR Instructions
-- Update `PLANS.md` before starting significant work and record completed items
-  in `CHANGELOG.md` under the `[Unreleased]` section.
-- Centralize terminology or policy updates in `SSOT.md` and reference that file
-  from other documentation instead of duplicating definitions.
-- A pull request must document the Flow Runner or governance impact for changes
-  touching runners, policies, or observability. Capture expected
-  `magsag.cli flow ...` behaviors in the description when applicable.
-- Only open a PR after all required commands succeed locally:
-  `pnpm -r test`, `uv run python tools/check_docs.py`, and the walking
-  skeleton CLI checks listed above.
-
-## MAG/SAG Development Guide
-
-**Quick Reference:**
-- **MAG (Main Agent)**: Orchestrators with suffix `-mag` (e.g., `offer-orchestrator-mag`)
-- **SAG (Sub-Agent)**: Specialists with suffix `-sag` (e.g., `compensation-advisor-sag`)
-- **Templates**: Use `catalog/agents/_template/mag-template/` or `catalog/agents/_template/sag-template/`
-- **Testing**: Three-layer strategy (unit, agent, integration)
-- **Observability**: Artifacts in `.runs/agents/<RUN_ID>/`
-
-## Agent Persona Integration
-
-Agents can define personality, tone, and behavioral guidelines via optional `PERSONA.md` files. Personas are automatically loaded by the Registry and can be used in LLM system prompts.
-
-### Persona File Location
-
-```
-catalog/agents/{role}/{slug}/
-├── agent.yaml
-├── README.md
-├── PERSONA.md          ← Optional persona configuration
-└── code/
-```
-
-### Using Personas in Agent Code
-
-Agents receive `registry` as a parameter and can access persona content:
-
-```python
-from magsag.persona import build_system_prompt_with_persona, get_agent_persona
-
-def run(payload, *, registry, skills, runner, obs):
-    """Agent implementation with persona"""
-
-    # Get persona for this agent
-    persona = get_agent_persona("my-agent-slug", registry=registry)
-
-    # Build LLM system prompt with persona
-    if persona:
-        system_prompt = build_system_prompt_with_persona(
-            base_prompt="Analyze the data and generate recommendations.",
-            persona_content=persona
-        )
-    else:
-        system_prompt = "Analyze the data and generate recommendations."
-
-    # Use system_prompt in LLM calls
-    # (Integrate with provider layer as needed)
-
-    return {"result": "..."}
-```
-
-### Persona Utility Functions
-
-The `magsag.persona` module provides helper functions:
-
-- **`build_system_prompt_with_persona(base_prompt, persona_content, separator="\\n\\n---\\n\\n")`**
-  - Combines persona with task-specific instructions
-  - Persona appears first, followed by separator and base prompt
-  - Returns base_prompt unchanged if persona_content is None or empty
-
-- **`get_agent_persona(agent_slug, registry=None)`**
-  - Retrieves persona content by agent slug
-  - Uses global registry if not provided
-  - Returns None if persona not available
-
-- **`extract_persona_section(persona_content, section_name)`**
-  - Extracts specific sections from PERSONA.md (e.g., "Behavioral Guidelines")
-  - Case-insensitive section matching
-  - Includes nested subsections (e.g., "### When Uncertain")
-  - Returns None if section not found
-
-### Example: Extracting Specific Sections
-
-For LLM-based agents that only need specific guidance:
-
-```python
-from magsag.persona import extract_persona_section
-
-def run(payload, *, registry, skills, runner, obs):
-    agent = registry.load_agent("my-agent-slug")
-
-    # Extract only behavioral guidelines
-    guidelines = extract_persona_section(
-        agent.persona_content or "",
-        "Behavioral Guidelines"
-    )
-
-    if guidelines:
-        system_prompt = f"{guidelines}\\n\\nNow complete this task: {payload}"
-    else:
-        system_prompt = f"Complete this task: {payload}"
-
-    # Use system_prompt in LLM call
-    return {"result": "..."}
-```
-
-### Testing Persona Integration
-
-Test persona loading and usage:
-
-```python
-def test_agent_uses_persona():
-    registry = Registry()
-    agent = registry.load_agent("my-agent-mag")
-
-    # Verify persona is loaded
-    assert agent.persona_content is not None
-
-    # Verify persona sections are present
-    assert "Personality" in agent.persona_content
-    assert "Behavioral Guidelines" in agent.persona_content
-
-    # Test persona utility functions
-    from magsag.persona import build_system_prompt_with_persona
-
-    prompt = build_system_prompt_with_persona(
-        "Task instructions",
-        agent.persona_content
-    )
-
-    assert len(prompt) > len("Task instructions")
-    assert agent.persona_content in prompt
-```
-
-### Persona Best Practices
-
-1. **Keep personas focused**: Define personality, tone, and behavior relevant to the agent's domain
-2. **Provide examples**: Include good/bad response examples in PERSONA.md
-3. **Use structured sections**: Organize content with clear headings for easy extraction
-4. **Test with LLMs**: Verify persona guidance produces desired agent behavior
-5. **Update incrementally**: Refine persona based on agent performance and user feedback
-6. **Document customization**: Note domain-specific requirements in PERSONA.md
-
-### Persona Templates
-
-All agent templates include comprehensive PERSONA.md files:
-- `catalog/agents/_template/mag-template/PERSONA.md` - MAG persona template
-- `catalog/agents/_template/sag-template/PERSONA.md` - SAG persona template
-- `catalog/agents/main/offer-orchestrator-mag/PERSONA.md` - Example MAG persona
-- `catalog/agents/sub/compensation-advisor-sag/PERSONA.md` - Example SAG persona
-
-## Security & Credentials
-- Do not commit secrets, API keys, or Flow Runner credentials. Use environment
-  variables sourced via `ops/scripts/flowrunner-env.sh` (generated by `make setup-flowrunner`).
-- Keep governance thresholds in `catalog/policies/flow_governance.yaml` aligned with
-  operational requirements. Update associated tests and documentation when
-  thresholds or policy structures change.
-- Review third-party dependencies during updates and run
-  `uv run python ops/tools/verify_vendor.py` after refreshing vendored artifacts to
-  detect tampering.
-
-## Documentation Conventions
-
-This project follows AI-first documentation standards. See the following files for specific guidance:
-
-- **SSOT.md** - Single Source of Truth for canonical definitions, policies, and terminology
-  - Defines glossary terms (Agent, Skill, Contract, Registry, etc.)
-  - Establishes project-wide policies and versioning conventions
-  - When conflicts arise in documentation, SSOT.md is authoritative
-
-- **CHANGELOG.md** - Version history following [Keep a Changelog](https://keepachangelog.com/) format
-  - Update the `[Unreleased]` section as you complete work
-  - Categorize changes: Added, Changed, Removed, Fixed, Security
-  - Focus on user-facing changes, not implementation details
-
-- **PLANS.md** - Active ExecPlan for tracking complex multi-step initiatives
-  - Review current To-do items and Progress before starting work
-  - Update Progress, Surprises & Discoveries, and Decision Log in real-time
-  - Reference this plan when making architectural decisions
-
-**Integration**: When making changes, ensure consistency across all documentation:
-1. Update canonical definitions in SSOT.md first
-2. Add user-facing changes to CHANGELOG.md under `[Unreleased]`
-3. Update PLANS.md progress and decisions for complex initiatives
-4. Follow the procedures in this AGENTS.md file for testing and PRs
-
-## Update Log
-
-- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
-- 2025-11-01: Adopted the unified documentation standard and refreshed references.
-- 2025-10-25: Added CLI reference and SSOT linkage.
-- 2025-10-24: Introduced frontmatter and repository-specific guidance.
+The Python-based workflow (FastAPI, uv, Typer CLI) shipped prior to v2.0.0 and has been removed. Refer to the Git history before commit `feature/ts-migration/f-legacy-cleanup` if historical context is required.

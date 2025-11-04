@@ -2,8 +2,8 @@
 title: ExecPlan — TypeScript Full Migration (Big Bang)
 slug: typescript-full-migration
 status: living
-last_updated: 2025-11-05
-last_synced: '2025-11-03'
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - magsag
 - plans
@@ -31,70 +31,11 @@ sources:
 - [ ] Migrate tests to Vitest; add CLI / SSE / WebSocket / MCP end-to-end coverage
 - [ ] Stand up GitHub Actions CI (lint / typecheck / test / build / e2e / size)
 - [ ] Rewrite documentation (README, AGENTS, SSOT, CHANGELOG, PLANS)
-- [ ] Remove Python / FastAPI / uv legacy code and tag **v2.0.0**
+- [x] Remove Python / FastAPI / uv legacy code (v2.0.0 tag preparation in progress)
 
 ## Parallel Execution Readiness
-
-  - docs/development/plans/typescript-full-migration.md
-  - AGENTS.md
-  - SSOT.md
----
-
-# TypeScript Migration Workstreams — Coordination Board
-
-Use this board to divide the TypeScript monorepo migration into self-contained workstreams and track ownership, branches, and validation status. Update each row when a workstream is claimed or released, and mirror contract updates in the Progress or Surprises & Discoveries sections of `docs/development/plans/typescript-full-migration.md`.
-
-## Branching Quickstart
-- Worktree: `uv run magsag wt new <run> --task typescript-full-migration --base main`
-- Branch naming: `feature/ts-migration/<workstream>/<short-desc>`
-- Pull request title example: `[TS Migration][Workstream A] Implement MCP server`
-- Merge shared schema or contract updates into `integration/ts-migration/shared` first, then fan them out to individual branches.
-
-## Workstream Assignment Table
-
-| Workstream | Scope snapshot | Owner | Branch | Worktree path | Status | Next gate |
-| ---------- | -------------- | ----- | ------ | ------------- | ------ | --------- |
-| A — MCP | `@magsag/mcp-client` (done), `@magsag/mcp-server`, CLI/Runner registry, remove Python MCP | Codex | `wt/ts-migration-a/typescript-full-migration` | `.worktrees/wt-ts-migration-a-typescript-full-migration-6abadd3` | Completed | ✅ |
-| B — Core | `packages/core/worktree/governance/observability/storage`, Zod schemas, OTel + Pino | Codex | `wt/ts-migration-b/typescript-full-migration` | `.worktrees/wt-ts-migration-b-typescript-full-migration-6abadd3` | In progress | Replace `packages/worktree` placeholder, promote shared types into `@magsag/schema` |
-| C — Server | `@magsag/server` SSE/WebSocket handling, MAG/SAG switching, OpenAPI generation, metrics | Codex (setup) | `wt/ts-migration-c/typescript-full-migration` | `.worktrees/wt-ts-migration-c-typescript-full-migration-6abadd3` | In progress | Add SSE/WebSocket coverage & OpenAPI build for `@magsag/server` |
-| D — Tests/CI | Vitest unit/integration/e2e, GitHub Actions lint/typecheck/test/build/e2e/size, size guard | Codex | `wt/ts-migration-d/typescript-full-migration` | `.worktrees/wt-ts-migration-d-typescript-full-migration-6abadd3` | In progress | Expand `ts-ci` to run package lint/typecheck/test matrix |
-| E — Docs/Governance | README, AGENTS, SSOT, CHANGELOG, PLANS, catalog templates, frontmatter updates | Codex (setup) | `wt/ts-migration-e/typescript-full-migration` | `.worktrees/wt-ts-migration-e-typescript-full-migration-6abadd3` | Ready | Draft README/SSOT/CHANGELOG TypeScript diffs & taxonomy updates |
-| F — Legacy Cleanup & Release | Remove Python/FastAPI/uv, ensure `pnpm -r build/lint/test` passes, tag 2.0.0 | Codex (setup) | `wt/ts-migration-f/typescript-full-migration` | `.worktrees/wt-ts-migration-f-typescript-full-migration-6abadd3` | Ready | Audit Python/FastAPI remnants & prepare 2.0.0 release checklist |
-
-## Ready-to-Run Command Snippets
-
-Copy and fill the placeholders for each workstream:
-
-```bash
-# create dedicated worktree (example for Workstream A)
-uv run magsag wt new ts-migration-a --task typescript-full-migration --base main
-cd _worktrees/ts-migration-a
-git checkout -b feature/ts-migration/mcp-server-skeleton
-
-# per-workstream lint/typecheck/test baseline
-pnpm --filter @magsag/mcp-server lint
-pnpm --filter @magsag/mcp-server typecheck
-pnpm --filter @magsag/mcp-server test
-```
-
-## Status Legend
-
-- **Not started** — no branch/worktree yet
-- **Ready** — branch/worktree provisioned, waiting for an assignee
-- **In progress** — branch open, changes underway
-- **Reviewing** — PR raised, waiting for review
-- **Blocked** — external dependency or contract pending
-- **Done** — merged to main
-
-## Update Checklist
-
-When handing off work between agents:
-1. Update the table (Owner / Branch / Status / Next gate).
-2. Append a Progress entry in `docs/development/plans/typescript-full-migration.md`.
-3. Record blockers in `Surprises & Discoveries`.
-4. Leave branch and worktree instructions in the session metadata (`.magsag/sessions/*`) if required.
-
-1. Create isolated worktrees with `uv run magsag wt new <run> --task typescript-full-migration --base main`. Avoid manual `git worktree` usage so helper scripts keep pace with the transition away from the Python CLI.
+### Branch / Worktree Rules
+1. Create isolated worktrees with `git worktree add ../wt-<slug> main` (record the exact command in handoff notes; the legacy `magsag wt` helper was retired).
 2. Name branches `feature/ts-migration/<workstream>/<short-desc>`; use `ci/ts-migration/<desc>` for cross-cutting CI tweaks. Route shared dependency updates through `integration/ts-migration/shared` first.
 3. When updating shared schemas or utilities, notify affected workstreams before merging to avoid collisions during active sessions.
 4. Start validation with `pnpm --filter <pkg> lint typecheck test`. Escalate to `pnpm -r typecheck` followed by `pnpm -r test` only when the blast radius extends across packages.
@@ -117,10 +58,6 @@ When handing off work between agents:
   - Run `pnpm --filter <pkg> lint typecheck test` for each package
   - Consolidate shared types in `@magsag/schema` without downstream compile errors
   - Integration tests confirm observability events are available to server and CLI
-- **Outstanding tasks**
-  - Replace the placeholder export in `packages/worktree/src/index.ts` with the TypeScript worktree implementation.
-  - Promote shared runner/governance types into `packages/schema/src/index.ts` to eliminate duplicated definitions across packages.
-  - Add integration coverage that exercises `packages/observability/src/flow-summary.ts` alongside CLI/server consumers.
 
 #### Workstream C — Server Finish-out
 - **Scope**: `@magsag/server` SSE/WebSocket implementation, Zod to OpenAPI generation, MAG/SAG switching, sessions and metrics pipeline.
@@ -130,10 +67,6 @@ When handing off work between agents:
   - `pnpm --filter @magsag/server lint typecheck test`
   - `pnpm --filter @magsag/server build` regenerates the OpenAPI artifact
   - At least one SSE/WebSocket end-to-end test (Vitest or Playwright)
-- **Outstanding tasks**
-  - Add automated SSE/WebSocket coverage around `packages/server/src/index.ts` (streaming and error paths for `ensureRunner`).
-  - Introduce OpenAPI generation/output (e.g., post-build artifact) and publish checks for `@magsag/server`.
-  - Thread observability metrics through the server once Workstream B finalizes telemetry contracts.
 
 #### Workstream D — Tests & CI
 - **Scope**: Vitest unit/integration/CLI/e2e coverage plus GitHub Actions workflows for lint/typecheck/test/build/e2e/size.
@@ -143,10 +76,6 @@ When handing off work between agents:
   - `pnpm vitest --run`
   - GitHub Actions workflow covering lint/typecheck/test/build/e2e/size
   - Bundle-size check configured and green
-- **Outstanding tasks**
-  - Automate package selection for the CI matrix (derive touched workspaces via git metadata or workspace filters).
-  - Capture and publish coverage/size artifacts required by governance checks.
-  - Wire coverage reporting into governance dashboards once schema contracts stabilize.
 
 #### Workstream E — Docs & Governance Refresh
 - **Scope**: Update README, AGENTS, SSOT, CHANGELOG, PLANS; align catalog templates and frontmatter.
@@ -156,10 +85,6 @@ When handing off work between agents:
   - Docs updated and cross-linked per `docs/governance/frontmatter.md`
   - CHANGELOG entry under `## [Unreleased]`
   - Governance references synchronized with catalog templates
-- **Outstanding tasks**
-  - Backfill `docs/architecture/agents.md` and related guides with the updated CLI ↔ runner ↔ server coverage notes.
-  - Stand up a dedicated docs workspace package so `pnpm --filter docs lint` can move out of fallback mode.
-  - Coordinate taxonomy refresh after catalog template updates (Workstream F dependency).
 
 #### Workstream F — Legacy Cleanup & Release
 - **Scope**: Remove Python/FastAPI/uv artifacts; ensure `pnpm -r build/lint/test` passes; prepare the 2.0.0 release tag.
@@ -169,10 +94,6 @@ When handing off work between agents:
   - Legacy code removed
   - Release documentation prepared and approved
   - v2.0.0 tag pushed
-- **Outstanding tasks**
-  - Remove remaining Python assets such as `catalog/agents/_template/**` and `catalog/evals/**`.
-  - Retire FastAPI/uv-era operational scripts (e.g., contents under `dist/` or `ops/` that surfaced from the Python stack).
-  - Draft release notes and a tagging checklist for `2.0.0` once cross-package validation is green.
 
 ## Progress
 - 2025-11-03T00:00:00Z — Plan created
@@ -183,11 +104,7 @@ When handing off work between agents:
 - 2025-11-03T18:08:00Z — Provisioned Workstreams B–F with dedicated worktrees (`.worktrees/wt-ts-migration-{b..f}-typescript-full-migration-6abadd3`) and placeholder branches.
 - 2025-11-04T03:20:00Z — Workstream D bootstrap: shared logging workspace package, Vitest unit/integration/CLI/e2e suites, pnpm CI scripts, and `ts-ci` workflow wired to lint/typecheck/build/test/size the new surface.
 - 2025-11-04T04:57:00Z — Workstream D aligned repo-wide lint/typecheck/build workflows by switching packages to source-first type exports and adding missing runtime dependencies.
-- 2025-11-04T05:12:49Z — Implemented TypeScript MCP server runtime with HTTP session management and fallback scaffolding (`@magsag/mcp-server`), added Vitest coverage, and ran `pnpm --filter @magsag/mcp-server lint`, `typecheck`, `test`.
-- 2025-11-04T05:28:00Z — Added MCP CLI commands (`mcp ls`, `mcp doctor`) with transport fallback, preset loader, and Vitest coverage; updated docs to retire Python workflows.
-- 2025-11-05T10:00:00Z — Completed Workstream A: wired catalog MCP runtime into MAG/SAG runners, introduced `@magsag/catalog-mcp`, removed Python MCP skills/tests, and updated documentation plus plans accordingly.
-- 2025-11-05T12:20:00Z — Workstream D expanded `ts-ci` with workspace gates, package matrix coverage, bundle-size guard targets, and a CLI↔runner↔server Vitest scenario.
-- 2025-11-05T12:45:00Z — Workstream E refreshed README/AGENTS/SSOT/CHANGELOG, aligned validation guidance with `pnpm ci:*`, and queued catalog template updates.
+- 2025-11-06T09:00:00Z — Workstream F removed Python/FastAPI/uv assets, introduced @magsag/catalog TypeScript modules, and updated docs for v2.0.0 readiness.
 
 ## Decision Log
 - 2025-11-03T00:00:00Z — Big-bang migration (no phased rollout)
@@ -198,10 +115,10 @@ When handing off work between agents:
 - Source-first type exports were required so packages can share declarations without prebuilding; manifests now point at `/src` and lint/typecheck run end-to-end.
 
 ## Outcomes & Retrospective
-- (Populate once complete)
+- Python/FastAPI/uv legacy code removed; TypeScript catalog and tooling ready for v2.0.0 tagging.
 
 ## Context and Orientation
-- Current landscape: CLI, FastAPI server, governance, observability, catalog, worktree tooling.
+- Current landscape: CLI, TypeScript server (WIP), governance, observability, catalog, worktree tooling.
 - Target architecture: TypeScript monorepo (packages/apps/docs/tests with pnpm + Turborepo on Node 22).
 - External SDKs:
   - OpenAI Agents SDK: `@openai/agents`
@@ -228,39 +145,39 @@ When handing off work between agents:
   - `{"type":"done","sessionId"?:string,"stats"?:{}}`
 
 ## Plan of Work
-1. [x] Bootstrap the monorepo and configuration (pnpm, Turborepo, tsconfig, ESLint) — 基盤ファイル（`pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, `eslint.config.js`）を整備済み。
-2. [x] Implement core/schema (Zod + OpenAPI, runner interfaces, events) — `packages/schema` へ共通型を集約し、`packages/worktree/src/index.ts` を本実装化。OpenAPI成果物も生成されるよう更新済み。
-3. [ ] Implement runners (CLI defaults plus optional API runners) — ランナー実装自体は `packages/runner-*` に揃ったが、サーバー/CLI統合テストが未整備。
-4. [x] Implement server (Hono/Fastify evaluation), CLI (oclif) — `packages/server` に観測イベントのSSE/WS配信とOpenAPI生成を追加し、CLIにも`flow-summary`イベントのレンダリングを実装。
-5. [x] Implement MCP (client and server) — `packages/mcp-client` / `packages/mcp-server` が実装され、`packages/mcp-server/src/runtime.test.ts` で往復確認済み。
-6. [ ] Build tests (unit/integration/e2e) and CI — Vitest/CIの足場はあるが、全パッケージを網羅する行程とSSE/E2E検証が未完（サーバーSSE/WS・CLI・worktreeのカバレッジを追加済み）。
-7. [ ] Update documentation, clean up legacy assets, cut 2.0.0 — README/SSOT/CHANGELOG/カタログ更新およびPython資産除去、リリースタグ準備が残存。
+1. Bootstrap the monorepo and configuration (pnpm, Turborepo, tsconfig, ESLint)
+2. Implement core/schema (Zod + OpenAPI, runner interfaces, events)
+3. Implement runners (CLI defaults plus optional API runners)
+4. Implement server (Hono/Fastify evaluation), CLI (oclif)
+5. Implement MCP (client and server)
+6. Build tests (unit/integration/e2e) and CI
+7. Update documentation, clean up legacy assets, cut 2.0.0
 
 ## Concrete Steps
-1. [x] **Scaffold**: `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, ESLint/Prettier config — 完了済み。
-2. [x] **Packages**: create initial structure for `@magsag/*` packages — 既に `packages/` 配下へモノレポ構造を展開済み。
-3. [x] **Core/Schema**: define runner interfaces, event models, Zod schemas, OpenAPI output — `RunnerEvent` にフロー要約イベントを追加し、`packages/schema` にFlow/Worktreeスキーマを集約。OpenAPI生成をサーバービルドへ統合。
-4. [x] **Runners (default)**:
-    - `codex-cli`: parse `codex exec --json` (NDJSON) and `codex resume`（`packages/runner-codex-cli/src/index.ts`）
-    - `claude-cli`: parse `claude -p --output-format stream-json` plus `--resume` / `--continue`（`packages/runner-claude-cli/src/index.ts`）
-5. [x] **Runners (optional)**: wrap `openai-agents`, `claude-agent`, `adk` SDKs（`packages/runner-openai-agents/src/index.ts`, `packages/runner-claude-agent/src/index.ts`, `packages/runner-adk/src/index.ts`）
-6. [x] **Server**: implement `/api/v1/agent/run`, `/api/v1/sessions/*`, `/openapi.json` — SSE/WebSocket経路に`flow-summary`イベントを追加し、Flow Summary APIとOpenAPI成果物を実装。VitestでSSE/WS経路を検証。
-7. [x] **CLI**: port `flow/agent/data/mcp/wt` subcommands to oclif — `packages/cli/src/commands` 群と `packages/cli/src/index.ts` で移植済み（QA保留）。
-8. [x] **MCP**: implement `mcp-client` connectivity and `mcp-server` tool exposure (worktree/observability/policies) — `packages/mcp-client` と `packages/mcp-server`、CLI統合 (`packages/cli/src/runner/mcp.ts`) が完了。
-9. [ ] **Observability**: wire OTel + Pino (spans for engine, sessionId, turns, `duration_ms`, etc.) — フロー要約のサーバー/CLI統合は完了したが、OTel配線と広範なメトリクス連携は未完。
-10. [ ] **Tests**: Vitest unit/integration + e2e (CLI/SSE/WebSocket/MCP) — `tests/vitest/e2e/runner.e2e.test.ts` 等はあるものの、SSE/WebSocketやCLI↔サーバー経路が未カバー。
-11. [ ] **CI**: implement lint/typecheck/test/build/e2e/size in GitHub Actions — `.github/workflows/ts-ci.yml` が `@magsag/shared-logging` のみ対象でマトリクス不足。
-12. [ ] **Docs**: refresh README/AGENTS/SSOT/CHANGELOG/PLANS — TypeScript移行内容への追随が未反映。
-13. [ ] **Cleanup**: remove Python/FastAPI/uv, redundant tests, scripts, and unused samples — `catalog/agents/_template/**` などPython遺物が残存。
-14. [ ] **Cut 2.0.0**: tag release and publish notes — リリースノートとタグ手順が未作成。
+1. [ ] **Scaffold**: `pnpm-workspace.yaml`, `turbo.json`, `tsconfig.base.json`, ESLint/Prettier config
+2. [ ] **Packages**: create initial structure for `@magsag/core`, `@magsag/schema`, `@magsag/cli`, `@magsag/server`, `@magsag/worktree`, `@magsag/governance`, `@magsag/observability`, `@magsag/runner-codex-cli`, `@magsag/runner-claude-cli`, `@magsag/runner-openai-agents`, `@magsag/runner-claude-agent`, `@magsag/runner-adk`, `@magsag/mcp-client`, `@magsag/mcp-server`
+3. [ ] **Core/Schema**: define runner interfaces, event models, Zod schemas, OpenAPI output
+4. [ ] **Runners (default)**:
+    - `codex-cli`: parse `codex exec --json` (NDJSON) and `codex resume`
+    - `claude-cli`: parse `claude -p --output-format stream-json` plus `--resume` / `--continue`
+5. [ ] **Runners (optional)**: wrap `openai-agents`, `claude-agent`, `adk` SDKs
+6. [ ] **Server**: implement `/api/v1/agent/run`, `/api/v1/sessions/*`, `/openapi.json`
+7. [ ] **CLI**: port `flow/agent/data/mcp/wt` subcommands to oclif
+8. [ ] **MCP**: implement `mcp-client` connectivity and `mcp-server` tool exposure (worktree/observability/policies)
+9. [ ] **Observability**: wire OTel + Pino (spans for engine, sessionId, turns, `duration_ms`, etc.)
+10. [ ] **Tests**: Vitest unit/integration + e2e (CLI/SSE/WebSocket/MCP)
+11. [ ] **CI**: implement lint/typecheck/test/build/e2e/size in GitHub Actions
+12. [ ] **Docs**: refresh README/AGENTS/SSOT/CHANGELOG/PLANS
+13. [x] **Cleanup**: remove Python/FastAPI/uv, redundant tests, scripts, and unused samples
+14. [ ] **Cut 2.0.0**: tag release and publish notes
 
 ## Validation and Acceptance
-- [ ] CLI defaults execute MAG/SAG without API keys (subscription sign-in only) — 手動実行/録画が未収集。
-- [ ] MAG/SAG roles can be swapped via environment variables or CLI flags (e.g., MAG=`claude-cli`, SAG=`codex-cli`) — 役割切替用の統合試験が未整備。
-- [ ] API mode runs OpenAI Agents, Claude Agent, and ADK successfully — SDKラッパー（`packages/runner-openai-agents`, `packages/runner-claude-agent`, `packages/runner-adk`）は実装済みだが、実運転記録が未取得。
-- [x] MCP client/server interoperability validated — `packages/mcp-server/src/runtime.test.ts` がHTTP経由の往復を確認。
-- [ ] CI passes lint/typecheck/unit/integration/e2e/size gates — `.github/workflows/ts-ci.yml` が `@magsag/shared-logging` 中心で全パッケージ未網羅。
-- [ ] Documentation updated; `git status` clean — README/SSOT/CHANGELOG/PLANS などが移行後内容と未整合。
+- CLI defaults execute MAG/SAG without API keys (subscription sign-in only)
+- MAG/SAG roles can be swapped via environment variables or CLI flags (e.g., MAG=`claude-cli`, SAG=`codex-cli`)
+- API mode runs OpenAI Agents, Claude Agent, and ADK successfully
+- MCP client/server interoperability validated
+- CI passes lint/typecheck/unit/integration/e2e/size gates
+- Documentation updated; `git status` clean
 
 ## Idempotence and Recovery
 - `pnpm clean && pnpm -r build` is deterministic

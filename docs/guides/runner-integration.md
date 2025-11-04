@@ -2,7 +2,7 @@
 title: Runner Integration Guide
 slug: guide-runner-integration
 status: living
-last_updated: 2025-11-02
+last_updated: 2025-11-06
 tags:
 - runners
 - integration
@@ -10,7 +10,7 @@ summary: Expectations and interface requirements for integrating execution runne
   with MAGSAG.
 authors: []
 sources: []
-last_synced: '2025-11-02'
+last_synced: '2025-11-06'
 description: Expectations and interface requirements for integrating execution runners
   with MAGSAG.
 ---
@@ -57,7 +57,7 @@ When adding a new runner adapter:
 
 1. Implement the `Runner` protocol and `info()` method.
 2. Provide a minimal example flow and schema if the runner needs bespoke definitions.
-3. Ensure `src/magsag/observability/summarize_runs.py` can normalize the runner's artifacts or supply a custom normalizer.
+3. Ensure `packages/observability/src/flow-summary.ts` can normalize the runner's artifacts or supply a custom normalizer.
 4. Add tests under `tests/runner/conformance/` exercising:
    - `is_available()` detection (can be skipped when the runner binary is missing).
    - `validate()` error handling for known-bad inputs.
@@ -69,7 +69,7 @@ When adding a new runner adapter:
 ## Governance & Observability
 
 - Flow summaries must conform to `src/magsag/assets/contracts/flow_summary.schema.json`.
-- Vendor assets (e.g., Flow Runner schema) are locked via `tools/verify_vendor.py`.
+- Vendor assets (e.g., Flow Runner schema) are checked via `pnpm catalog:validate`.
 - CI must execute the runner integration tests and publish run summaries for policy evaluation.
 
 ## Agent Runner

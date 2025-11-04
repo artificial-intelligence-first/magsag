@@ -4,7 +4,7 @@ role: "main"
 version: "0.1.0"
 description: "Main agent for orchestrating [describe your task]"
 
-entrypoint: "catalog/agents/main/your-orchestrator-mag/src/index.ts:run"
+entrypoint: "@magsag/catalog#agents.yourOrchestratorMag"
 
 depends_on:
   sub_agents:

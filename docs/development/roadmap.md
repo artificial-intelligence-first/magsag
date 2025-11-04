@@ -46,7 +46,7 @@ Anchor the MAGSAG repository around a resilient, AI-first walking skeleton so su
 - [2025-10-21 07:40 UTC] Refactored ExecPlan to the ExecPlans template, migrated historical accomplishments, and identified remaining governance hardening tasks.
 - [2025-10-20 15:30 UTC] Walking skeleton validated end-to-end (registry lookup → schema validation → Flow Runner invocation) with automation tests and documentation updates.
 - [2025-10-20 13:45 UTC] Flow Runner adapter, CLI entry points, and mirrored assets integrated with packaging configuration and smoke-test guidance.
-- [2025-10-20 11:55 UTC] Governance gate operationalized via `tools/gate_flow_summary.py`, wired into CI alongside Flow Runner validation and Multi-Agent Governance checks.
+- [2025-10-20 11:55 UTC] Governance gate operationalized via `magsag flow gate` (TypeScript CLI), wired into CI alongside Flow Runner validation and Multi-Agent Governance checks.
 - [2025-10-20 11:10 UTC] Observability summary tooling created for Flow Runner `.runs/`, exposing per-step metrics and MCP call counts.
 - [2025-10-20 10:40 UTC] Baseline repository skeleton established with `uv` tooling, initial directories, and core documentation.
 
@@ -82,13 +82,17 @@ Framework deliverables are in place with passing tests and policy checks, ready 
 4. Update contributor documentation to reference ExecPlan lifecycle and validation expectations.
 
 ## Validation and Acceptance
+- [ ] `pnpm -r lint`
+- [ ] `pnpm -r typecheck`
 - [ ] `pnpm -r test`
-- [ ] `# Manual doc validation (tooling pending Workstream E)`
+- [ ] `pnpm docs:lint`
+- [ ] `pnpm catalog:validate`
+- [ ] `pnpm ci:e2e`
+- [ ] `pnpm ci:size`
 - [ ] `echo '{"role":"Engineer","level":"Mid"}' | pnpm --filter @magsag/cli exec magsag agent run offer-orchestrator-mag`
 - [ ] `pnpm --filter @magsag/cli exec magsag flow available`
 - [ ] `pnpm --filter @magsag/cli exec magsag flow summarize --output /tmp/summary.json`
 - [ ] `pnpm --filter @magsag/cli exec magsag flow gate /tmp/summary.json`
-- [ ] `uv build` (smoke test packaging when bundled resources change)
 
 ## Idempotence and Recovery
 - Flow Runner asset sync scripts must be rerunnable; guard file operations with existence checks.
@@ -97,7 +101,7 @@ Framework deliverables are in place with passing tests and policy checks, ready 
 
 ## Artifacts and Notes
 - Policy definitions: `catalog/policies/flow_governance.yaml`.
-- Governance tooling: `src/magsag/observability/summarize_runs.py`, CLI command `magsag flow gate`.
+- Governance tooling: `packages/observability/src/flow-summary.ts`, CLI command `pnpm --filter @magsag/cli exec magsag flow gate`.
 - Runner scripts: `ops/scripts/setup-flowrunner.sh` (generates `ops/scripts/flowrunner-env.sh`).
 - Agent templates: `catalog/agents/_template/mag-template/` and `catalog/agents/_template/sag-template/`.
 - Development automation: `Makefile` with common tasks.

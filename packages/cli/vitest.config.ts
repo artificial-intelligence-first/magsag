@@ -1,24 +1,17 @@
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import path from 'node:path';
 import { defineConfig } from 'vitest/config';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const packagesRoot = join(__dirname, '..', '..', 'packages').replace(/\\/g, '/');
+const fromPackage = (relative: string) => path.resolve(__dirname, relative);
 
 export default defineConfig({
-  resolve: {
-    alias: [
-      {
-        find: /^@magsag\/(.+)$/,
-        replacement: `${packagesRoot}/$1/src/index.ts`
-      }
-    ]
-  },
   test: {
-    globals: true,
-    environment: 'node',
-    clearMocks: true,
-    include: ['src/**/*.test.ts']
+    environment: 'node'
+  },
+  resolve: {
+    alias: {
+      '@magsag/catalog-mcp': fromPackage('../catalog-mcp/src/index.ts'),
+      '@magsag/mcp-client': fromPackage('../mcp-client/src/mcp-client.ts'),
+      '@magsag/mcp-server': fromPackage('../mcp-server/src/index.ts')
+    }
   }
 });

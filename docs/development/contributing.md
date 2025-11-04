@@ -134,6 +134,7 @@ PR expectations:
 
 ## Update Log
 
+- 2025-11-06: Adopted TypeScript doc tooling (`pnpm docs:lint`, `pnpm catalog:validate`) in place of manual validation notes.
 - 2025-11-04: Migrated the contribution workflow to the TypeScript + pnpm toolchain and documented manual doc validation.
 - 2025-11-02: Linked documentation templates and taxonomy usage.
 - 2025-11-01: Rebuilt guide using the unified documentation standard.

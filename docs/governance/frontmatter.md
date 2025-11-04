@@ -2,8 +2,8 @@
 title: Markdown Frontmatter Specification
 slug: frontmatter
 status: living
-last_updated: 2025-11-05
-last_synced: '2025-11-05'
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - documentation
 - governance
@@ -86,7 +86,7 @@ sources:
 Run the validator before pushing:
 
 ```bash
-pnpm --filter docs lint || uv run python ops/tools/check_docs.py
+pnpm docs:lint
 ```
 
 The script enforces required fields, slug patterns, tag casing, summary limits, and ISO 8601 dates. Record command results in delivery notes.
@@ -113,5 +113,5 @@ Record frontmatter schema updates here:
 - 2025-11-05: Restored scripted validation using pnpm with Python fallback during the TypeScript migration.
 - 2025-11-04: Documented manual frontmatter review while TypeScript doc tooling is in-flight.
 - 2025-11-02: Redirected tag guidance to the dedicated taxonomy document.
-- 2025-11-02: Restored `last_synced` and `description` as required fields to align with `ops/tools/check_docs.py`.
+- 2025-11-02: Restored `last_synced` and `description` as required fields to align with documentation validators (`pnpm docs:lint`).
 - 2025-11-01: Introduced v1 schema and validation requirements for the MAGSAG repository.

@@ -2,175 +2,54 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
 
 jobs:
-  core:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
         with:
-          python-version-file: ".python-version"
+          version: 9
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          enable-cache: true
-
-      - name: Sync dependencies
-        run: uv sync --locked --extra dev
-
-      - name: Documentation guard
-        run: uv run python ops/tools/check_docs.py
-
-      - name: Validate MCP artefacts
-        run: uv run magsag mcp sync --dry-run
-
-      - name: Verify vendor assets
-        run: uv run python ops/tools/verify_vendor.py
-
-      - name: Test suite
-        run: uv run -m pytest -q -m 'not slow' -n auto
-
-      - name: Build distributions
-        run: uv build
-
-      - name: Verify wheel assets
-        run: |
-          uv venv .venv_build
-          uv pip install --python .venv_build/bin/python dist/*.whl
-          .venv_build/bin/python - <<'PY'
-          from importlib.resources import files
-          assert (files('magsag.assets.contracts') / 'agent.schema.json').is_file(), 'missing agent schema'
-          assert (files('magsag.assets.policies') / 'flow_governance.yaml').is_file(), 'missing governance policy'
-          print('package assets accessible')
-          PY
-
-  flowrunner:
-    needs: core
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: ".python-version"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Sync dependencies
-        run: uv sync --locked --extra dev
-
-      - name: Checkout Flow Runner
-        uses: actions/checkout@v4
-        with:
-          repository: artificial-intelligence-first/flow-runner
-          path: .flow-runner
-          ref: flowrunner-v1.0.0
-
-      - name: Install Flow Runner CLIs
-        run: |
-          cd .flow-runner
-          uv pip install -e packages/mcprouter -e packages/flowrunner
-
-      - name: Configure Flow Runner PYTHONPATH
-        run: echo "FLOW_RUNNER_PYTHONPATH=$GITHUB_WORKSPACE/.flow-runner/packages/flowrunner/src:$GITHUB_WORKSPACE/.flow-runner/packages/mcprouter/src" >> $GITHUB_ENV
-
-      - name: Run tests (Flow Runner)
-        run: uv run -m pytest -q -m 'not slow' -n auto
-
-      - name: Execute sample flow
-        run: |
-          uv run python -m magsag.cli flow run examples/flowrunner/prompt_flow.yaml
-          uv run python -m magsag.cli flow summarize --output flow_summary.json
-
-      - name: Governance gate
-        run: uv run python -m magsag.cli flow gate flow_summary.json --policy src/magsag/assets/policies/flow_governance.yaml
-
-      - name: Upload flow summary
-        uses: actions/upload-artifact@v4
-        with:
-          name: flow-summary
-          path: flow_summary.json
-
-  governance:
-    needs: core
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Checkout MAG
-        uses: actions/checkout@v4
-        with:
-          repository: artificial-intelligence-first/multi-agent-governance
-          path: .mag
-
-      - name: Prepare MAG environment
-        run: |
-          cd .mag
-          uv venv
-          uv pip install -r requirements.txt
-
-      - name: Run MAG validation
-        run: |
-          cd .mag
-          make validate
-          make test
-
-  security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: .python-version
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+          node-version: '20'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: pnpm install --frozen-lockfile
 
-      - name: Security scanning with bandit
-        run: |
-          uv pip install bandit[toml]
-          uv run bandit -r src/magsag/ -f json -o bandit-report.json || true
-          uv run bandit -r src/magsag/ -ll -f screen
-        continue-on-error: true
+      - name: Documentation guard
+        run: pnpm docs:lint
 
-      - name: Dependency audit
-        run: |
-          uv pip install pip-audit
-          uv run pip-audit --skip-editable
-        continue-on-error: true
+      - name: Catalog validation
+        run: pnpm catalog:validate
 
-      - name: Upload security reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports
-          path: bandit-report.json
-          retention-days: 30
+      - name: Verify vendored assets
+        run: pnpm verify:vendor
+
+      - name: Workspace lint
+        run: pnpm -r lint
+
+      - name: Workspace typecheck
+        run: pnpm -r typecheck
+
+      - name: Workspace build
+        run: pnpm -r build
+
+      - name: Workspace tests
+        run: pnpm -r test
+
+      - name: Vitest e2e subset
+        run: pnpm ci:e2e
+
+      - name: Bundle size guard
+        run: pnpm ci:size

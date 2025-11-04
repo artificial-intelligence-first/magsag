@@ -1,9 +1,9 @@
 ---
 title: Documentation Validation Memo
 slug: documentation-validation-memo
-status: deprecated
-last_updated: 2025-11-04
-last_synced: '2025-11-04'
+status: living
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - documentation
 - governance
@@ -37,14 +37,20 @@ sources:
 
 | Command | Executed At | Result |
 |---------|-------------|--------|
-| `uv run python ops/tools/check_docs.py` | 2025-11-04 | Passed |
-| `uv run ruff check docs catalog` | 2025-11-04 | Passed |
-| `# Manual doc validation (tooling pending Workstream E)` | 2025-11-02 | Passed |
-| `uv run ruff check docs catalog` | 2025-11-02 | Passed |
-| `uv run ruff check docs` | 2025-11-02 | Passed |
+| `pnpm docs:lint` | 2025-11-06 | Passed |
+| `pnpm catalog:validate` | 2025-11-06 | Passed |
+| `pnpm -r lint` | 2025-11-06 | Passed |
+| `pnpm -r typecheck` | 2025-11-06 | Passed |
+| `pnpm -r build` | 2025-11-06 | Passed |
+| `pnpm -r test` | 2025-11-06 | Passed |
+| `pnpm ci:e2e` | 2025-11-06 | Passed |
+| `pnpm ci:size` | 2025-11-06 | Passed |
+| `npm run preflight` | 2025-11-06 | Not applicable (script retired with Python tooling) |
+| `npm run exec` | 2025-11-06 | Not applicable (script retired with Python tooling) |
 
 ## Update Log
 
+- 2025-11-06: Reset validation memo for TypeScript tooling (`pnpm docs:lint`, `pnpm catalog:validate`).
 - 2025-11-04: Recorded final documentation checks before archive.
 - 2025-11-02: Recorded additional documentation validation run outputs.
 - 2025-11-02: Established memo and recorded current documentation validation results.

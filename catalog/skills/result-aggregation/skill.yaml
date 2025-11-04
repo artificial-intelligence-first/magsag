@@ -3,7 +3,7 @@ id: skill.result-aggregation
 name: ResultAggregation
 description: Aggregates results from multiple sub-agents into a unified output
 
-entrypoint: packages/catalog-mcp/src/tools/result-aggregation.ts:createResultAggregationTool
+entrypoint: "@magsag/catalog#skills.resultAggregation"
 
 contracts:
   input_schema: catalog/skills/result-aggregation/contracts/input.schema.json

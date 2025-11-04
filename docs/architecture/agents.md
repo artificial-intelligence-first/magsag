@@ -10,6 +10,7 @@ tags:
 summary: Detailed operating procedures for contributors working inside the TypeScript MAGSAG monorepo.
 description: Deep dive into the TypeScript packages, tooling, and governance expectations that drive agent contributions.
 authors: []
+source_of_truth: https://github.com/artificial-intelligence-first/ssot
 sources:
 - id: R1
   title: MAGSAG Agent Playbook
@@ -82,10 +83,12 @@ examples/             → Reference flows and snippets
 pnpm -r lint
 pnpm -r typecheck
 pnpm -r test
+pnpm docs:lint
+pnpm catalog:validate
 ```
 
 - Narrow scope with `pnpm --filter @magsag/<pkg> lint|typecheck|test` for targeted packages.
-- Document manual doc validation (frontmatter/taxonomy) until the TypeScript tooling ships; record results in delivery notes.
+- Capture docs and catalog validation via `pnpm docs:lint` / `pnpm catalog:validate`; record results in delivery notes.
 
 ## Change Workflow
 

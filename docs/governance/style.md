@@ -2,8 +2,8 @@
 title: Documentation Style Guide
 slug: documentation-style
 status: living
-last_updated: 2025-11-05
-last_synced: '2025-11-05'
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - documentation
 - governance
@@ -127,7 +127,7 @@ All Markdown documents follow this order:
 ## Validation
 
 ```bash
-pnpm --filter docs lint || uv run python ops/tools/check_docs.py
+pnpm docs:lint
 pnpm -r lint
 ```
 

@@ -64,7 +64,7 @@ export const buildRunnerMcpEnv = (
 export const applyRunnerMcpEnv = (metadata?: RunnerMcpMetadata): (() => void) => {
   const envUpdates = buildRunnerMcpEnv(metadata);
   if (Object.keys(envUpdates).length === 0) {
-    return () => {};
+    return () => undefined;
   }
 
   const previous = new Map<string, string | undefined>();

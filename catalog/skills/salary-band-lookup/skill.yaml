@@ -4,7 +4,7 @@ name: SalaryBandLookup
 description: Looks up salary bands based on role, level, and location
 
 # Entrypoint to the skill implementation
-entrypoint: packages/catalog-mcp/src/tools/placeholders.ts:createSalaryBandLookupPlaceholderTool
+entrypoint: "@magsag/catalog#skills.salaryBandLookup"
 
 # Input/output contracts (JSON Schema)
 contracts:

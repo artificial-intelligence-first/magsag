@@ -3,7 +3,7 @@ id: skill.task-decomposition
 name: TaskDecomposition
 description: Decomposes complex tasks into subtasks for parallel execution
 
-entrypoint: packages/catalog-mcp/src/tools/task-decomposition.ts:createTaskDecompositionTool
+entrypoint: "@magsag/catalog#skills.taskDecomposition"
 
 contracts:
   input_schema: catalog/skills/task-decomposition/contracts/input.schema.json

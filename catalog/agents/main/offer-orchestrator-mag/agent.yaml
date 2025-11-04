@@ -2,7 +2,7 @@ version: 0.1.0
 slug: offer-orchestrator-mag
 name: OfferOrchestratorMAG
 role: main
-entrypoint: catalog/agents/main/offer-orchestrator-mag/code/simple_mag.py:run
+entrypoint: "@magsag/catalog#agents.offerOrchestratorMag"
 depends_on:
   sub_agents:
     - magsag://sub.compensation-advisor-sag@>=0.1.0

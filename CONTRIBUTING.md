@@ -2,8 +2,8 @@
 title: Contributing to MAGSAG
 slug: contributing
 status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - magsag
 - contributing
@@ -44,7 +44,7 @@ sources:
 ## Before You Start
 
 1. Read `README.md`, [SSOT.md](./SSOT.md), and [AGENTS.md](./AGENTS.md) to understand current capabilities and workflow expectations.
-2. Sync dependencies: `uv sync --extra dev` (add `--extra production` when working with Postgres/Redis/MCP).
+2. Sync dependencies: `pnpm install` (repeat per worktree after rebasing or switching branches).
 3. Verify local environment by running:
    ```bash
    pnpm -r test
@@ -84,13 +84,12 @@ sources:
 
 | Command | Purpose |
 |---------|---------|
-| `pnpm -r test` | Fast test suite (excludes `slow`). |
-| `uv run -m pytest -m slow` | Slow/integration scenarios (run when affecting flows, MCP, or storage). |
-| `pnpm -r typecheck` | Strict type checking. |
-| `uv run ruff format .` | Auto-format. |
-| `pnpm -r lint` | Lint enforcement. |
-| `uv run bandit -r src` | Security scanning for Python code. |
-| Catalog validation | Covered by pytest (catalog tests validate schemas). |
+| `pnpm -r test` | Fast Vitest suites (unit, integration, CLI). |
+| `pnpm vitest --run --project e2e` | Slow/e2e scenarios (run when flows, MCP, or runners change). |
+| `pnpm -r typecheck` | Strict TypeScript project checking. |
+| `pnpm -r lint` | ESLint enforcement (use `-- --fix` to autofix when safe). |
+| `pnpm docs:lint` | Frontmatter + doc policy checks. |
+| `pnpm catalog:validate` | Catalog YAML/JSON schema validation. |
 | `pnpm --filter @magsag/cli exec magsag flow validate <flow>` | Ensure Flow Runner configs remain valid. |
 | `pnpm --filter @magsag/cli exec magsag flow gate <summary.json>` | Apply governance thresholds to flow summaries. |
 
@@ -105,7 +104,7 @@ Record pass/fail results for each command in the PR description.
 
 ## Review & Merge
 
-- CI must pass (`pytest`, `ruff`, `mypy`, doc checks) before requesting review.
+- CI must pass (`pnpm -r lint`, `pnpm -r typecheck`, `pnpm -r test`, docs & catalog checks) before requesting review.
 - Reviewers focus on correctness, tests, docs, and governance compliance.
 - Address feedback promptly; prefer rebasing over merge commits.
 - Squash or rebase before merge. Tag releases only after maintainers update `CHANGELOG.md` and confirm readiness.

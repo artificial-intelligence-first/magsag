@@ -115,10 +115,10 @@ export MAGSAG_REDIS_URL=redis://localhost:6379
 
 ### Dependency Security
 
-- Regularly update dependencies using `uv sync`
-- Monitor security advisories for dependencies
-- Review `pyproject.toml` for any pinned vulnerable versions
-- Run `uv sync --upgrade` periodically to get security patches
+- Regularly update dependencies with `pnpm up --latest` (or targeted `pnpm up <pkg>`).
+- Monitor security advisories surfaced by `pnpm audit` and provider dashboards.
+- Review `package.json` / `pnpm-lock.yaml` for pinned vulnerable versions.
+- Capture dependency upgrade outcomes and remediation steps in delivery notes.
 
 ## Production Deployment Checklist
 

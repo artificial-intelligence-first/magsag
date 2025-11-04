@@ -4,7 +4,7 @@ role: "main"
 version: "0.1.0"
 description: "A2A-enabled Main Agent for orchestrating agent-to-agent workflows"
 
-entrypoint: "catalog/agents/main/your-a2a-orchestrator-mag/src/index.ts:run"
+entrypoint: "@magsag/catalog#agents.yourA2aOrchestratorMag"
 
 depends_on:
   sub_agents:

@@ -1,187 +1,47 @@
 ---
 title: MAGSAG Migration Guide
 slug: guide-migration
-status: deprecated
-last_updated: 2025-11-04
+status: living
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - migration
-- upgrades
-summary: Steps for adopting the current MAGSAG conventions.
+summary: High-level checklist for adopting the TypeScript-only MAGSAG 2.0.0 release.
+description: Summarises the steps required to move from the legacy Python stack to the TypeScript monorepo.
 authors: []
-sources: []
-last_synced: '2025-11-04'
-description: End-to-end checklist for adopting the current MAGSAG conventions.
+sources:
+- id: R1
+  title: TypeScript Full Migration Plan
+  url: ../development/plans/typescript-full-migration.md
+  accessed: '2025-11-06'
 ---
-
-> **Notice**: Historical migration notes. Current TypeScript plan lives in docs/development/plans/typescript-full-migration.md.
 
 # MAGSAG Migration Guide
 
-> **For Humans**: Follow these steps to adopt the current async agent architecture and supporting tooling.
->
-> **For AI Agents**: Apply these migration patterns when refactoring code. Document deviations in SSOT and the changelog.
+## Breaking Changes
 
-This guide helps you migrate from previous implementations to the current stack.
+- Python code, FastAPI services, and uv-based workflows have been removed.
+- Catalog entrypoints now reference TypeScript modules (`@magsag/catalog#agents.*`, `@magsag/catalog#skills.*`).
+- Validation relies on pnpm scripts and Vitest; pytest/ruff/mypy are no longer used.
 
-## Breaking Changes Summary
+## Migration Checklist
 
-As of October 2025, MAGSAG has made significant simplifications:
-- **All skills must be async** - Synchronous skills are no longer supported
-- **All agents must be async** - Synchronous agents are no longer supported  
-- **Google SDK consolidated** - Only `google-genai` SDK is supported
-- **Documentation consolidated** - Single source of truth is now [SSOT.md](../architecture/ssot.md)
+1. Port agent and skill logic to TypeScript packages.
+2. Update catalog YAML and schemas to point at new entrypoints.
+3. Replace CI commands with `pnpm -r lint`, `pnpm -r typecheck`, `pnpm -r test`, `pnpm docs:lint`, and `pnpm catalog:validate`.
+4. Drop Python-only dependencies from manifests and worktree notes.
+5. Capture the migration outcome in `CHANGELOG.md` under `## [Unreleased]`.
 
-## Migrating from Synchronous to Asynchronous Skills
-
-### Before (Synchronous - No longer supported)
-```python
-from magsag.skills.base import Skill
-
-class MySkill:
-    def __call__(self, text: str) -> str:
-        result = process_text(text)
-        return result
-```
-
-### After (Asynchronous - Required)
-```python
-from magsag.skills.base import MCPSkill
-from typing import Any, Dict
-
-class MySkill:
-    async def execute(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        # Convert string input to dict if needed
-        if isinstance(payload, str):
-            payload = {"text": payload}
-        
-        result = await async_process_text(payload["text"])
-        return {"result": result}
-```
-
-### Key Changes:
-1. Change `def __call__` to `async def execute`
-2. Change input from `str` to `Dict[str, Any]`
-3. Change output from `str` to `Dict[str, Any]`
-4. Use `await` for any I/O operations
-
-## Migrating from Synchronous to Asynchronous Agents
-
-### Before (Synchronous - No longer supported)
-```python
-def my_agent(payload, registry=None, skills=None, obs=None):
-    result = skills.invoke("my-skill", {"input": payload})
-    return {"output": result}
-```
-
-### After (Asynchronous - Required)
-```python
-async def my_agent(payload, registry=None, skills=None, obs=None, runner=None):
-    result = await skills.invoke_async("my-skill", {"input": payload})
-    return {"output": result}
-```
-
-### Key Changes:
-1. Add `async` keyword to function definition
-2. Use `await` when calling skills
-3. Use `invoke_async` instead of `invoke`
-
-## Migrating from google-generativeai to google-genai SDK
-
-### Before (google-generativeai - No longer supported)
-```python
-import google.generativeai as genai
-
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-1.5-pro')
-response = model.generate_content(prompt)
-```
-
-### After (google-genai - Required)
-```python
-from google import genai
-from google.genai import types
-
-client = genai.Client(api_key=api_key)
-response = client.models.generate_content(
-    model='gemini-1.5-pro',
-    contents=prompt
-)
-```
-
-### Environment Variables
-Remove `GOOGLE_SDK_TYPE` - only `google-genai` is supported now:
-```bash
-# Before
-GOOGLE_SDK_TYPE=google-generativeai  # Remove this
-GOOGLE_API_KEY=your-key
-
-# After  
-GOOGLE_API_KEY=your-key  # Only this is needed
-```
-
-## Schema File Naming Convention
-
-All contract schemas must use `.schema.json` extension:
-
-### Before
-```
-catalog/contracts/my_contract.json
-```
-
-### After
-```
-catalog/contracts/my_contract.schema.json
-```
-
-## Common Migration Issues and Solutions
-
-### Issue: "Skill 'my-skill' must be async. Synchronous skills are not supported."
-**Solution:** Convert your skill to use `async def execute()` as shown above.
-
-### Issue: "Agent 'my-agent' must be async. Synchronous agents are not supported."
-**Solution:** Add `async` keyword and use `await` for all async operations.
-
-### Issue: "google-generativeai package is required"
-**Solution:** Install `google-genai` instead:
-```bash
-pip uninstall google-generativeai
-pip install google-genai
-```
-
-### Issue: "No module named 'magsag.skills.echo'"
-**Solution:** The example echo skill has been removed. Create your own async skill instead.
-
-## Testing Your Migration
-
-Run these commands to verify your migration:
+## Validation Commands
 
 ```bash
-# Validate all schemas
-uv run python ops/tools/validate_catalog.py
-
-# Check documentation
-# Manual doc validation (tooling pending Workstream E)
-
-# Run tests
-pnpm --filter @magsag/cli test
-
-# Test a specific agent
-echo '{"role":"Engineer","level":"Senior"}' | pnpm --filter @magsag/cli exec magsag agent run your-agent
+pnpm -r lint
+pnpm -r typecheck
+pnpm -r test
+pnpm docs:lint
+pnpm catalog:validate
 ```
 
-## Need Help?
+## Legacy Reference
 
-- Review the updated examples in `catalog/skills/` and `catalog/agents/`
-- Check `SSOT.md` for current terminology and policies
-- Run tests to verify your implementation
-
-## Timeline
-
-These changes are effective immediately. There is no grace period for legacy support.
-
-## Update Log
-
-- 2025-11-03: Clarified migration guidance for the current stack and refreshed summary/description.
-- 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
-- 2025-11-01: Added unified frontmatter and audience guidance.
-- 2025-10-30: Documented async migration path and SDK consolidation.
+See the Git history prior to branch `feature/ts-migration/f-legacy-cleanup` for the retired Python workflow.
