@@ -64,6 +64,58 @@ Each package defines standard scripts (`lint`, `typecheck`, `test`, `build`). Us
 
 ---
 
+## Sandbox Exec (codex-universal)
+
+All sandboxed execution runs inside `ghcr.io/openai/codex-universal:latest`. The
+Docker container is forced to `--platform=linux/amd64` for Apple Silicon parity,
+and sets `CODEX_ENV_NODE_VERSION=20` to match the published Node runtimes. Refer
+to the codex-universal README and the GHCR package page for release cadence and
+supported runtimes.[^codex-universal]
+
+```bash
+npm run exec
+```
+
+Expected output:
+
+```
+[preflight] policy OK: container ghcr.io/openai/codex-universal:latest
+[CTR] policy: container ghcr.io/openai/codex-universal:latest
+[CTR] hello from sandbox-runner.
+```
+
+- The host workspace is mounted read-only; `.work/` is the only writeable path.
+- Network access is disabled by default (`network: none` in
+  `policy/default.policy.yaml`). Open selective domains through a reviewable PR.
+- Docker hardening flags (`--read-only`, `--cap-drop=ALL`,
+  `--cap-add=SETUID`, `--cap-add=SETGID`, `--security-opt
+  no-new-privileges`, resource limits) must remain in place.
+- `scripts/sandbox-entry.sh` resolves the container Node runtime dynamically,
+  rewrites `/work/tmp/node`, then invokes it with `setpriv --no-new-privs`
+  as UID/GID 65532 so user code never runs as root.
+- HOME/TMPDIR resolve to `.work/` so temp files stay inside the sandboxed
+  volume; the host bootstrap (`npm run exec`) pre-creates the directory with
+  permissive permissions for the sandbox user.
+- `npm run preflight` validates the sandbox policy (image pin, network mode,
+  resource limits, forbidden functions) before the container launches.
+- Use VS Code / Cursor `F5` (launch configuration `Sandbox Exec`) to trigger the
+  same sand-boxed execution loop.
+
+Troubleshooting:
+
+- Ensure Docker Desktop shares the repository path (`Settings ➜ Resources ➜
+  File Sharing`).
+- Re-run `npm run build` if `dist/` assets are missing; the postbuild step
+  injects `dist/package.json` with `{ "type": "module" }`.
+- When updating the policy, prefer keeping `network.mode: none` and documenting
+  any exceptions in the PR.
+
+[^codex-universal]: See the [codex-universal README](https://github.com/openai/codex-universal)
+and the [GHCR package page](https://github.com/openai/codex-universal/pkgs/container/codex-universal)
+for image details and environment variables such as `CODEX_ENV_NODE_VERSION`.
+
+---
+
 ## Runtime Overview
 
 - **Engine resolution**: `ENGINE_MODE` (`auto|subscription|api|oss`) controls subscription vs API engines. `ENGINE_MAG` / `ENGINE_SAG` choose runners (`codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, `adk`). Defaults resolve to `codex-cli` (MAG) + `claude-cli` (SAG).

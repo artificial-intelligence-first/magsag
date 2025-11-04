@@ -2,7 +2,7 @@
 title: MAGSAG Single Source of Truth
 slug: ssot
 status: living
-last_updated: 2025-11-05
+last_updated: 2025-11-06
 last_synced: '2025-11-05'
 tags:
 - governance
@@ -40,6 +40,7 @@ sources:
 | Documentation workflows | `docs/workflows/` | Changelog, ExecPlan, and operational runbooks |
 | Architecture overview | `docs/architecture/` | System design, workflows, skill conventions |
 | TypeScript packages | `packages/` | CLI, governance, runners, observability, MCP utilities |
+| Sandbox execution | `policy/default.policy.yaml`, `scripts/preflight.ts`, `scripts/sandbox-entry.sh`, `.github/workflows/sandbox-check.yml` | Codex sandbox policy, entrypoint hardening, preflight guardrails, CI enforcement |
 | Demo surfaces | `apps/` | CLI / API shells demonstrating package usage |
 | Development process | `docs/development/` | Roadmap, plans, contributing guides |
 | Catalog assets | `catalog/` | Agent, skill, and policy definitions |
@@ -60,7 +61,7 @@ sources:
 1. **Identify** the SSOT location for the domain you are changing.
 2. **Draft** changes in the canonical file, applying the style and frontmatter rules.
 3. **Propagate** updates to dependent documents (e.g., README excerpts, guides).
-4. **Validate** with current tooling (run `pnpm -r lint`, `pnpm -r typecheck`, `pnpm --filter docs lint || uv run python ops/tools/check_docs.py`) and log outputs in delivery notes.
+4. **Validate** with current tooling (run `pnpm -r lint`, `pnpm -r typecheck`, `pnpm --filter docs lint || uv run python ops/tools/check_docs.py`, `npm run preflight`) and log outputs in delivery notes.
 5. **Record** outcomes in the change log or plan update log.
 
 Document skipped steps or deferred updates in delivery notes so follow-up actions remain visible.
@@ -188,6 +189,7 @@ Use this checklist during review to prevent drift and retain SSOT integrity.
 
 ## Update Log
 
+- 2025-11-06: Added sandbox execution SSOT entries and folded preflight validation into the canonical workflow.
 - 2025-11-05: Updated canonical surfaces for the TypeScript monorepo and aligned validation commands with pnpm workflows.
 - 2025-11-03: Migrated MCP workflow to JSON runtime artefacts with YAML sources under `ops/adk/servers/`.
 - 2025-11-03: Documented external SDK drivers, ADK sync pipeline, and CLI touchpoints.

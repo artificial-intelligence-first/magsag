@@ -27,6 +27,7 @@ sources: []
 - Place plan files under `docs/development/plans/`.
 - Reference active plans from `docs/architecture/plans.md` and mark status changes immediately.
 - Keep sections concise; link to supporting artefacts instead of duplicating details.
+- Record sandbox validation as `npm run preflight` → `npm run exec` → policy audit notes in every plan touching execution flows.
 
 ## Active Plans
 
@@ -90,6 +91,7 @@ sources: []
 
 ## Update Log
 
+- 2025-11-06: Captured sandbox validation sequence (`npm run preflight` → `npm run exec`) in plan usage guidance.
 - 2025-11-06: Added TypeScript Full Migration plan to Active Plans.
 - 2025-11-05: Replaced SDK unification entry with SDK & ADK runtime migration plan.
 - 2025-11-03: Added Active Plans section and linked the SDK unification rollout ExecPlan.

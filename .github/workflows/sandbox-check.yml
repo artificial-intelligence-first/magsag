@@ -1,0 +1,13 @@
+name: sandbox-check
+on: [pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm ci || npm i
+      - run: npx tsc -p .
+      - run: npm run preflight
+      - run: node -e "const fs=require('fs');const y=fs.readFileSync('policy/default.policy.yaml','utf8');if(!/mode:\\s*none/.test(y)){console.error('network must start as none');process.exit(1)}"

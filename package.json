@@ -8,7 +8,8 @@
   },
   "packageManager": "pnpm@9.0.0",
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "tsc -p .",
+    "postbuild": "node --input-type=module -e \"import { mkdirSync, writeFileSync } from 'node:fs'; mkdirSync('dist',{recursive:true}); writeFileSync('dist/package.json','{\\n  \\\"type\\\": \\\"module\\\"\\n}\\n');\"",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest --run",
@@ -22,7 +23,10 @@
     "ci:build": "pnpm --filter @magsag/shared-logging build",
     "ci:test": "vitest --run",
     "ci:e2e": "vitest --run tests/vitest/e2e/runner.e2e.test.ts",
-    "ci:size": "node ops/scripts/check_package_size.mjs"
+    "ci:size": "node ops/scripts/check_package_size.mjs",
+    "exec:ctr": "mkdir -p .work/tmp && chmod 777 .work .work/tmp && docker run --pull=always --rm --read-only --pids-limit=32 --memory=256m --memory-swap=256m --ulimit nofile=256:256 --cpus=0.5 --security-opt=no-new-privileges --cap-drop=ALL --cap-add=SETUID --cap-add=SETGID --network none --ipc=none --tmpfs /tmp:rw,nosuid,nodev,noexec,size=64m --platform=linux/amd64 -e CODEX_ENV_NODE_VERSION=20 -v $PWD:/workspace/app:ro -v $PWD/.work:/work -w /workspace/app --entrypoint /workspace/app/scripts/sandbox-entry.sh ghcr.io/openai/codex-universal:latest",
+    "preflight": "tsx scripts/preflight.ts",
+    "exec": "npm run build && npm run preflight && npm run exec:ctr"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
@@ -30,8 +34,32 @@
     "eslint": "^8.57.0",
     "eslint-plugin-vitest": "^0.5.4",
     "tsup": "^8.1.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.4.5",
     "typescript-eslint": "^7.18.0",
-    "vitest": "^1.6.1"
-  }
+    "vitest": "^1.6.1",
+    "yaml": "^2.8.1"
+  },
+  "version": "1.0.0",
+  "description": "[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE) [![Node Version](https://img.shields.io/badge/node-18.18%2B-%23026e00)](https://nodejs.org/en) [![CI Status](https://img.shields.io/github/actions/workflow/status/artificial-intelligence-first/magsag/ci.yml?branch=main&label=CI)](https://github.com/artificial-intelligence-first/magsag/actions/workflows/ci.yml?branch=main)",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
+  },
+  "dependencies": {
+    "eslint-scope": "^7.2.2",
+    "eslint-visitor-keys": "^3.4.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/artificial-intelligence-first/magsag.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/artificial-intelligence-first/magsag/issues"
+  },
+  "homepage": "https://github.com/artificial-intelligence-first/magsag#readme"
 }

@@ -1,0 +1,14 @@
+runtime:
+  kind: container
+  image: ghcr.io/openai/codex-universal:latest
+limits:
+  cpu_seconds: 30
+  memory_mb: 256
+  pids: 32
+network:
+  mode: none
+filesystem:
+  workdir: ".work"
+  workdir_quota_mb: 64
+forbidden:
+  functions: ["child_process.exec","eval"]

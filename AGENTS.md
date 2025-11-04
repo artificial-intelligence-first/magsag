@@ -2,7 +2,7 @@
 title: MAGSAG Agent Playbook
 slug: agents
 status: living
-last_updated: 2025-11-04
+last_updated: 2025-11-06
 last_synced: '2025-11-03'
 tags:
 - agents
@@ -37,6 +37,18 @@ sources:
 - Update MCP YAML in `ops/adk/servers/` and regenerate artefacts with the forthcoming TypeScript sync utility. Until it ships, run the Python fallback (`uv run magsag mcp sync`) and note it in delivery updates.
 - Start demo services with `pnpm --filter @magsag/demo-cli start` or `pnpm --filter @magsag/demo-api start` after building.
 - Configure secrets through neutral `ENGINE_*` variables or provider-specific keys. Never commit credentials or CLI configuration files.
+
+## Sandbox Execution
+
+- Run `npm run exec` (or press F5 in VS Code / Cursor) to build, preflight, and execute TypeScript artefacts inside `ghcr.io/openai/codex-universal:latest`.
+- `npm run preflight` must pass; it enforces the image pin, network defaults, filesystem quotas, and resource guards before the container boots.
+- The container runs with `--platform=linux/amd64`, read-only mounts, and `.work/` as the sole writeable path (permissions set to `0777` before launch).
+- `policy/default.policy.yaml` must keep `network.mode: none`; request explicit approval in delivery notes before relaxing the rule.
+- Docker hardening flags (`--read-only`, `--security-opt=no-new-privileges`, `--cap-drop=ALL`, `--cap-add=SETUID`, `--cap-add=SETGID`, resource limits, `--ipc=none`) are mandatory.
+- `scripts/sandbox-entry.sh` resolves the container Node runtime, refreshes
+  `/work/tmp/node`, then launches it with `setpriv --no-new-privs --reuid/--regid 65532`
+  so user workloads never run as root.
+- Update `sandbox/seccomp.profile.json` when tightening the runtime; attach it via `--security-opt=seccomp=...` once finalised.
 
 ## Engine Runtime
 
@@ -127,6 +139,7 @@ pnpm --filter docs lint || uv run python ops/tools/check_docs.py
 
 ## Update Log
 
+- 2025-11-06: Documented codex-universal sandbox execution workflow and policy expectations.
 - 2025-11-04: Added MAG/SAG runtime guidance (subscription-first defaults, session storage, metrics endpoint).
 - 2025-11-03: Documented MCP YAML sources under `ops/adk/servers/` and JSON-only runtime artefacts.
 - 2025-11-02: Linked workflow guides, templates, and taxonomy reference.
