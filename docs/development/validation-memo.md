@@ -37,11 +37,14 @@ sources:
 
 | Command | Executed At | Result |
 |---------|-------------|--------|
+| `uv run python ops/tools/check_docs.py` | 2025-11-04 | Passed |
+| `uv run ruff check docs catalog` | 2025-11-04 | Passed |
 | `# Manual doc validation (tooling pending Workstream E)` | 2025-11-02 | Passed |
 | `uv run ruff check docs catalog` | 2025-11-02 | Passed |
 | `uv run ruff check docs` | 2025-11-02 | Passed |
 
 ## Update Log
 
+- 2025-11-04: Recorded final documentation checks before archive.
 - 2025-11-02: Recorded additional documentation validation run outputs.
 - 2025-11-02: Established memo and recorded current documentation validation results.

@@ -1,6 +1,6 @@
 id: github
 version: "1"
-description: "GitHub MCP (remote HTTP; OAuth recommended, PAT supported)"
+description: "GitHub MCP (remote HTTP; OAuth recommended, PAT optional)"
 transport:
   type: http
   url: "https://api.githubcopilot.com/mcp/"
