@@ -11,6 +11,10 @@ import { flowSummarizeHandler, parseFlowSummarize } from './commands/flow-summar
 import type { ParsedFlowSummarize } from './commands/flow-summarize.js';
 import { flowValidateHandler, parseFlowValidate } from './commands/flow-validate.js';
 import type { ParsedFlowValidate } from './commands/flow-validate.js';
+import { mcpDoctorHandler, parseMcpDoctor } from './commands/mcp-doctor.js';
+import type { ParsedMcpDoctor } from './commands/mcp-doctor.js';
+import { mcpLsHandler, parseMcpLs } from './commands/mcp-ls.js';
+import type { ParsedMcpLs } from './commands/mcp-ls.js';
 import type { CliStreams } from './utils/streams.js';
 
 interface CommandRegistration {
@@ -27,7 +31,9 @@ type ParsedCommand =
   | { kind: 'flow:validate'; payload: ParsedFlowValidate }
   | { kind: 'flow:run'; payload: ParsedFlowRun }
   | { kind: 'flow:summarize'; payload: ParsedFlowSummarize }
-  | { kind: 'flow:gate'; payload: ParsedFlowGate };
+  | { kind: 'flow:gate'; payload: ParsedFlowGate }
+  | { kind: 'mcp:ls'; payload: ParsedMcpLs }
+  | { kind: 'mcp:doctor'; payload: ParsedMcpDoctor };
 
 const COMMANDS: CommandRegistration[] = [
   {
@@ -115,6 +121,35 @@ const COMMANDS: CommandRegistration[] = [
       }
       return flowGateHandler(parsed.payload, streams);
     }
+  },
+  {
+    id: 'mcp:ls',
+    summary: 'List configured MCP servers or enumerate tools for a preset.',
+    aliases: ['mcp'],
+    async parse(argv: string[]) {
+      const payload = await parseMcpLs(argv);
+      return { kind: 'mcp:ls', payload };
+    },
+    execute(parsed, streams) {
+      if (parsed.kind !== 'mcp:ls') {
+        throw new Error(`Unexpected command kind: ${parsed.kind}`);
+      }
+      return mcpLsHandler(parsed.payload, streams);
+    }
+  },
+  {
+    id: 'mcp:doctor',
+    summary: 'Diagnose connectivity to an MCP server with transport fallbacks.',
+    async parse(argv: string[]) {
+      const payload = await parseMcpDoctor(argv);
+      return { kind: 'mcp:doctor', payload };
+    },
+    execute(parsed, streams) {
+      if (parsed.kind !== 'mcp:doctor') {
+        throw new Error(`Unexpected command kind: ${parsed.kind}`);
+      }
+      return mcpDoctorHandler(parsed.payload, streams);
+    }
   }
 ];
 
@@ -128,6 +163,8 @@ Commands
   flow run           Execute a flow via flowctl.
   flow summarize     Summarize Flow Runner artifacts.
   flow gate          Evaluate governance thresholds for a flow summary.
+  mcp ls             Inspect MCP presets and list remote tools.
+  mcp doctor         Diagnose MCP connectivity with fallback transports.
 
 For detailed help on a command, pass --help after the command.`;
 
@@ -152,15 +189,29 @@ const resolveCommand = (
     return { registration: directMatch, rest };
   }
 
-  const aliasMatch = COMMANDS.find(
-    (command) => command.aliases?.includes(first) ?? false
-  );
+  const aliasMatch = COMMANDS.find((command) => command.aliases?.includes(first) ?? false);
   if (aliasMatch) {
-    return { registration: aliasMatch, rest: [second, ...rest].filter(Boolean) };
+    if (second) {
+      const derivedId = `${first}:${second}`;
+      const derivedMatch = COMMANDS.find((command) => command.id === derivedId);
+      if (derivedMatch) {
+        return { registration: derivedMatch, rest };
+      }
+    }
+
+    const [, expectedSubcommand] = aliasMatch.id.split(':');
+    if (expectedSubcommand && second === expectedSubcommand) {
+      return { registration: aliasMatch, rest };
+    }
+
+    const aliasRest = [second, ...rest].filter((token): token is string => Boolean(token));
+    return { registration: aliasMatch, rest: aliasRest };
   }
 
   return { registration: undefined, rest: argv.slice(1) };
 };
+
+export const __test__ = { resolveCommand } as const;
 
 const writeHelp = (streams: CliStreams) => {
   streams.stdout.write(`${HELP_TEXT}\n`);

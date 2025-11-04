@@ -142,24 +142,29 @@ See [ROUTE.md](./ROUTE.md) for detailed decision logic.
 ## A2A Communication Patterns
 
 ### Pattern 1: Direct Delegation
-```python
-# MAG delegates to SAG via runner
-delegation = Delegation(
-    task_id="task-1",
-    sag_id="your-a2a-advisor-sag",
-    input=task_input,
-    context={"parent_run_id": run_id}
-)
-result = runner.invoke_sag(delegation)
+```ts
+// MAG delegates to a SAG via the shared runtime
+const result = runtime.delegate
+  ? await runtime.delegate({
+      target: 'your-a2a-advisor-sag',
+      input: taskInput,
+      context: { parentRunId: runId }
+    })
+  : undefined;
 ```
 
 ### Pattern 2: API-based Invocation (Future)
-```python
-# MAG invokes another MAG via HTTP API
-response = http_client.post(
-    "http://localhost:8000/api/v1/agents/other-mag/run",
-    json=payload
-)
+```ts
+// MAG invokes another MAG via HTTP(S)
+const response = await fetch('http://localhost:8000/api/v1/agents/other-mag/run', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ payload, correlationId: runId })
+});
+if (!response.ok) {
+  throw new Error(`Remote MAG failed: ${response.status}`);
+}
+const remotePayload = await response.json();
 ```
 
 ## Error Handling
@@ -187,7 +192,7 @@ All executions produce artifacts in `.runs/agents/<RUN_ID>/`:
 
 ### Unit Test
 ```bash
-uv run -m pytest tests/agents/test_your_a2a_orchestrator_mag.py -v
+pnpm vitest --run --project unit --dir tests/vitest
 ```
 
 ### Integration Test - Discovery
@@ -209,8 +214,8 @@ curl -X POST http://localhost:8000/api/v1/agents/your-a2a-orchestrator-mag/run \
 
 ### E2E Test
 ```bash
-# Test full discovery → invoke flow
-uv run -m pytest tests/integration/test_a2a_e2e.py -v
+# Test full discovery → invoke flow via Vitest e2e suite
+pnpm vitest --run --project e2e --dir tests/vitest
 ```
 
 ## Development Notes
@@ -218,7 +223,7 @@ uv run -m pytest tests/integration/test_a2a_e2e.py -v
 ### Customization Checklist
 - [ ] Update agent.yaml with correct slug, name, and description
 - [ ] Define input/output contracts in catalog/contracts/
-- [ ] Implement orchestration logic in code/orchestrator.py
+- [ ] Implement orchestration logic in src/index.ts
 - [ ] Add A2A-specific error handling
 - [ ] Implement retry logic for A2A calls
 - [ ] Add comprehensive tests

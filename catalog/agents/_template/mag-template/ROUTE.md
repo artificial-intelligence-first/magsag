@@ -79,12 +79,12 @@ Input: your_input
 ## Context Propagation
 
 Every SAG delegation includes:
-```python
-context = {
-    "parent_run_id": run_id,
-    "task_index": idx,
-    "total_tasks": len(tasks),
-}
+```ts
+const context = {
+  parentRunId: runId,
+  taskIndex: idx,
+  totalTasks: tasks.length
+};
 ```
 
 ## Observability

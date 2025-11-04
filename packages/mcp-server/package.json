@@ -20,7 +20,7 @@
     "clean": "rimraf dist",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "vitest --run --passWithNoTests",
     "test:watch": "vitest"
   },
   "keywords": [
@@ -32,7 +32,9 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@magsag/shared-logging": "workspace:*"
+    "@magsag/shared-logging": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "eslint": "^8.57.0",

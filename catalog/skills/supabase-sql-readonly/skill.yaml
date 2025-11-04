@@ -3,7 +3,7 @@ id: skill.supabase-sql-readonly
 name: SupabaseSqlReadonly
 description: Execute read-only SQL queries against the Supabase MCP endpoint.
 
-entrypoint: catalog/skills/supabase-sql-readonly/impl/sql_readonly.py:run
+entrypoint: packages/catalog-mcp/src/tools/placeholders.ts:createSupabaseSqlReadonlyPlaceholderTool
 
 permissions:
   - mcp:supabase

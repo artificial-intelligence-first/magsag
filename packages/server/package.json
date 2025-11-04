@@ -9,16 +9,19 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm",
+    "build": "tsup src/index.ts --dts --format esm && node scripts/generate-openapi.mjs",
     "lint": "eslint \"src/**/*.ts\"",
-    "test": "vitest --run --passWithNoTests",
+    "test": "vitest --run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@hono/node-server": "^1.7.0",
     "@magsag/core": "workspace:*",
     "@magsag/schema": "workspace:*",
-    "@hono/node-server": "^1.7.0",
     "hono": "^4.5.0",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "zod-to-json-schema": "^3.24.6"
   }
 }

@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsup --config tsup.config.ts",
     "lint": "eslint \"src/**/*.ts\"",
-    "test": "vitest --run --passWithNoTests",
+    "test": "vitest --run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -22,12 +22,20 @@
     "@magsag/schema": "workspace:*",
     "@magsag/governance": "workspace:*",
     "@magsag/observability": "workspace:*",
+    "@magsag/mcp-client": "workspace:*",
+    "@magsag/catalog-mcp": "workspace:*",
+    "@magsag/mcp-server": "workspace:*",
     "@magsag/runner-adk": "workspace:*",
     "@magsag/runner-claude-agent": "workspace:*",
     "@magsag/runner-claude-cli": "workspace:*",
     "@magsag/runner-codex-cli": "workspace:*",
     "@magsag/runner-openai-agents": "workspace:*",
     "@oclif/core": "3.27.0",
-    "execa": "^8.0.1"
+    "execa": "^8.0.1",
+    "yaml": "^2.5.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }

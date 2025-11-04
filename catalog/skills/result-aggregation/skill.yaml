@@ -3,7 +3,7 @@ id: skill.result-aggregation
 name: ResultAggregation
 description: Aggregates results from multiple sub-agents into a unified output
 
-entrypoint: catalog/skills/result-aggregation/impl/result_aggregation.py:run
+entrypoint: packages/catalog-mcp/src/tools/result-aggregation.ts:createResultAggregationTool
 
 contracts:
   input_schema: catalog/skills/result-aggregation/contracts/input.schema.json

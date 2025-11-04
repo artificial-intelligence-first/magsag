@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import yaml from 'yaml';
+import { flowSummarySchema, type FlowSummary, type FlowSummaryStep } from '@magsag/schema';
 
 const DEFAULT_POLICY_YAML = `
 min_runs: 1
@@ -27,7 +28,6 @@ models:
 `.trim();
 
 type JsonRecord = Record<string, unknown>;
-type FlowSummary = JsonRecord;
 type FlowPolicy = JsonRecord;
 
 const isRecord = (value: unknown): value is JsonRecord =>
@@ -83,7 +83,7 @@ const stringArray = (value: unknown): string[] =>
 const loadSummary = async (summaryPath: string): Promise<FlowSummary> => {
   const raw = await readFile(summaryPath, 'utf8');
   const parsed = JSON.parse(raw) as unknown;
-  return requireRecord(parsed, 'Summary must be a JSON object');
+  return flowSummarySchema.parse(parsed);
 };
 
 const toFlowPolicy = (value: unknown): FlowPolicy => {
@@ -105,11 +105,12 @@ const loadPolicy = async (policyPath?: string): Promise<FlowPolicy> => {
 };
 
 const evaluateStep = (
-  step: JsonRecord,
+  step: FlowSummaryStep,
   stepPolicy: JsonRecord,
   errors: string[],
   rootPolicy: JsonRecord
 ) => {
+  const stepExtras = step as FlowSummaryStep & JsonRecord;
   const name = String(step.name ?? '<unknown>');
   const runs = numbers(step.runs) ?? 0;
   const successes = numbers(step.successes) ?? 0;
@@ -129,8 +130,8 @@ const evaluateStep = (
   let model: string | undefined;
   if (Array.isArray(models) && models.length > 0) {
     model = String(models[0]);
-  } else if (typeof step.model === 'string') {
-    model = step.model;
+  } else if (typeof stepExtras.model === 'string') {
+    model = String(stepExtras.model);
   }
   if (typeof model === 'string') {
     const modelPolicy = toRecord(rootPolicy.models) ?? {};
@@ -145,7 +146,7 @@ const evaluateStep = (
     }
   }
 
-  const mcp = toRecord(step.mcp);
+  const mcp = step.mcp;
   const mcpCalls = numbers(mcp?.calls);
   const mcpErrors = numbers(mcp?.errors);
   const mcpErrorRate = ratio(mcpErrors, mcpCalls);
@@ -184,9 +185,7 @@ export const evaluateFlowSummary = async (
     errors.push(`avg_latency_ms ${avgLatency.toFixed(1)} > max ${maxAvgLatency.toFixed(1)}`);
   }
 
-  const steps = Array.isArray(summary.steps)
-    ? summary.steps.filter((item): item is JsonRecord => isRecord(item))
-    : [];
+  const steps = summary.steps;
 
   const requiredSteps = stringArray(policy['required_steps']);
   if (requiredSteps.length > 0) {

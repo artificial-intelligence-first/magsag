@@ -1,3 +1,5 @@
+import type { FlowSummary } from '@magsag/schema';
+
 export const ENGINE_IDS = [
   'codex-cli',
   'claude-cli',
@@ -16,12 +18,82 @@ export interface EngineSelection {
   sag: EngineId;
 }
 
+export interface RunnerMcpRuntime {
+  url: string;
+  host: string;
+  port: number;
+  path: string;
+}
+
+export interface RunnerMcpMetadata {
+  runtime: RunnerMcpRuntime;
+  tools?: string[];
+}
+
+export const RUNNER_MCP_ENV = {
+  url: 'MAGSAG_MCP_SERVER_URL',
+  host: 'MAGSAG_MCP_SERVER_HOST',
+  port: 'MAGSAG_MCP_SERVER_PORT',
+  path: 'MAGSAG_MCP_SERVER_PATH',
+  tools: 'MAGSAG_MCP_TOOLS'
+} as const;
+
+export const buildRunnerMcpEnv = (
+  metadata?: RunnerMcpMetadata
+): Record<string, string> => {
+  const runtime = metadata?.runtime;
+  if (!runtime) {
+    return {};
+  }
+
+  const env: Record<string, string> = {
+    [RUNNER_MCP_ENV.url]: runtime.url,
+    [RUNNER_MCP_ENV.host]: runtime.host,
+    [RUNNER_MCP_ENV.port]: String(runtime.port),
+    [RUNNER_MCP_ENV.path]: runtime.path
+  };
+
+  const tools = metadata?.tools;
+  if (tools && tools.length > 0) {
+    env[RUNNER_MCP_ENV.tools] = tools.join(',');
+  }
+
+  return env;
+};
+
+export const applyRunnerMcpEnv = (metadata?: RunnerMcpMetadata): (() => void) => {
+  const envUpdates = buildRunnerMcpEnv(metadata);
+  if (Object.keys(envUpdates).length === 0) {
+    return () => {};
+  }
+
+  const previous = new Map<string, string | undefined>();
+  for (const [key, value] of Object.entries(envUpdates)) {
+    previous.set(key, process.env[key]);
+    process.env[key] = value;
+  }
+
+  return () => {
+    for (const [key, previousValue] of previous.entries()) {
+      if (previousValue === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = previousValue;
+      }
+    }
+  };
+};
+
+export interface RunSpecExtra extends Record<string, unknown> {
+  mcp?: RunnerMcpMetadata;
+}
+
 export interface RunSpec {
   engine: EngineId;
   repo: string;
   prompt: string;
   resumeId?: string;
-  extra?: Record<string, unknown>;
+  extra?: RunSpecExtra;
 }
 
 export interface ToolCallPayload {
@@ -40,6 +112,7 @@ export type RunnerEvent =
   | { type: 'message'; role: 'assistant' | 'tool' | 'system'; content: string }
   | { type: 'diff'; files: { path: string; patch: string }[] }
   | { type: 'tool-call'; call: ToolCallPayload }
+  | { type: 'flow-summary'; summary: FlowSummary }
   | { type: 'done'; sessionId?: string; stats?: Record<string, unknown> }
   | { type: 'error'; error: RunnerErrorPayload };
 

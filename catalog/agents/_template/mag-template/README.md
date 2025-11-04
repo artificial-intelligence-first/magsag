@@ -103,11 +103,11 @@ All executions produce artifacts in `.runs/agents/<RUN_ID>/`:
 ## Testing
 
 ```bash
-# Unit test
-uv run -m pytest tests/agents/test_your_orchestrator_mag.py -v
+# Unit or integration tests (place specs under tests/vitest/agents)
+pnpm vitest --run --project integration --dir tests/vitest
 
-# Integration test
-echo '{"field1":"test"}' | pnpm --filter @magsag/cli exec magsag agent run your-orchestrator-mag
+# End-to-end smoke via the CLI using the TypeScript runtime
+echo '{"field1":"test"}' | pnpm --filter @magsag/cli exec magsag agent run --engine codex-cli --repo .
 ```
 
 ## Development Notes

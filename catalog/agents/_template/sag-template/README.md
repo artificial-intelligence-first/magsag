@@ -94,12 +94,10 @@ Executions produce metrics:
 ## Testing
 
 ```bash
-# Unit test
-uv run -m pytest tests/agents/test_your_advisor_sag.py -v
+# Unit test (place specs under tests/vitest/agents)
+pnpm vitest --run --project unit --dir tests/vitest
 
-# Direct invocation
-echo '{"domain_field":"test"}' > /tmp/input.json
-# (SAGs are invoked by MAGs, not directly via CLI)
+# (SAGs are typically invoked by MAGs rather than directly via CLI)
 ```
 
 ## Development Notes

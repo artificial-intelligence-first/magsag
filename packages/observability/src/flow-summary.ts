@@ -2,6 +2,12 @@ import { promises as fs } from 'node:fs';
 import { createReadStream } from 'node:fs';
 import { join, resolve } from 'node:path';
 import split2 from 'split2';
+import {
+  flowSummarySchema,
+  type FlowSummary,
+  type FlowSummaryModel,
+  type FlowSummaryStep
+} from '@magsag/schema';
 
 const SUCCESS_STATUSES = new Set(['ok', 'success', 'succeeded', 'completed']);
 
@@ -10,52 +16,6 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const toRecord = (value: unknown): Record<string, unknown> | undefined =>
   isRecord(value) ? value : undefined;
-
-export interface FlowSummary {
-  runs: number;
-  successes: number;
-  success_rate: number;
-  avg_latency_ms: number;
-  errors: {
-    total: number;
-    by_type: Record<string, number>;
-  };
-  mcp: {
-    calls: number;
-    errors: number;
-    tokens: {
-      input: number;
-      output: number;
-      total: number;
-    };
-    cost_usd: number;
-  };
-  steps: {
-    name: string;
-    runs: number;
-    successes: number;
-    errors: number;
-    success_rate: number;
-    avg_latency_ms: number;
-    mcp?: {
-      calls: number;
-      errors: number;
-    };
-    models?: string[];
-    error_types?: Record<string, number>;
-  }[];
-  models: {
-    name: string;
-    calls: number;
-    errors: number;
-    tokens: {
-      input: number;
-      output: number;
-      total: number;
-    };
-    cost_usd: number;
-  }[];
-}
 
 interface StepMetrics {
   runs: number;
@@ -416,8 +376,8 @@ const summaryIndicatesSuccess = (summary: Record<string, unknown>): boolean => {
 
 const formatStepEntries = (
   metrics: RunMetrics
-): { steps: FlowSummary['steps']; totalFailures: number } => {
-  const steps: FlowSummary['steps'] = [];
+): { steps: FlowSummaryStep[]; totalFailures: number } => {
+  const steps: FlowSummaryStep[] = [];
   let totalFailures = 0;
 
   const sortedSteps = [...metrics.stepStats.entries()].sort(([a], [b]) =>
@@ -425,7 +385,7 @@ const formatStepEntries = (
   );
 
   for (const [name, data] of sortedSteps) {
-    const entry: FlowSummary['steps'][number] = {
+    const entry: FlowSummaryStep = {
       name,
       runs: data.runs,
       successes: data.successes,
@@ -461,13 +421,13 @@ const formatStepEntries = (
 const formatModelEntries = (
   metrics: RunMetrics
 ): {
-  models: FlowSummary['models'];
+  models: FlowSummaryModel[];
   totalInput: number;
   totalOutput: number;
   totalTokens: number;
   totalCost: number;
 } => {
-  const models: FlowSummary['models'] = [];
+  const models: FlowSummaryModel[] = [];
   let totalInput = 0;
   let totalOutput = 0;
   let totalTokens = 0;
@@ -569,7 +529,7 @@ export const summarizeFlowRuns = async (base?: string): Promise<FlowSummary> => 
     )
   };
 
-  return {
+  return flowSummarySchema.parse({
     runs: totalRuns,
     successes: metrics.succeeded,
     success_rate: successRate,
@@ -587,5 +547,5 @@ export const summarizeFlowRuns = async (base?: string): Promise<FlowSummary> => 
     },
     steps,
     models
-  };
+  });
 };

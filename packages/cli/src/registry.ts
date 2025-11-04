@@ -8,8 +8,9 @@ import { createClaudeCliRunner } from '@magsag/runner-claude-cli';
 import { createOpenAiAgentsRunner } from '@magsag/runner-openai-agents';
 import { createClaudeAgentRunner } from '@magsag/runner-claude-agent';
 import { createGoogleAdkRunner } from '@magsag/runner-adk';
+import { withCatalogMcpRuntime } from './runner/mcp.js';
 
-const factories: RunnerFactory[] = [
+const baseFactories: RunnerFactory[] = [
   {
     id: 'codex-cli',
     create: () => createCodexCliRunner()
@@ -31,6 +32,10 @@ const factories: RunnerFactory[] = [
     create: () => createGoogleAdkRunner()
   }
 ];
+
+const factories: RunnerFactory[] = baseFactories.map((factory) =>
+  withCatalogMcpRuntime(factory)
+);
 
 export const createDefaultRunnerRegistry = (): RunnerRegistry => {
   const registry = new InMemoryRunnerRegistry();

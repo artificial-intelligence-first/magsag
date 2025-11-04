@@ -3,7 +3,7 @@ id: skill.notion-page-lookup
 name: NotionPageLookup
 description: Retrieve Notion pages through the standard HTTP-first MCP transport.
 
-entrypoint: catalog/skills/notion-page-lookup/impl/notion_page.py:run
+entrypoint: packages/catalog-mcp/src/tools/placeholders.ts:createNotionPageLookupPlaceholderTool
 
 permissions:
   - mcp:notion

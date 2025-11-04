@@ -126,6 +126,19 @@ export class CodexCliRunner implements Runner {
   async *run(spec: RunSpec): AsyncIterable<RunnerEvent> {
     const validated = runSpecSchema.parse(spec);
 
+    const env = { ...process.env };
+    const mcp = validated.extra?.mcp;
+    if (mcp?.runtime) {
+      env.MAGSAG_MCP_SERVER_URL = mcp.runtime.url;
+      env.MAGSAG_MCP_SERVER_HOST = mcp.runtime.host;
+      env.MAGSAG_MCP_SERVER_PORT = String(mcp.runtime.port);
+      env.MAGSAG_MCP_SERVER_PATH = mcp.runtime.path;
+      env.MCP_SERVER = mcp.runtime.url;
+      if (mcp.tools?.length) {
+        env.MAGSAG_MCP_TOOLS = mcp.tools.join(',');
+      }
+    }
+
     const args = validated.resumeId
       ? ['resume', validated.resumeId, '--json']
       : ['exec', '--json', validated.prompt];
@@ -137,7 +150,8 @@ export class CodexCliRunner implements Runner {
 
     const child = execa(this.binary(), args, {
       cwd: validated.repo,
-      all: true
+      all: true,
+      env
     });
 
     const stream = child.all;

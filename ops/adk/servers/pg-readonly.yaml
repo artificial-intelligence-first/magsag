@@ -1,4 +1,4 @@
-server_id: pg-readonly
+id: pg-readonly
 version: "1"
 type: postgres
 description: Read-only PostgreSQL database access

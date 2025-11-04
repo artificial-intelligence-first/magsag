@@ -75,98 +75,99 @@ External Agent/Client
 ### Future Enhancements
 
 #### Dynamic Agent Discovery
-```python
-# Discover available agents via registry
-available_agents = registry.discover_agents(capability="data-processing")
-# Select best agent based on criteria
-selected_agent = select_best_agent(available_agents, criteria)
+```ts
+// Discover available agents via the registry
+const availableAgents = await registry.discoverAgents({ capability: 'data-processing' });
+// Select the best agent based on your criteria
+const selectedAgent = selectBestAgent(availableAgents, criteria);
 ```
 
 #### Load-Based Routing
-```python
-# Route to least loaded agent instance
-if agent_load[sag_1] < agent_load[sag_2]:
-    target = sag_1
-else:
-    target = sag_2
+```ts
+// Route to the least loaded agent instance
+const target = agentLoad[sag1] < agentLoad[sag2] ? sag1 : sag2;
 ```
 
 #### Capability-Based Routing
-```python
-# Route based on required capabilities
-if "real-time-processing" in task.requirements:
-    target = "real-time-sag"
-elif "batch-processing" in task.requirements:
-    target = "batch-sag"
+```ts
+// Route based on required capabilities
+let target = 'batch-sag';
+if (task.requirements.includes('real-time-processing')) {
+  target = 'real-time-sag';
+}
 ```
 
 ## A2A-Specific Error Handling
 
 ### Communication Failures
 
-```python
-try:
-    result = runner.invoke_sag(delegation)
-except ConnectionError as e:
-    # Retry with exponential backoff
-    for attempt in range(max_retries):
-        time.sleep(2 ** attempt)
-        try:
-            result = runner.invoke_sag(delegation)
-            break
-        except ConnectionError:
-            if attempt == max_retries - 1:
-                raise
+```ts
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+try {
+  const result = await runtime.delegate?.(delegation);
+  return result;
+} catch (error) {
+  for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+    await sleep(2 ** attempt * 100);
+    try {
+      return await runtime.delegate?.(delegation);
+    } catch (retryError) {
+      if (attempt === maxRetries - 1) {
+        throw retryError;
+      }
+    }
+  }
+  throw error;
+}
 ```
 
 ### Timeout Handling
 
-```python
-# Set timeout for A2A calls
-delegation.timeout = 10  # seconds
+```ts
+// Set timeout for A2A calls (seconds)
+delegation.timeoutSeconds = 10;
 
-try:
-    result = runner.invoke_sag(delegation)
-except TimeoutError:
-    obs.log("a2a_timeout", {"agent": sag_id, "timeout": 10})
-    # Fallback to alternative agent or return partial results
+try {
+  const result = await runtime.delegate?.(delegation);
+  return result;
+} catch (error) {
+  runtime.log?.('a2a_timeout', { agent: sagId, timeoutSeconds: 10 });
+  // Fallback to alternative agent or return partial results
+}
 ```
 
 ### Circuit Breaker Pattern
 
-```python
-# Track failure rate
-if failure_rate[sag_id] > 0.5:
-    obs.log("circuit_breaker_open", {"agent": sag_id})
-    # Route to alternative agent
-    fallback_sag = get_fallback_agent(sag_id)
-    result = runner.invoke_sag(fallback_sag)
+```ts
+// Track failure rate and open a circuit when thresholds are exceeded
+if (failureRate[sagId] > 0.5) {
+  runtime.log?.('circuit_breaker_open', { agent: sagId });
+  const fallback = getFallbackAgent(sagId);
+  await runtime.delegate?.({ target: fallback, input: payload });
+}
 ```
 
 ## Context Propagation
 
 ### Standard Context
 Every A2A delegation includes:
-```python
-context = {
-    "parent_run_id": run_id,         # Current MAG run ID
-    "task_index": idx,                # Position in task list
-    "total_tasks": len(tasks),        # Total decomposed tasks
-}
+```ts
+const context = {
+  parentRunId: runId,
+  taskIndex: idx,
+  totalTasks: tasks.length
+};
 ```
 
 ### A2A-Specific Context
-```python
-a2a_context = {
-    "correlation_id": correlation_id,  # End-to-end request tracking
-    "source_agent": "your-a2a-orchestrator-mag",
-    "call_chain": [                    # Full agent call chain
-        "external-client",
-        "your-a2a-orchestrator-mag",
-        "your-a2a-advisor-sag"
-    ],
-    "trace_id": trace_id,              # Distributed tracing ID
-}
+```ts
+const a2aContext = {
+  correlationId,
+  sourceAgent: 'your-a2a-orchestrator-mag',
+  callChain: ['external-client', 'your-a2a-orchestrator-mag', 'your-a2a-advisor-sag'],
+  traceId
+};
 ```
 
 ## Observability
@@ -210,22 +211,25 @@ a2a_context = {
 - Reject malformed requests early
 
 ### Authentication (Future)
-```python
-# Verify calling agent identity
-def verify_agent_token(token: str) -> bool:
-    # Validate JWT or API key
-    return is_valid_token(token)
+```ts
+// Verify calling agent identity
+const verifyAgentToken = (token: string | undefined): boolean => {
+  // Validate JWT or API key
+  return Boolean(token && isValidToken(token));
+};
 
-# In orchestrator
-if not verify_agent_token(request.headers.get("Authorization")):
-    raise Unauthorized("Invalid agent credentials")
+// In orchestrator
+if (!verifyAgentToken(request.headers.get('authorization'))) {
+  throw new Error('Invalid agent credentials');
+}
 ```
 
 ### Rate Limiting (Future)
-```python
-# Limit requests per agent
-if request_count[source_agent] > rate_limit:
-    raise RateLimitExceeded(f"Agent {source_agent} exceeded rate limit")
+```ts
+// Limit requests per agent
+if (requestCount[sourceAgent] > rateLimit) {
+  throw new Error(`Agent ${sourceAgent} exceeded rate limit`);
+}
 ```
 
 ## Testing Strategies

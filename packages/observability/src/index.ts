@@ -1,2 +1,2 @@
-export type { FlowSummary } from './flow-summary.js';
+export type { FlowSummary, FlowSummaryModel, FlowSummaryStep } from '@magsag/schema';
 export { summarizeFlowRuns } from './flow-summary.js';

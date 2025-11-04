@@ -1,4 +1,4 @@
-server_id: filesystem
+id: filesystem
 version: "1"
 type: mcp
 description: Secure file operations with configurable access controls

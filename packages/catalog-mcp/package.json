@@ -1,0 +1,50 @@
+{
+  "name": "@magsag/catalog-mcp",
+  "version": "0.1.0",
+  "description": "Catalog MCP tool definitions implemented in TypeScript.",
+  "type": "module",
+  "private": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm",
+    "clean": "rimraf dist",
+    "lint": "eslint \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest --run --passWithNoTests",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "mcp",
+    "magsag",
+    "catalog",
+    "tools"
+  ],
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@magsag/mcp-server": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-plugin-vitest": "^0.5.4",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.18.0",
+    "vitest": "^1.6.1"
+  },
+  "engines": {
+    "node": ">=18.18"
+  }
+}

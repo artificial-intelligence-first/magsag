@@ -55,17 +55,17 @@ Response includes:
 This agent is typically invoked by MAGs via the runner interface, but can also be called via API if needed:
 
 #### Via Runner (Standard)
-```python
-delegation = Delegation(
-    task_id="task-1",
-    sag_id="your-a2a-advisor-sag",
-    input=task_input,
-    context={
-        "parent_run_id": "mag-abc123",
-        "correlation_id": "xyz-789"
-    }
-)
-result = runner.invoke_sag(delegation)
+```ts
+const delegation = {
+  taskId: 'task-1',
+  sagId: 'your-a2a-advisor-sag',
+  input: taskInput,
+  context: {
+    parentRunId: 'mag-abc123',
+    correlationId: 'xyz-789'
+  }
+};
+const result = await runtime.delegate?.(delegation);
 ```
 
 #### Via API (Advanced)
@@ -143,23 +143,22 @@ Example:
 ## A2A Context Handling
 
 ### Context Extraction
-```python
-# Extract A2A context from payload
-a2a_context = payload.get("context", {})
-correlation_id = a2a_context.get("correlation_id")
-parent_run_id = a2a_context.get("parent_run_id")
-call_chain = a2a_context.get("call_chain", [])
+```ts
+// Extract A2A context from payload
+const a2aContext = payload.context ?? {};
+const { correlationId, parentRunId } = a2aContext;
+const callChain = Array.isArray(a2aContext.callChain) ? a2aContext.callChain : [];
 ```
 
 ### Context Propagation
-```python
-# Preserve context in output
-output_trace = {
-    "correlation_id": correlation_id,
-    "processing_time_ms": duration_ms,
-    "call_depth": len(call_chain),
-    "parent_run_id": parent_run_id,
-}
+```ts
+// Preserve context in output
+const outputTrace = {
+  correlationId,
+  processingTimeMs: durationMs,
+  callDepth: callChain.length,
+  parentRunId
+};
 ```
 
 ## Error Handling
@@ -188,26 +187,23 @@ Executions produce metrics:
 
 ### Unit Test
 ```bash
-uv run -m pytest tests/agents/test_your_a2a_advisor_sag.py -v
+pnpm vitest --run --project unit --dir tests/vitest
 ```
 
 ### Integration Test - Direct Invocation (via MAG)
-```python
-# SAGs are typically invoked by MAGs
-delegation = Delegation(
-    task_id="test-1",
-    sag_id="your-a2a-advisor-sag",
-    input={"domain_field": "test", "context": {...}},
-    context={"parent_run_id": "mag-test"}
-)
-result = runner.invoke_sag(delegation)
-assert result.status == "success"
+```ts
+const delegation = {
+  taskId: 'test-1',
+  sagId: 'your-a2a-advisor-sag',
+  input: { domain_field: 'test', context: { parentRunId: 'mag-test' } }
+};
+const result = await runtime.delegate?.(delegation);
+expect(result?.status).toBe('success');
 ```
 
 ### E2E Test
 ```bash
-# Test as part of MAG orchestration
-uv run -m pytest tests/integration/test_a2a_e2e.py -v
+pnpm vitest --run --project e2e --dir tests/vitest
 ```
 
 ## Development Notes
@@ -215,7 +211,7 @@ uv run -m pytest tests/integration/test_a2a_e2e.py -v
 ### Customization Checklist
 - [ ] Update agent.yaml with correct slug, name, and description
 - [ ] Define input/output contracts in catalog/contracts/
-- [ ] Implement domain logic in code/advisor.py
+- [ ] Implement domain logic in src/index.ts
 - [ ] Add A2A context handling
 - [ ] Implement skill invocation with fallbacks
 - [ ] Add comprehensive tests

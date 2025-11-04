@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm",
     "lint": "eslint \"src/**/*.ts\"",
-    "test": "vitest --run --passWithNoTests",
+    "test": "vitest --run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   }
 }

@@ -4,7 +4,7 @@ role: "sub"
 version: "0.1.0"
 description: "A2A-enabled Sub-Agent for specialized task execution"
 
-entrypoint: "catalog/agents/sub/your-a2a-advisor-sag/code/advisor.py:run"
+entrypoint: "catalog/agents/sub/your-a2a-advisor-sag/src/index.ts:run"
 
 depends_on:
   skills:

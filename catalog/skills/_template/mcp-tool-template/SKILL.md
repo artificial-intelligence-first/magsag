@@ -89,32 +89,32 @@ MCP Tool Template provides a standardized structure for creating skills that wra
 <skill-name>/
 ├── SKILL.md                    # This file
 ├── impl/
-│   └── mcp_tool.py            # Tool implementation
+│   └── mcp-tool.ts            # Tool implementation
 ├── resources/
 │   └── examples/
 │       ├── in.json            # Sample input
 │       └── out.json           # Sample output
 └── tests/
-    └── test_mcp_tool.py       # Unit tests
+    └── mcp-tool.test.ts       # Vitest specs
 ```
 
 ### Key Functions
-- `async def run(payload: dict[str, Any], *, mcp: Optional[MCPRuntime] = None) -> dict[str, Any]` – Main entry point with optional MCP runtime
-- `_validate(payload: dict[str, Any], schema: dict[str, Any], name: str) -> None` – Input/output validation helper
-- `_prepare_request(payload: dict[str, Any]) -> dict[str, Any]` – Request transformation helper
-- `async def _call_mcp_tool(**kwargs) -> Any` – Local or mocked execution path when MCP runtime is unavailable
-- `async def _call_tool_via_runtime(mcp: MCPRuntime, request: dict[str, Any]) -> Any` – Preferred MCP runtime integration path
-- `_process_response(raw_response: Any, payload: dict[str, Any]) -> dict[str, Any]` – Response normalization helper
+- `export const run = async (payload: Record<string, unknown>, context: McpToolContext = {}): Promise<Record<string, unknown>>` – Main entry point with optional MCP runtime metadata
+- `const validate = (payload: unknown, schema: JsonSchema, name: string): void` – Input/output validation helper
+- `const prepareRequest = (payload: Record<string, unknown>): Record<string, unknown>` – Request transformation helper
+- `const callMcpTool = async (args: Record<string, unknown>): Promise<unknown>` – Local or mocked execution path when MCP runtime is unavailable
+- `const callToolViaRuntime = async (runtime: McpRuntime, request: Record<string, unknown>): Promise<unknown>` – Preferred MCP runtime integration path
+- `const processResponse = (raw: unknown, payload: Record<string, unknown>): Record<string, unknown>` – Response normalization helper
 
 ### Development Checklist
 - [ ] Copy template to `catalog/skills/<your-skill-name>/`
 - [ ] Update `name`, `description`, and `mcp.server_ref` in SKILL.md frontmatter
 - [ ] Define input/output contracts in `catalog/contracts/`
-- [ ] Implement `_call_mcp_tool()` in `impl/mcp_tool.py`
+- [ ] Implement `callMcpTool()` in `impl/mcp-tool.ts`
 - [ ] Create example payloads in `resources/examples/`
-- [ ] Write tests in `tests/test_mcp_tool.py`
-- [ ] Run `mypy --strict` and `ruff` to ensure code quality
-- [ ] Run `pytest` to verify all tests pass
+- [ ] Write tests in `tests/mcp-tool.test.ts`
+- [ ] Run `pnpm ci:lint` / `pnpm ci:typecheck` to ensure code quality
+- [ ] Run `pnpm vitest --run --project unit` to verify tests pass
 - [ ] Register skill in `catalog/registry/skills.yaml` if needed
 
 ## Additional Resources

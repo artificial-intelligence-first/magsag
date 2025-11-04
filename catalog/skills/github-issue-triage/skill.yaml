@@ -3,7 +3,7 @@ id: skill.github-issue-triage
 name: GitHubIssueTriage
 description: Fetch open GitHub issues for triage workflows using the GitHub MCP server.
 
-entrypoint: catalog/skills/github-issue-triage/impl/issue_triage.py:run
+entrypoint: packages/catalog-mcp/src/tools/placeholders.ts:createGithubIssueTriagePlaceholderTool
 
 permissions:
   - mcp:github

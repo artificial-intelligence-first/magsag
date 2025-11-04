@@ -150,6 +150,17 @@ const renderRunnerEvent = (
         `Tool call: ${event.call.name} ${JSON.stringify(event.call.arguments)}`
       );
       break;
+    case 'flow-summary': {
+      const { runs, success_rate: successRate, errors, avg_latency_ms: avgLatency } = event.summary;
+      const successPercent = Number.isFinite(successRate) ? (successRate * 100).toFixed(1) : '0.0';
+      writeLine(
+        streams.stdout,
+        `Flow summary: runs=${runs} success=${successPercent}% errors=${errors.total} avg_latency_ms=${Math.round(
+          avgLatency
+        )}`
+      );
+      break;
+    }
     case 'error':
       writeLine(streams.stderr, `Error: ${event.error.message}`);
       if (event.error.details) {

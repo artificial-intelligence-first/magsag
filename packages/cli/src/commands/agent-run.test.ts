@@ -112,4 +112,53 @@ describe('agentRunHandler', () => {
 
     registrySpy.mockRestore();
   });
+
+  it('prints flow summary events to stdout', async () => {
+    const registry = new InMemoryRunnerRegistry();
+    registry.register({
+      id: 'codex-cli',
+      create: () =>
+        createStubRunner([
+          {
+            type: 'flow-summary',
+            summary: {
+              runs: 4,
+              successes: 3,
+              success_rate: 0.75,
+              avg_latency_ms: 1500,
+              errors: { total: 1, by_type: { timeout: 1 } },
+              mcp: {
+                calls: 2,
+                errors: 0,
+                tokens: { input: 10, output: 20, total: 30 },
+                cost_usd: 0.5
+              },
+              steps: [],
+              models: []
+            }
+          },
+          { type: 'done' }
+        ])
+    });
+
+    const registrySpy = vi
+      .spyOn(registryModule, 'getDefaultRunnerRegistry')
+      .mockReturnValue(registry);
+
+    const stdout = collectStream();
+    const stderr = collectStream();
+
+    const parsed = await parseAgentRun(['Summary prompt']);
+    const exitCode = await agentRunHandler(parsed, {
+      stdout: stdout.stream,
+      stderr: stderr.stream
+    });
+
+    expect(exitCode).toBe(0);
+    const stdoutContent = stdout.chunks.join('');
+    expect(stdoutContent).toContain('Flow summary: runs=4');
+    expect(stdoutContent).toContain('success=75.0%');
+
+    registrySpy.mockRestore();
+  });
 });

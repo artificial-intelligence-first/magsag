@@ -123,6 +123,19 @@ export class ClaudeCliRunner implements Runner {
   async *run(spec: RunSpec): AsyncIterable<RunnerEvent> {
     const validated = runSpecSchema.parse(spec);
 
+    const env = { ...process.env };
+    const mcp = validated.extra?.mcp;
+    if (mcp?.runtime) {
+      env.MAGSAG_MCP_SERVER_URL = mcp.runtime.url;
+      env.MAGSAG_MCP_SERVER_HOST = mcp.runtime.host;
+      env.MAGSAG_MCP_SERVER_PORT = String(mcp.runtime.port);
+      env.MAGSAG_MCP_SERVER_PATH = mcp.runtime.path;
+      env.MCP_SERVER = mcp.runtime.url;
+      if (mcp.tools?.length) {
+        env.MAGSAG_MCP_TOOLS = mcp.tools.join(',');
+      }
+    }
+
     // TODO: Confirm exact claude CLI subcommand naming once documentation is available.
     const baseArgs = validated.resumeId
       ? ['resume', validated.resumeId]
@@ -142,7 +155,8 @@ export class ClaudeCliRunner implements Runner {
 
     const child = execa(this.binary(), args, {
       cwd: validated.repo,
-      all: true
+      all: true,
+      env
     });
 
     const stream = child.all;

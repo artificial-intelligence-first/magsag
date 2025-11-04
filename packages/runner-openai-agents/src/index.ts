@@ -1,4 +1,4 @@
-import type { Runner, RunnerEvent, RunSpec } from '@magsag/core';
+import type { Runner, RunnerEvent, RunSpec, RunnerMcpMetadata } from '@magsag/core';
 import { runSpecSchema } from '@magsag/schema';
 
 export interface OpenAiAgentsRunnerOptions {
@@ -57,6 +57,8 @@ export class OpenAiAgentsRunner implements Runner {
     const previous = process.env.OPENAI_API_KEY;
     process.env.OPENAI_API_KEY = apiKey;
 
+    const restoreMcpEnvironment = applyMcpEnvironment(validated.extra?.mcp);
+
     try {
       const { Agent, run } = await loadAgentsModule();
       const agent = new Agent({
@@ -102,6 +104,7 @@ export class OpenAiAgentsRunner implements Runner {
       } else {
         delete process.env.OPENAI_API_KEY;
       }
+      restoreMcpEnvironment();
     }
   }
 }
@@ -109,3 +112,40 @@ export class OpenAiAgentsRunner implements Runner {
 export const createOpenAiAgentsRunner = (
   options?: OpenAiAgentsRunnerOptions
 ): Runner => new OpenAiAgentsRunner(options);
+
+const applyMcpEnvironment = (metadata?: RunnerMcpMetadata): (() => void) => {
+  if (!metadata?.runtime) {
+    return () => undefined;
+  }
+
+  const previousEntries: [string, string | undefined][] = [
+    ['MAGSAG_MCP_SERVER_URL', process.env.MAGSAG_MCP_SERVER_URL],
+    ['MAGSAG_MCP_SERVER_HOST', process.env.MAGSAG_MCP_SERVER_HOST],
+    ['MAGSAG_MCP_SERVER_PORT', process.env.MAGSAG_MCP_SERVER_PORT],
+    ['MAGSAG_MCP_SERVER_PATH', process.env.MAGSAG_MCP_SERVER_PATH],
+    ['MCP_SERVER', process.env.MCP_SERVER],
+    ['MAGSAG_MCP_TOOLS', process.env.MAGSAG_MCP_TOOLS]
+  ];
+
+  process.env.MAGSAG_MCP_SERVER_URL = metadata.runtime.url;
+  process.env.MAGSAG_MCP_SERVER_HOST = metadata.runtime.host;
+  process.env.MAGSAG_MCP_SERVER_PORT = String(metadata.runtime.port);
+  process.env.MAGSAG_MCP_SERVER_PATH = metadata.runtime.path;
+  process.env.MCP_SERVER = metadata.runtime.url;
+
+  if (metadata.tools?.length) {
+    process.env.MAGSAG_MCP_TOOLS = metadata.tools.join(',');
+  } else {
+    delete process.env.MAGSAG_MCP_TOOLS;
+  }
+
+  return () => {
+    for (const [key, value] of previousEntries) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  };
+};

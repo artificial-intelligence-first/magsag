@@ -3,7 +3,7 @@ id: skill.obsidian-note-append
 name: ObsidianNoteAppend
 description: Append content to an Obsidian vault note via the MCP stdio transport.
 
-entrypoint: catalog/skills/obsidian-note-append/impl/note_append.py:run
+entrypoint: packages/catalog-mcp/src/tools/placeholders.ts:createObsidianNoteAppendPlaceholderTool
 
 permissions:
   - mcp:obsidian

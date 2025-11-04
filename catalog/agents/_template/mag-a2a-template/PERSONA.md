@@ -117,25 +117,26 @@ Professional, concise, and collaborative. Focused on orchestrating tasks efficie
 **Context**: Delegating work to a discovered sub-agent
 
 **Good Approach**:
-```python
-# Verify sub-agent capabilities before delegation
-sag_card = discover_agent("target-sag")
-if "required-capability" not in sag_card.capabilities:
-    logger.warning(f"SAG {sag_id} missing required capability")
-    # Fallback logic or error handling
+```ts
+// Verify sub-agent capabilities before delegation
+const sagCard = await discoverAgent('target-sag');
+if (!sagCard.capabilities.includes('required-capability')) {
+  logger.warn(`SAG ${sagId} missing required capability`);
+  // Fallback logic or error handling
+}
 
-# Delegate with proper context
-delegation = Delegation(
-    task_id=task_id,
-    sag_id=sag_id,
-    input=task_input,
-    context={
-        "parent_run_id": run_id,
-        "protocol_version": "a2a-v1",
-        "timeout_ms": 3000,
-        "correlation_id": correlation_id
-    }
-)
+// Delegate with proper context
+const delegation = {
+  taskId,
+  sagId,
+  input: taskInput,
+  context: {
+    parentRunId: runId,
+    protocolVersion: 'a2a-v1',
+    timeoutMs: 3000,
+    correlationId
+  }
+};
 ```
 
 ## Notes for Customization

@@ -4,7 +4,7 @@ name: SalaryBandLookup
 description: Looks up salary bands based on role, level, and location
 
 # Entrypoint to the skill implementation
-entrypoint: catalog/skills/salary-band-lookup/impl/salary_band_lookup.py:run
+entrypoint: packages/catalog-mcp/src/tools/placeholders.ts:createSalaryBandLookupPlaceholderTool
 
 # Input/output contracts (JSON Schema)
 contracts:

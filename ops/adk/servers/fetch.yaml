@@ -1,4 +1,4 @@
-server_id: fetch
+id: fetch
 version: "1"
 type: mcp
 description: Web content fetching and conversion for efficient LLM usage

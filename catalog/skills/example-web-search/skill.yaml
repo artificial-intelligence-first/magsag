@@ -3,7 +3,7 @@ id: skill.example-web-search
 name: ExampleWebSearch
 description: Example MCP tool wrapper for web content fetching demonstrating fetch server integration
 
-entrypoint: catalog/skills/example-web-search/impl/mcp_tool.py:run
+entrypoint: packages/catalog-mcp/src/tools/placeholders.ts:createExampleWebSearchPlaceholderTool
 
 contracts:
   input_schema: catalog/contracts/web_search_query.schema.json
