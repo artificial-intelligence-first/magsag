@@ -62,7 +62,7 @@ sources:
 ## Development Process
 
 1. Branch from `main` (`feature/<slug>` or `fix/<issue>`).
-2. Write or update ExecPlan entries (see [PLANS.md](./docs/architecture/plans.md)) when work is multi-phase.
+2. Write or update ExecPlan entries (see [PLANS.md](./docs/development/PLANS.md)) when work is multi-phase.
 3. Implement changes with strict type hints and tests.
 4. Update documentation:
    - `README.md` for user-facing capabilities.
@@ -99,7 +99,7 @@ Record pass/fail results for each command in the PR description.
 
 - Keep docs concise and actionable. Avoid rhetorical language.
 - Update diagrams, examples, and CLI excerpts when behaviour changes.
-- Maintain Update Log sections at the bottom of [AGENTS.md](./docs/architecture/agents.md), [SKILL.md](./docs/architecture/skills.md), [SSOT.md](./docs/architecture/ssot.md), [PLANS.md](./docs/architecture/plans.md), and similar files.
+- Maintain Update Log sections at the bottom of [AGENTS.md](./docs/architecture/agents.md), [SKILL.md](./docs/architecture/skills.md), [SSOT.md](./docs/architecture/ssot.md), [PLANS.md](./docs/development/PLANS.md), and similar files.
 - Ensure cross-references remain accurate (e.g., README → docs/guides, SSOT definitions → catalog files).
 
 ## Review & Merge

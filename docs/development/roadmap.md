@@ -21,7 +21,7 @@ description: ExecPlan tracking governance, release, and documentation hardening 
 >
 > **For AI Agents**: Update timestamps, decisions, and to-do items as you execute tasks. Keep the plan synced with related documentation.
 
-Refer to the template in `PLANS.md` for structure and usage expectations. This ExecPlan is living—keep Progress, Surprises & Discoveries, Decision Log, and Outcomes current as work proceeds.
+Refer to the template in `docs/development/PLANS.md` for structure and usage expectations. This ExecPlan is living—keep Progress, Surprises & Discoveries, Decision Log, and Outcomes current as work proceeds.
 
 ## Purpose / Big Picture
 Anchor the MAGSAG repository around a resilient, AI-first walking skeleton so subsequent feature work inherits proven governance, observability, and packaging practices from day one.
