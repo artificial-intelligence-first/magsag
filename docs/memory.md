@@ -1,21 +1,21 @@
 ---
 title: Memory IR Layer
 slug: memory-ir
-status: living
-last_updated: '2025-11-02'
-last_synced: '2025-11-02'
+status: archived
+last_updated: '2025-11-15'
+last_synced: '2025-11-15'
 tags:
 - memory
 - storage
-summary: Structured memory subsystem for persisting agent context with governance
-  and TTL controls.
-description: Structured memory subsystem for persisting agent context with governance
-  and TTL controls.
+summary: Legacy documentation for the retired Python memory subsystem.
+description: Historical reference retained while the TypeScript memory layer is redefined.
 authors: []
 sources: []
 ---
 
 # Memory IR Layer
+
+> ⚠️ **Archived** — The Python-based memory subsystem is deprecated. Future TypeScript designs will be documented alongside the new storage abstractions once available. Track progress in `docs/development/plans/typescript-full-migration-workstreams.md`.
 
 > **For Humans**: Use this reference to design and operate memory strategies across agents, scopes, and storage backends.
 >
@@ -576,5 +576,6 @@ store = SQLiteMemoryStore(
 
 ## Update Log
 
+- 2025-11-15: Archived Python-centric guidance; TypeScript memory design pending.
 - 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added frontmatter, corrected references, and aligned with the unified documentation standard.

@@ -9,6 +9,12 @@ import type { Server as HttpServer } from 'http';
 import type { IncomingMessage } from 'http';
 import type { Duplex } from 'stream';
 import { WebSocketServer, type RawData, WebSocket } from 'ws';
+import { createOpenApiDocument } from './openapi.js';
+import {
+  InMemorySessionStore,
+  type SessionErrorPayload,
+  type SessionStore
+} from './session-store.js';
 
 type FlowSummaryLoader = (basePath?: string) => Promise<FlowSummary>;
 
@@ -18,6 +24,10 @@ export interface AgentObservabilityOptions {
   enableFlowSummaryEndpoint?: boolean;
   loadSummary?: FlowSummaryLoader;
   logOnError?: boolean;
+}
+
+export interface AgentSessionOptions {
+  store?: SessionStore;
 }
 
 interface ObservabilityRuntime {
@@ -36,6 +46,27 @@ const formatSummaryError = (error: unknown): string => {
     return error;
   }
   return 'Unknown error';
+};
+
+const formatSessionErrorPayload = (error: unknown): SessionErrorPayload => {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const payload = error as { message?: unknown; code?: unknown; details?: unknown };
+    return {
+      message: typeof payload.message === 'string' ? payload.message : String(payload.message ?? 'Unknown error'),
+      code: typeof payload.code === 'string' ? payload.code : undefined,
+      details:
+        payload.details && typeof payload.details === 'object'
+          ? (payload.details as Record<string, unknown>)
+          : undefined
+    };
+  }
+  if (error instanceof Error) {
+    return { message: error.message };
+  }
+  if (typeof error === 'string') {
+    return { message: error };
+  }
+  return { message: 'Unknown error' };
 };
 
 const toObservabilityRuntime = (options?: AgentObservabilityOptions): ObservabilityRuntime => ({
@@ -68,6 +99,7 @@ export interface AgentServerOptions {
   registry: RunnerRegistry;
   defaultRunner?: Runner;
   observability?: AgentObservabilityOptions;
+  sessions?: AgentSessionOptions;
 }
 
 const serializeEvent = (event: RunnerEvent): string => JSON.stringify(event);
@@ -97,11 +129,16 @@ const mapEventToSse = (event: RunnerEvent): { event: string; data: string } => (
 export const createAgentApp = ({
   registry,
   defaultRunner,
-  observability
+  observability,
+  sessions
 }: AgentServerOptions) => {
   const app = new Hono();
   const observabilityRuntime = toObservabilityRuntime(observability);
   const emitFlowSummary = createFlowSummaryEmitter(observabilityRuntime);
+  const sessionStore = sessions?.store ?? new InMemorySessionStore();
+  const openApiDocument = createOpenApiDocument();
+
+  app.get('/openapi.json', (c) => c.json(openApiDocument));
 
   if (observabilityRuntime.enableFlowSummaryEndpoint) {
     app.get('/api/v1/observability/flow-summary', async (c) => {
@@ -117,18 +154,56 @@ export const createAgentApp = ({
     });
   }
 
+  app.get('/api/v1/sessions', async (c) => {
+    const collection = await sessionStore.list();
+    return c.json(collection);
+  });
+
+  app.get('/api/v1/sessions/:id', async (c) => {
+    const id = c.req.param('id');
+    const record = await sessionStore.get(id);
+    if (!record) {
+      throw new HTTPException(404, {
+        message: `Session not found: ${id}`
+      });
+    }
+    return c.json(record);
+  });
+
+  app.delete('/api/v1/sessions/:id', async (c) => {
+    const id = c.req.param('id');
+    const removed = await sessionStore.delete(id);
+    if (!removed) {
+      throw new HTTPException(404, {
+        message: `Session not found: ${id}`
+      });
+    }
+    return c.json({ id, status: 'deleted' });
+  });
+
   app.post('/api/v1/agent/run', async (c) => {
     const spec = runSpecSchema.parse(await c.req.json<unknown>());
     const runner = ensureRunner(registry, spec, defaultRunner);
+    const session = await sessionStore.create(spec, { id: spec.resumeId });
+    let sessionId = session.id;
+    const recordEvent = async (event: RunnerEvent) => {
+      sessionId = await sessionStore.append(sessionId, event);
+    };
 
     return streamSSE(c, async (stream) => {
       try {
         for await (const event of runner.run(spec)) {
+          await recordEvent(event);
           await stream.writeSSE(mapEventToSse(event));
         }
+        await sessionStore.markCompleted(sessionId);
+      } catch (error) {
+        await sessionStore.markFailed(sessionId, formatSessionErrorPayload(error));
+        throw error;
       } finally {
         try {
           await emitFlowSummary(async (event) => {
+            await recordEvent(event);
             await stream.writeSSE(mapEventToSse(event));
           });
         } catch {
@@ -274,3 +349,12 @@ export const attachAgentWebSocketServer = (
 
   return wss;
 };
+
+export { InMemorySessionStore } from './session-store.js';
+export type {
+  SessionStore,
+  SessionRecord,
+  SessionSummary,
+  SessionStatus
+} from './session-store.js';
+export { createOpenApiDocument } from './openapi.js';

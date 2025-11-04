@@ -16,6 +16,7 @@ import {
   attachAgentWebSocketServer,
   createAgentApp,
   ensureRunner,
+  InMemorySessionStore,
   type AgentWebSocketOptions
 } from './index.js';
 
@@ -160,6 +161,71 @@ describe('createAgentApp', () => {
     expect(response.status).toBe(200);
     const json = (await response.json()) as FlowSummary;
     expect(json).toEqual(summary);
+  });
+
+  it('records sessions and exposes REST endpoints', async () => {
+    const registry = new InMemoryRunnerRegistry();
+    registry.register(
+      createStubRunnerFactory([
+        { type: 'log', data: 'start' },
+        { type: 'done', sessionId: 'session-123' }
+      ])
+    );
+    const store = new InMemorySessionStore();
+    const summary = summaryFixture();
+    const app = createAgentApp({
+      registry,
+      sessions: { store },
+      observability: {
+        loadSummary: async () => summary
+      }
+    });
+
+    const response = await app.request('/api/v1/agent/run', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        engine: 'codex-cli',
+        repo: '/tmp/repo',
+        prompt: 'session test'
+      } satisfies RunSpec)
+    });
+    expect(response.status).toBe(200);
+    await response.text();
+
+    const sessionsResponse = await app.request('/api/v1/sessions');
+    expect(sessionsResponse.status).toBe(200);
+    const sessionsJson = (await sessionsResponse.json()) as Array<Record<string, unknown>>;
+    expect(sessionsJson).toHaveLength(1);
+    const sessionId = String(sessionsJson[0]?.id ?? '');
+    expect(sessionId).toBe('session-123');
+    expect(sessionsJson[0]?.status).toBe('completed');
+    expect(sessionsJson[0]?.lastEventType).toBe('flow-summary');
+
+    const detailResponse = await app.request(`/api/v1/sessions/${sessionId}`);
+    expect(detailResponse.status).toBe(200);
+    const detail = (await detailResponse.json()) as { events: RunnerEvent[] };
+    expect(Array.isArray(detail.events)).toBe(true);
+    expect(detail.events.at(-1)?.type).toBe('flow-summary');
+
+    const deleteResponse = await app.request(`/api/v1/sessions/${sessionId}`, {
+      method: 'DELETE'
+    });
+    expect(deleteResponse.status).toBe(200);
+    const missingResponse = await app.request(`/api/v1/sessions/${sessionId}`);
+    expect(missingResponse.status).toBe(404);
+  });
+
+  it('returns the OpenAPI document', async () => {
+    const app = createAgentApp({
+      registry: new InMemoryRunnerRegistry()
+    });
+    const response = await app.request('/openapi.json');
+    expect(response.status).toBe(200);
+    const document = (await response.json()) as { paths?: Record<string, unknown> };
+    expect(document.paths).toBeDefined();
+    expect(document.paths).toHaveProperty('/api/v1/sessions');
+    expect(document.paths).toHaveProperty('/openapi.json');
   });
 });
 

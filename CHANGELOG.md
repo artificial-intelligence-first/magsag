@@ -49,11 +49,20 @@ sources:
 
 ### [Unreleased]
 
+#### Added
+- `/api/v1/sessions` and `/openapi.json` endpoints backed by an in-memory session store so runs can be inspected and replayed without the legacy Python API.
+- `docs/development/plans/typescript-full-migration-workstreams.md` to snapshot progress across Workstreams A–F.
+
 #### Changed
 - Replaced legacy Python/FastAPI/uv assets with TypeScript implementations (new `@magsag/catalog` package, updated ops tooling).
+- CLI build now externalises workspace dependencies, allowing `pnpm --filter @magsag/cli exec node dist/index.js` to resolve bundled imports.
+- `pnpm test:e2e` / `ci:e2e` invoke the shared Vitest configuration to cover both CLI/server end-to-end suites.
+- CI helper scripts (`ci:lint`, `ci:typecheck`, `ci:build`, `ci:test`) now execute across the entire workspace.
+- Archived legacy Python documentation for handoff and memory flows while TypeScript replacements are prepared.
 
 #### Removed
 - Retired Python doc tooling and scripts in favour of `pnpm docs:lint` and `pnpm catalog:validate` ahead of the v2.0.0 tag.
+- Deleted stray Node.js skill implementations under `catalog/skills/**/impl` that were superseded by the TypeScript catalog modules.
 
 ### [2.0.0] - 2025-11-04
 

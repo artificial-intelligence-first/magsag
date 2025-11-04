@@ -1,20 +1,21 @@
 ---
 title: Handoff-as-a-Tool
 slug: handoff-tool
-status: living
-last_updated: '2025-11-03'
-last_synced: '2025-11-03'
+status: archived
+last_updated: '2025-11-15'
+last_synced: '2025-11-15'
 tags:
 - governance
 - workflow
-summary: Standardized interface for delegating work between agents and external platforms.
-description: Standardized interface for delegating work between agents and external
-  platforms.
+summary: Historical notes about delegating work between agents and external platforms.
+description: Legacy documentation retained for reference while the TypeScript handoff module is rebuilt.
 authors: []
 sources: []
 ---
 
 # Handoff-as-a-Tool
+
+> ⚠️ **Archived** — The Python-based handoff implementation has been retired. TypeScript equivalents will be documented after Workstream E delivers refreshed deep dives. See `docs/development/plans/typescript-full-migration-workstreams.md` for tracking details.
 
 > **For Humans**: Use this reference to configure cross-agent handoffs, approvals, and observability hooks.
 >
@@ -654,6 +655,7 @@ Handoff events are logged for observability:
 
 ## Update Log
 
+- 2025-11-15: Archived legacy Python guidance; pending TypeScript replacement tracked in migration workstreams.
 - 2025-11-03: Added CLI delegation guidance and documented BudgetController spend governance.
 - 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added frontmatter, audience guidance, and refreshed related documentation.

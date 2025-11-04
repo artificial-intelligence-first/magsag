@@ -19,12 +19,12 @@
     "test:unit": "vitest --run --project unit",
     "test:integration": "vitest --run --project integration",
     "test:cli": "vitest --run --project cli",
-    "test:e2e": "vitest --run --project e2e",
-    "ci:lint": "pnpm --filter @magsag/shared-logging lint",
-    "ci:typecheck": "pnpm --filter @magsag/shared-logging typecheck",
-    "ci:build": "pnpm --filter @magsag/shared-logging build",
-    "ci:test": "vitest --run",
-    "ci:e2e": "vitest --run tests/vitest/e2e/runner.e2e.test.ts",
+    "test:e2e": "vitest --run --config vitest.config.ts tests/vitest/e2e/*.test.ts",
+    "ci:lint": "pnpm -r lint",
+    "ci:typecheck": "pnpm -r typecheck",
+    "ci:build": "pnpm -r build",
+    "ci:test": "vitest --run --config vitest.config.ts",
+    "ci:e2e": "vitest --run --config vitest.config.ts tests/vitest/e2e/*.test.ts",
     "ci:size": "node ops/scripts/check_package_size.mjs"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { defineConfig } from 'vitest/config';
+import { defineConfig, defineProject } from 'vitest/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,33 +28,33 @@ export default defineConfig({
     watchExclude: ['dist/**', 'build/**']
   },
   projects: [
-    {
+    defineProject({
+      name: 'unit',
       test: {
-        name: 'unit',
         include: ['tests/vitest/unit/**/*.test.ts']
       }
-    },
-    {
+    }),
+    defineProject({
+      name: 'integration',
       test: {
-        name: 'integration',
         include: ['tests/vitest/integration/**/*.test.ts']
       }
-    },
-    {
+    }),
+    defineProject({
+      name: 'cli',
       test: {
-        name: 'cli',
         include: ['tests/vitest/cli/**/*.test.ts']
       }
-    },
-    {
+    }),
+    defineProject({
+      name: 'e2e',
       test: {
-        name: 'e2e',
-        include: ['tests/vitest/e2e/**/*.test.ts'],
+        include: ['**/tests/vitest/e2e/**/*.test.ts'],
         sequence: {
           concurrent: false
         },
         timeout: 20000
       }
-    }
+    })
   ]
 });
