@@ -95,7 +95,7 @@ notes: "Use browser OAuth by default. Reserve PAT + project_ref for CI or headle
 ```yaml
 id: github
 version: "1"
-description: "GitHub MCP (remote HTTP; prefer OAuth and fall back to PAT when required)"
+description: "GitHub MCP (remote HTTP; OAuth recommended, PAT optional)"
 transport:
   type: http
   url: "https://api.githubcopilot.com/mcp/"
