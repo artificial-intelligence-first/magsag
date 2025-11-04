@@ -9,7 +9,7 @@ const EXPECTED_CPU_SECONDS = 30;
 const EXPECTED_PIDS_LIMIT = 32;
 const REQUIRED_FORBIDDEN = ["child_process.exec", "eval"];
 
-const raw = fs.readFileSync("policy/default.policy.yaml", "utf8");
+const raw = fs.readFileSync("tools/security/policy/default.policy.yaml", "utf8");
 const policy = yaml.parse(raw);
 
 const fail = (message: string): never => {

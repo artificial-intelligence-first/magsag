@@ -12,9 +12,9 @@
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
     "test": "vitest --run",
-    "docs:lint": "tsx ops/tools/check-docs.ts",
-    "catalog:validate": "tsx ops/tools/validate-catalog.ts",
-    "verify:vendor": "tsx ops/tools/verify-vendor.ts",
+    "docs:lint": "tsx tools/check-docs.ts",
+    "catalog:validate": "tsx tools/validate-catalog.ts",
+    "verify:vendor": "tsx tools/verify-vendor.ts",
     "test:watch": "vitest",
     "test:unit": "vitest --run --project unit",
     "test:integration": "vitest --run --project integration",
@@ -25,7 +25,7 @@
     "ci:build": "pnpm -r build",
     "ci:test": "vitest --run --config vitest.config.ts",
     "ci:e2e": "vitest --run --config vitest.config.ts tests/vitest/e2e/*.test.ts",
-    "ci:size": "node ops/scripts/check_package_size.mjs"
+    "ci:size": "node tools/check_package_size.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.16.5",
