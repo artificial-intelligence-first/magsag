@@ -54,4 +54,3 @@ benchmarks/*.json
 benchmarks/*.log
 benchmark_report.html
 .work/
-dist/
