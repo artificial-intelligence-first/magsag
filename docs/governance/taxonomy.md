@@ -2,8 +2,8 @@
 title: Documentation Tag Taxonomy
 slug: documentation-taxonomy
 status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+last_updated: 2025-11-05
+last_synced: '2025-11-05'
 tags:
 - documentation
 - governance
@@ -95,9 +95,14 @@ sources:
 
 ## Validation Commands
 
-Automated validation is unavailable. When adjusting tag assignments, manually verify frontmatter tags and document the review in delivery notes.
+```bash
+pnpm --filter docs lint || uv run python ops/tools/check_docs.py
+pnpm -r lint
+```
+
+Record command results and any remediation notes in delivery updates when adjusting tag assignments.
 
 ## Update Log
 
-- 2025-11-04: Documented manual validation flow during TypeScript tooling migration.
+- 2025-11-05: Restored scripted validation using pnpm with Python fallback.
 - 2025-11-02: Expanded the controlled vocabulary to cover all in-repo tags and refreshed metadata.

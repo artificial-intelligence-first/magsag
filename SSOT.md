@@ -2,8 +2,8 @@
 title: MAGSAG Single Source of Truth
 slug: ssot
 status: living
-last_updated: 2025-11-03
-last_synced: '2025-11-04'
+last_updated: 2025-11-05
+last_synced: '2025-11-05'
 tags:
 - governance
 - ssot

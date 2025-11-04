@@ -2,8 +2,8 @@
 title: Documentation Style Guide
 slug: documentation-style
 status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+last_updated: 2025-11-05
+last_synced: '2025-11-05'
 tags:
 - documentation
 - governance
@@ -126,7 +126,12 @@ All Markdown documents follow this order:
 
 ## Validation
 
-Automated doc validation is temporarily paused. Perform manual checks (frontmatter completeness, tag usage, link hygiene, update logs) and capture findings in PR descriptions or delivery notes so reviewers can audit coverage.
+```bash
+pnpm --filter docs lint || uv run python ops/tools/check_docs.py
+pnpm -r lint
+```
+
+Capture command results (pass/fail plus remediation) in PR descriptions or delivery notes so reviewers can audit coverage.
 
 ## Taxonomy
 
@@ -144,6 +149,6 @@ Use the controlled vocabulary maintained in `docs/governance/taxonomy.md`; exten
 
 ## Change Log
 
-- 2025-11-04: Updated validation guidance for manual review during the TypeScript tooling migration.
+- 2025-11-05: Restored scripted validation using pnpm with Python fallback.
 - 2025-11-02: Redirected tag guidance to the dedicated taxonomy reference.
 - 2025-11-01: Established and expanded documentation style rules with detailed structures, formatting, and hygiene guidance.

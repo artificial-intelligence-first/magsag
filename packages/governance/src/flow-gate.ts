@@ -114,13 +114,13 @@ const evaluateStep = (
   const runs = numbers(step.runs) ?? 0;
   const successes = numbers(step.successes) ?? 0;
   const errorRate = ratio(runs - successes, runs);
-  const maxErrorRate = numbers(stepPolicy.max_error_rate);
+  const maxErrorRate = numbers(stepPolicy['max_error_rate']);
   if (errorRate !== undefined && maxErrorRate !== undefined && errorRate > maxErrorRate) {
     errors.push(`step ${name}: error_rate ${errorRate.toFixed(3)} > max ${maxErrorRate.toFixed(3)}`);
   }
 
   const avgLatency = numbers(step.avg_latency_ms);
-  const maxLatency = numbers(stepPolicy.max_avg_latency_ms);
+  const maxLatency = numbers(stepPolicy['max_avg_latency_ms']);
   if (avgLatency !== undefined && maxLatency !== undefined && avgLatency > maxLatency) {
     errors.push(`step ${name}: avg_latency_ms ${avgLatency.toFixed(1)} > max ${maxLatency.toFixed(1)}`);
   }
@@ -149,7 +149,7 @@ const evaluateStep = (
   const mcpCalls = numbers(mcp?.calls);
   const mcpErrors = numbers(mcp?.errors);
   const mcpErrorRate = ratio(mcpErrors, mcpCalls);
-  const maxMcpErrorRate = numbers(stepPolicy.max_mcp_error_rate);
+  const maxMcpErrorRate = numbers(stepPolicy['max_mcp_error_rate']);
   if (mcpErrorRate !== undefined && maxMcpErrorRate !== undefined && mcpErrorRate > maxMcpErrorRate) {
     errors.push(
       `step ${name}: mcp.error_rate ${mcpErrorRate.toFixed(3)} > max ${maxMcpErrorRate.toFixed(3)}`
@@ -166,19 +166,19 @@ export const evaluateFlowSummary = async (
 
   const errors: string[] = [];
 
-  const minRuns = numbers(policy.min_runs);
+  const minRuns = numbers(policy['min_runs']);
   const runs = numbers(summary.runs) ?? 0;
   if (minRuns !== undefined && runs < minRuns) {
     errors.push(`runs ${runs} < min ${minRuns}`);
   }
 
-  const minSuccessRate = numbers(policy.min_success_rate);
+  const minSuccessRate = numbers(policy['min_success_rate']);
   const successRate = numbers(summary.success_rate);
   if (minSuccessRate !== undefined && successRate !== undefined && successRate < minSuccessRate) {
     errors.push(`success_rate ${successRate.toFixed(3)} < min ${minSuccessRate.toFixed(3)}`);
   }
 
-  const maxAvgLatency = numbers(policy.max_avg_latency_ms);
+  const maxAvgLatency = numbers(policy['max_avg_latency_ms']);
   const avgLatency = numbers(summary.avg_latency_ms);
   if (maxAvgLatency !== undefined && avgLatency !== undefined && avgLatency > maxAvgLatency) {
     errors.push(`avg_latency_ms ${avgLatency.toFixed(1)} > max ${maxAvgLatency.toFixed(1)}`);
@@ -188,7 +188,7 @@ export const evaluateFlowSummary = async (
     ? summary.steps.filter((item): item is JsonRecord => isRecord(item))
     : [];
 
-  const requiredSteps = stringArray(policy.required_steps);
+  const requiredSteps = stringArray(policy['required_steps']);
   if (requiredSteps.length > 0) {
     const presentSteps = new Set(steps.map((step) => String(step.name ?? '')));
     const missing = requiredSteps.filter((stepName) => !presentSteps.has(stepName));
