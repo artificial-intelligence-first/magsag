@@ -1,11 +1,10 @@
 {
   "name": "@magsag/shared-logging",
   "version": "0.1.0",
-  "description": "Shared logging utilities for the TypeScript monorepo.",
-  "type": "module",
   "private": true,
+  "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "src/index.ts",
   "files": [
     "dist"
   ],
@@ -14,11 +13,5 @@
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  },
-  "dependencies": {
-    "pino": "^9.2.0"
-  },
-  "engines": {
-    "node": ">=18.18"
   }
 }

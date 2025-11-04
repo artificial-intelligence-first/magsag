@@ -2,8 +2,8 @@
 title: Changelog Workflow
 slug: workflows-changelog
 status: living
-last_updated: 2025-11-04
-last_synced: '2025-11-04'
+last_updated: 2025-11-05
+last_synced: '2025-11-05'
 tags:
 - documentation
 - workflow
@@ -48,7 +48,7 @@ This document codifies how changelog entries are authored, reviewed, published, 
 1. **Assess** whether a change is user-facing or impacts public APIs, schemas, or governance policies.
 2. **Draft** the entry under `## [Unreleased]` in `CHANGELOG.md`, using controlled headings and concise bullets.
 3. **Propagate** references to ExecPlans, delivery notes, or documentation that quote the change.
-4. **Validate** via manual doc review (doc tooling is temporarily unavailable). Capture findings in delivery notes and alert Workstream E if issues arise.
+4. **Validate** with current tooling (`pnpm --filter docs lint || uv run python ops/tools/check_docs.py`, `pnpm -r lint`) and capture results in delivery notes or `docs/development/validation-memo.md`.
 5. **Review** the PR with at least one maintainer; secure two approvals for breaking changes.
 6. **Release** by duplicating the `## [Unreleased]` block into a tagged section, stamping the release date in ISO 8601, and resetting `## [Unreleased]` for the next cycle.
 
@@ -60,11 +60,16 @@ This document codifies how changelog entries are authored, reviewed, published, 
 
 ## Validation Commands
 
-Manual validation currently replaces scripted checks. Confirm frontmatter, metadata (`last_updated`, `last_synced`), links, and references to MCP assets before merging, then log the review in delivery notes or `docs/development/validation-memo.md`.
+```bash
+pnpm --filter docs lint || uv run python ops/tools/check_docs.py
+pnpm -r lint
+```
+
+Log pass/fail status and remediation steps in delivery notes or `docs/development/validation-memo.md`.
 
 ## Update Log
 
-- 2025-11-04: Switched to manual documentation validation during TypeScript doc tooling migration.
+- 2025-11-05: Restored automated doc validation using pnpm with a Python fallback.
 - 2025-11-03: Added MCP sync dry-run to validation guidance.
 - 2025-11-02: Adopted American English spelling throughout the workflow.
 - 2025-11-02: Added initial workflow covering canonical surfaces, entry structure, maintenance cadence, and validation.

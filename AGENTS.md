@@ -31,19 +31,18 @@ sources:
 
 ## Development Environment
 
-- Install Node.js 18.18+ (22.x LTS recommended) and [`pnpm 9`](https://pnpm.io/installation); run `pnpm install` per worktree.
-- Build TypeScript packages on demand; e.g. `pnpm --filter @magsag/cli build` emits `packages/cli/dist`.
-- Execute the CLI via `pnpm --filter @magsag/cli exec magsag --help`. Subscription engines are the default; API engines require explicit overrides.
-- Source code lives under `packages/` (core, CLI, governance, runners, observability) and demo surfaces under `apps/`. Catalog assets remain in `catalog/`; documentation stays in `docs/`.
-- Manage MCP definitions in `ops/adk/servers/*.yaml` and regenerate artefacts with the upcoming TypeScript sync utility. Until it lands, record any manual JSON sync steps in delivery notes.
-- Demo services run via `pnpm --filter @magsag/demo-cli start` or `pnpm --filter @magsag/demo-api start` after building their packages.
-- Configure runtime secrets with the neutral engine environment variables described below. Never commit credentials or CLI configuration files.
+- Install Node.js 18.18+ (22.x LTS recommended) and [pnpm 9](https://pnpm.io/installation); bootstrap each worktree with `pnpm install`.
+- Build packages on demand (for example `pnpm --filter @magsag/cli build`) and execute the CLI via `pnpm --filter @magsag/cli exec node dist/index.js --help`.
+- Place new TypeScript modules under `packages/`; demo surfaces stay in `apps/`; catalog assets remain in `catalog/`; documentation continues under `docs/`.
+- Update MCP YAML in `ops/adk/servers/` and regenerate artefacts with the forthcoming TypeScript sync utility. Until it ships, run the Python fallback (`uv run magsag mcp sync`) and note it in delivery updates.
+- Start demo services with `pnpm --filter @magsag/demo-cli start` or `pnpm --filter @magsag/demo-api start` after building.
+- Configure secrets through neutral `ENGINE_*` variables or provider-specific keys. Never commit credentials or CLI configuration files.
 
 ## Engine Runtime
 
 - `ENGINE_MODE` accepts `auto|subscription|api|oss`. `auto` resolves to subscription CLIs when explicit overrides are absent.
 - `ENGINE_MAG` / `ENGINE_SAG` select `codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, or `adk`. Defaults: `codex-cli` (MAG) and `claude-cli` (SAG).
-- Invoke the CLI with `pnpm --filter @magsag/cli exec magsag agent run --repo . "Investigate flaky CI"`. Pipe prompts via stdin for longer instructions.
+- Invoke the CLI with `pnpm --filter @magsag/cli exec node dist/index.js agent run --repo . "Investigate flaky CI"`. Pipe prompts via stdin for longer instructions.
 - Switch to API engines by exporting `ENGINE_MODE=api ENGINE_MAG=openai-agents ENGINE_SAG=claude-agent` alongside the necessary API keys.
 - Resume a session with `--resume <id>` once persistence lands in Workstream C; track readiness in `docs/development/plans/typescript-full-migration-workstreams.md`.
 
@@ -55,7 +54,7 @@ Execute these checks before pushing or requesting review:
 pnpm -r lint
 pnpm -r typecheck
 pnpm -r test
-python ops/tools/check_docs.py
+pnpm --filter docs lint || uv run python ops/tools/check_docs.py
 ```
 
 - Narrow scope with `pnpm --filter <pkg> lint|typecheck|test` when needed.
@@ -65,11 +64,12 @@ python ops/tools/check_docs.py
 ## Documentation Workflow
 
 - Apply the frontmatter standard in `docs/governance/frontmatter.md` to every Markdown file except `README.md`.
-- Update the canonical surfaces listed in `SSOT.md` first, then propagate references.
+- Update the canonical surfaces listed in `SSOT.md` first, then propagate references (TypeScript package names, `ENGINE_*`, pnpm commands).
 - Maintain update logs at the end of living documents (`docs/architecture/`, `docs/development/`, catalog templates).
-- Follow workflow guides in `docs/workflows/changelog.md` and `docs/workflows/plans.md` when recording releases or long-running initiatives.
-- Start new docs from the templates under `docs/_templates/` and align tags with `docs/governance/taxonomy.md`.
-- Keep diagrams, examples, and CLI excerpts accurate. Link to deeper guides rather than duplicating content.
+- Follow `docs/workflows/changelog.md` and `docs/workflows/plans.md` when recording releases or long-running initiatives.
+- Run `pnpm --filter docs lint` (or the Python fallback) before merging documentation updates and log the outcome.
+- Start new docs from `docs/_templates/` and align tags with `docs/governance/taxonomy.md`.
+- Keep diagrams, examples, and CLI excerpts accurate; link to deeper guides instead of duplicating content.
 - Highlight unresolved questions in delivery notes so follow-up work stays visible.
 
 ## Placement & Scope
@@ -96,11 +96,12 @@ python ops/tools/check_docs.py
 
 ## Change Delivery
 
-1. Create an isolated worktree (record the `git worktree` command used until the TypeScript replacement for `magsag wt` ships).
-2. Implement changes with complete typing and focused tests.
-3. Stage related files only (`git add -u`); avoid drive-by edits.
-4. Update `CHANGELOG.md` under `## [Unreleased]` for user-visible changes.
-5. Draft concise commits using imperative Conventional Commit-friendly summaries (≤72 chars).
+1. Create an isolated worktree (record the `git worktree` command until the TypeScript replacement for `magsag wt` ships).
+2. Implement changes with complete typing and focused tests; rely on pnpm scripts for build/test loops.
+3. Run `pnpm -r lint typecheck test` (or filtered equivalents) for packages you touched and capture results.
+4. Stage related files only (`git add -u`); avoid drive-by edits.
+5. Update `CHANGELOG.md` under `## [Unreleased]` for user-visible changes.
+6. Draft concise commits using imperative Conventional Commit-friendly summaries (≤72 chars).
 
 ## Security & Governance
 
@@ -111,12 +112,17 @@ python ops/tools/check_docs.py
 
 ## Reference Surfaces
 
-- `SSOT.md` – Canonical document index and governance rules.
+- `SSOT.md` – Canonical document index and governance rules across the TypeScript monorepo.
 - `docs/governance/style.md` – Writing, formatting, and tone guidelines.
 - `docs/governance/frontmatter.md` – Required metadata schema for Markdown.
 - `docs/governance/taxonomy.md` – Controlled vocabulary for documentation tags.
 - `docs/architecture/agents.md` – Deep dive into repository layout, workflows, and validation commands.
 - `docs/workflows/changelog.md` / `docs/workflows/plans.md` – Changelog and ExecPlan operations.
+- `packages/core/src/index.ts` – Engine contracts, selection helpers, and registry logic.
+- `packages/cli/src/index.ts` – CLI command registration and runner integration.
+- `packages/runner-*/src/index.ts` – Codex/Claude/OpenAI/ADK runner implementations.
+- `packages/governance/src/flow-gate.ts` – Flow gate evaluation in progress.
+- `packages/observability/src/flow-summary.ts` – Flow summary orchestration and metrics.
 - `catalog/` templates – Authoritative schema for agent and skill definitions.
 
 ## Update Log

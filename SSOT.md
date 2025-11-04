@@ -39,7 +39,8 @@ sources:
 | Documentation standards | `docs/governance/` | Frontmatter schema, style, taxonomy |
 | Documentation workflows | `docs/workflows/` | Changelog, ExecPlan, and operational runbooks |
 | Architecture overview | `docs/architecture/` | System design, workflows, skill conventions |
-| Engine & runner packages | `packages/` | CLI, governance, observability, runners, MCP |
+| TypeScript packages | `packages/` | CLI, governance, runners, observability, MCP utilities |
+| Demo surfaces | `apps/` | CLI / API shells demonstrating package usage |
 | Development process | `docs/development/` | Roadmap, plans, contributing guides |
 | Catalog assets | `catalog/` | Agent, skill, and policy definitions |
 | Changelog | `CHANGELOG.md`, `docs/development/changelog.md` | Release notes and historical changes |
@@ -59,7 +60,7 @@ sources:
 1. **Identify** the SSOT location for the domain you are changing.
 2. **Draft** changes in the canonical file, applying the style and frontmatter rules.
 3. **Propagate** updates to dependent documents (e.g., README excerpts, guides).
-4. **Validate** changes manually (doc tooling is pending). Capture review notes in delivery logs and notify Workstream E.
+4. **Validate** with current tooling (run `pnpm -r lint`, `pnpm -r typecheck`, `pnpm --filter docs lint || uv run python ops/tools/check_docs.py`) and log outputs in delivery notes.
 5. **Record** outcomes in the change log or plan update log.
 
 Document skipped steps or deferred updates in delivery notes so follow-up actions remain visible.
@@ -187,6 +188,7 @@ Use this checklist during review to prevent drift and retain SSOT integrity.
 
 ## Update Log
 
+- 2025-11-05: Updated canonical surfaces for the TypeScript monorepo and aligned validation commands with pnpm workflows.
 - 2025-11-03: Migrated MCP workflow to JSON runtime artefacts with YAML sources under `ops/adk/servers/`.
 - 2025-11-03: Documented external SDK drivers, ADK sync pipeline, and CLI touchpoints.
 - 2025-11-02: Added documentation workflows to the canonical map.

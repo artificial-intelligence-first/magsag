@@ -1,0 +1,48 @@
+name: TypeScript CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'integration/ts-migration/**'
+      - 'wt/ts-migration-**'
+  pull_request:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (shared logging)
+        run: pnpm ci:lint
+
+      - name: Typecheck (shared logging)
+        run: pnpm ci:typecheck
+
+      - name: Build (shared logging)
+        run: pnpm ci:build
+
+      - name: Vitest suite
+        run: pnpm ci:test
+
+      - name: Vitest e2e subset
+        run: pnpm ci:e2e
+
+      - name: Bundle size guard
+        run: pnpm ci:size

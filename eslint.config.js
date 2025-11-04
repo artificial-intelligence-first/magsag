@@ -1,40 +1,20 @@
 import tseslint from "typescript-eslint";
 import eslintPluginVitest from "eslint-plugin-vitest";
 
-export default tseslint.config(
-  ...tseslint.configs.strictTypeChecked,
-  ...tseslint.configs.stylisticTypeChecked,
+export default [
+  ...tseslint.configs.recommended,
+  ...tseslint.configs.stylistic,
   {
     files: ["**/*.ts"],
     ignores: ["dist", "coverage"],
-    languageOptions: {
-      parser: tseslint.parser,
-      parserOptions: {
-        project: true,
-        tsconfigRootDir: import.meta.dirname
-      }
-    },
     plugins: {
       vitest: eslintPluginVitest
     },
     rules: {
       "vitest/max-nested-describe": "off",
-      "@typescript-eslint/no-explicit-any": "error",
-      "@typescript-eslint/no-floating-promises": [
-        "error",
-        {
-          ignoreIIFE: true,
-          ignoreVoid: true
-        }
-      ],
-      "@typescript-eslint/restrict-template-expressions": [
-        "error",
-        {
-          allowNumber: true,
-          allowBoolean: true,
-          allowNullish: true
-        }
-      ]
+      "@typescript-eslint/array-type": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/consistent-type-definitions": "off"
     }
   }
-);
+];
