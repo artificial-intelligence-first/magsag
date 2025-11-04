@@ -1,7 +1,8 @@
 ---
 title: Skill Development Cheatsheet
 slug: architecture-skills
-status: living
+> **Notice**: Legacy Python-based skill guidance; update pending TypeScript catalog tooling.
+status: deprecated
 last_updated: 2025-11-02
 tags:
 - skills
@@ -57,8 +58,8 @@ This cheatsheet keeps skill development consistent without forcing you to read p
 ## Testing
 
 ```bash
-uv run pytest tests/skills/test_<skill>.py
-uv run pytest tests/mcp/test_skill_mcp_integration.py   # when MCP involved
+pnpm --filter @magsag/cli testskills/test_<skill>.py
+pnpm --filter @magsag/cli testmcp/test_skill_mcp_integration.py   # when MCP involved
 uv run mypy catalog/skills/<slug>/code
 ```
 

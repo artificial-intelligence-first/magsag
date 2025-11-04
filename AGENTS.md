@@ -31,41 +31,35 @@ sources:
 
 ## Development Environment
 
-- Use Python 3.12 with [`uv`](https://docs.astral.sh/uv/) for dependency management: `uv sync --extra dev`.
-- Run the Typer CLI via `uv run magsag --help` to explore supported commands.
-- Keep new source modules under `src/magsag/`; catalog assets live in `catalog/`; documentation resides in `docs/`.
-- Manage MCP configurations by editing YAML under `ops/adk/servers/` and regenerating runtime JSON with `uv run magsag mcp sync`.
-- Start local services when needed:
-  - API server: `uv run python -m magsag.api.server`
-  - Flow validation: `uv run magsag flow validate <flow>`
-- Configure secrets through environment variables prefixed with `MAGSAG_`. Never commit credentials.
-- When `MAGSAG_ENGINE_MODE` is unset or `auto`, Codex/Claude CLIs are used; set `MAGSAG_ENGINE_MODE=api` to require SDK mode.
+- Install Node.js 18.18+ (22.x LTS recommended) and [`pnpm 9`](https://pnpm.io/installation); run `pnpm install` per worktree.
+- Build TypeScript packages on demand; e.g. `pnpm --filter @magsag/cli build` emits `packages/cli/dist`.
+- Execute the CLI via `pnpm --filter @magsag/cli exec magsag --help`. Subscription engines are the default; API engines require explicit overrides.
+- Source code lives under `packages/` (core, CLI, governance, runners, observability) and demo surfaces under `apps/`. Catalog assets remain in `catalog/`; documentation stays in `docs/`.
+- Manage MCP definitions in `ops/adk/servers/*.yaml` and regenerate artefacts with the upcoming TypeScript sync utility. Until it lands, record any manual JSON sync steps in delivery notes.
+- Demo services run via `pnpm --filter @magsag/demo-cli start` or `pnpm --filter @magsag/demo-api start` after building their packages.
+- Configure runtime secrets with the neutral engine environment variables described below. Never commit credentials or CLI configuration files.
 
 ## Engine Runtime
 
-- `MAGSAG_ENGINE_MODE` accepts `auto|subscription|api|oss`; `auto` selects subscription mode unless both OpenAI and Anthropic keys are configured.
-- Use `MAGSAG_ENGINE_MAG` / `MAGSAG_ENGINE_SAG` to reassign roles to `codex-cli`, `claude-cli`, `openai-api`, or `anthropic-api` as needed.
-- Codex CLI runs with `--ask-for-approval on-failure` and `--sandbox workspace-write`. Claude CLI runs with `--allowedTools "Read,Bash,Edit"` and `--permission-mode acceptEdits`.
-- Session metadata persists to `.magsag/sessions/<engine>.json`. Provide notes with `--notes` (CLI) or `notes` in API requests.
-- Typical commands:
-  - `uv run magsag agent --repo . "Investigate flaky CI"`
-  - `uv run magsag agent --mode api --mag openai-api --sag anthropic-api --repo . "Draft release summary"`
-  - `uv run magsag agent --resume last --repo . "Continue prior Codex session"`
-- Legacy slug execution is available via `uv run magsag agent -- run <slug>`.
-- API parity via `POST /api/v1/agent/run`; aggregated health metrics available at `GET /api/v1/health/metrics`.
+- `ENGINE_MODE` accepts `auto|subscription|api|oss`. `auto` resolves to subscription CLIs when explicit overrides are absent.
+- `ENGINE_MAG` / `ENGINE_SAG` select `codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, or `adk`. Defaults: `codex-cli` (MAG) and `claude-cli` (SAG).
+- Invoke the CLI with `pnpm --filter @magsag/cli exec magsag agent run --repo . "Investigate flaky CI"`. Pipe prompts via stdin for longer instructions.
+- Switch to API engines by exporting `ENGINE_MODE=api ENGINE_MAG=openai-agents ENGINE_SAG=claude-agent` alongside the necessary API keys.
+- Resume a session with `--resume <id>` once persistence lands in Workstream C; track readiness in `docs/development/plans/typescript-full-migration-workstreams.md`.
 
 ## Quality Gates
 
 Execute these checks before pushing or requesting review:
 
 ```bash
-uv run ruff check .
-uv run mypy src tests
-uv run pytest -q -m "not slow"
-uv run python ops/tools/check_docs.py
+pnpm -r lint
+pnpm -r typecheck
+pnpm -r test
+python ops/tools/check_docs.py
 ```
 
-- Run `uv run -m pytest -m slow` when touching flows, storage backends, or MCP integrations.
+- Narrow scope with `pnpm --filter <pkg> lint|typecheck|test` when needed.
+- Run targeted integration suites (e.g. Flow Runner, observability) once the corresponding TypeScript packages land.
 - Capture command results in the delivery note or PR body. State any skipped gates and the reason.
 
 ## Documentation Workflow
@@ -102,7 +96,7 @@ uv run python ops/tools/check_docs.py
 
 ## Change Delivery
 
-1. Create an isolated worktree: `uv run magsag wt new <run> --task <slug> --base main`.
+1. Create an isolated worktree (record the `git worktree` command used until the TypeScript replacement for `magsag wt` ships).
 2. Implement changes with complete typing and focused tests.
 3. Stage related files only (`git add -u`); avoid drive-by edits.
 4. Update `CHANGELOG.md` under `## [Unreleased]` for user-visible changes.

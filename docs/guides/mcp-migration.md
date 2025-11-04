@@ -42,7 +42,7 @@ This guide covers migrating existing skills to support MCP (Model Context Protoc
 Before migrating skills to MCP:
 
 1. **Understand MCP Basics**: Review [mcp-integration.md](./mcp-integration.md) for MCP fundamentals
-2. **MCP Servers Configured**: Ensure YAML sources exist in `ops/adk/servers/` and generate `.mcp/servers/<server-id>.json` via `uv run magsag mcp sync`
+2. **MCP Servers Configured**: Ensure YAML sources exist in `ops/adk/servers/` and generate `.mcp/servers/<server-id>.json` via `pnpm --filter @magsag/cli exec magsag mcp sync`
 3. **Python Environment**: Python 3.12+ with `magsag[mcp-server]` installed
 4. **Skill Structure**: Existing skill with proper contracts and tests
 

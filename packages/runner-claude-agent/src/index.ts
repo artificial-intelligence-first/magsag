@@ -8,13 +8,21 @@ export interface ClaudeAgentRunnerOptions {
   maxThinkingTokens?: number;
 }
 
+type ClaudeAgentSdk = typeof import('@anthropic-ai/claude-agent-sdk');
+
 interface SdkMessage {
   type: string;
   [key: string]: unknown;
 }
 
-const loadClaudeAgentSdk = async () =>
-  (await import('@anthropic-ai/claude-agent-sdk')) as typeof import('@anthropic-ai/claude-agent-sdk');
+const loadClaudeAgentSdk = async (): Promise<ClaudeAgentSdk> =>
+  import('@anthropic-ai/claude-agent-sdk');
+
+const asString = (value: unknown, fallback: string): string =>
+  typeof value === 'string' && value.length > 0 ? value : fallback;
+
+const asNumber = (value: unknown, fallback: number): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
 const extractAssistantContent = (message: unknown): string | undefined => {
   if (!message || typeof message !== 'object') {
@@ -140,12 +148,12 @@ const messageToRunnerEvents = (sdkMessage: SdkMessage): RunnerEvent[] => {
       ];
     }
     case 'tool_progress': {
-      const progress = sdkMessage.elapsed_time_seconds;
-      const toolName = sdkMessage.tool_name;
+      const progress = asNumber(sdkMessage.elapsed_time_seconds, 0);
+      const toolName = asString(sdkMessage.tool_name, 'unknown');
       return [
         {
           type: 'log',
-          data: `tool_progress:${toolName ?? 'unknown'}:${progress ?? 0}`
+          data: `tool_progress:${toolName}:${progress}`
         }
       ];
     }

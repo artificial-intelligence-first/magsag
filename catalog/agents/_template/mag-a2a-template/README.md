@@ -193,7 +193,7 @@ uv run -m pytest tests/agents/test_your_a2a_orchestrator_mag.py -v
 ### Integration Test - Discovery
 ```bash
 # Start the API server
-uv run magsag api
+pnpm --filter @magsag/cli exec magsag api
 
 # Test discovery endpoint
 curl http://localhost:8000/api/v1/agents | jq '.[] | select(.slug == "your-a2a-orchestrator-mag")'

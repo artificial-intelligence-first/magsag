@@ -1,205 +1,143 @@
 # MAGSAG Framework
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Node Version](https://img.shields.io/badge/node-18.18%2B-%23026e00)](https://nodejs.org/en)
 [![CI Status](https://img.shields.io/github/actions/workflow/status/artificial-intelligence-first/magsag/ci.yml?branch=main&label=CI)](https://github.com/artificial-intelligence-first/magsag/actions/workflows/ci.yml?branch=main)
 
-MAGSAG is a governance-first framework for building and operating AI agent workflows.
-It provides a single runtime that spans CLI tools, FastAPI endpoints, GitHub
-automation, and observability features backed by OpenTelemetry and Langfuse.
+MAGSAG is a governance-first framework for building and operating AI agent workflows.  
+Version 2.0 is a TypeScript-only monorepo that ships a subscription-first MAG/SAG runtime, optional API engines, governance gates, and documentation assets under a pnpm/turborepo toolchain.
 
 ---
 
-## Architecture Overview
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                          Interfaces                          │
-│   ┌───────────────┐    ┌───────────────┐    ┌──────────────┐ │
-│   │  Typer CLI    │    │  FastAPI API  │    │ GitHub Hooks │ │
-│   │ (magsag wt/…) │    │ (/api/v1/…)   │    │  & Jobs      │ │
-│   └──────┬────────┘    └──────┬────────┘    └──────┬───────┘ │
-└──────────┼────────────────────┼────────────────────┼─────────┘
-           │                    │                    │
-           ▼                    ▼                    ▼
-┌──────────────────────────────────────────────────────────────┐
-│                     Orchestration Layer                      │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │  Runner Hooks & Governance (approvals, policies)     │   │
-│   │  Worktree Manager (git worktree lifecycle)           │   │
-│   │  Agent Runner (MAG/SAG coordination, skills runtime) │   │
-│   └──────────────────────────────┬───────────────────────┘   │
-└──────────────────────────────────┼───────────────────────────┘
-                                   │
-                                   ▼
-┌──────────────────────────────────────────────────────────────┐
-│                    Execution & Observability                 │
-│   ┌──────────┐   ┌──────────────┐   ┌──────────────────────┐ │
-│   │ Catalog  │   │ Storage APIs │   │  Telemetry (OTel,    │ │
-│   │ (agents, │   │ (SQLite,     │   │  Langfuse)           │ │
-│   │ skills,  │   └──────┬───────┘   └───────────┬──────────┘ │
-│   │ schemas) │          │                       │            │
-│   └─────┬────┘          │                       │            │
-│         │        ┌──────▼──────────┐    ┌───────▼──────────┐ │
-│         └──────▶ │ Providers &     │    │  Event Storage   │ │
-│                  │ MCP Integrations│    │  (append_event)  │ │
-│                  └─────────────────┘    └──────────────────┘ │
-└──────────────────────────────────────────────────────────────┘
-```
-
-- Interfaces (CLI, API, GitHub) trigger orchestration components.
-- Runner hooks enforce approvals and emit audit/telemetry events.
-- Catalog, storage backends, and providers back the execution layer.
-
-### Repository Layout
+## Monorepo Topology
 
 ```
 .
-├── src/magsag/                # Package code: API, CLI, runners, governance
-│   ├── api/                   # FastAPI app, routes, config
-│   ├── runners/               # MAG/SAG orchestration and Flow Runner bridge
-│   ├── worktree/              # Git worktree lifecycle management
-│   ├── governance/            # Approvals, policies, permission evaluation
-│   ├── observability/         # Logging, tracing, cost tracking
-│   └── ...                    # MCP, moderation, storage, optimization, etc.
-├── catalog/                   # Agents, skills, JSON Schema contracts, policies
-├── docs/                      # Architecture notes, guides, development docs
-├── ops/                       # Maintenance scripts and automated tooling
-├── benchmarks/                # Performance harnesses
-└── tests/                     # Unit, integration, observability, MCP suites
+├── packages/                     # TypeScript packages (ESM)
+│   ├── cli/                      # oclif-based CLI (`magsag`)
+│   ├── core/                     # Engine contracts, selection helpers
+│   ├── governance/               # Flow gates, policy evaluation
+│   ├── observability/            # Metrics + summaries
+│   ├── runner-*/                 # MAG/SAG runners (codex, claude, api, adk)
+│   ├── mcp-client/               # MCP transport + helpers
+│   ├── mcp-server/               # MCP server façade (WIP)
+│   ├── schema/                   # Shared Zod schemas
+│   ├── server/                   # HTTP entrypoint (experimental)
+│   └── shared-logging/           # Lightweight logger fallbacks
+├── apps/                         # Demo surfaces (CLI/API shells)
+├── catalog/                      # Agents, skills, policies, contracts
+├── docs/                         # Architecture notes, plans, governance guides
+├── ops/                          # Tooling (MCP sources, scripts)
+├── examples/                     # Reference flows and snippets
+├── eslint.config.js              # Flat ESLint config shared across packages
+├── tsconfig.base.json            # Base TS config with path aliases
+├── turbo.json                    # turborepo pipeline definitions
+├── package.json                  # Root metadata + devDependencies
+└── pnpm-workspace.yaml           # Workspace definition
 ```
 
 ---
 
-## Getting Started
+## Prerequisites
 
-```bash
-# 1. Install dependencies (creates .venv/)
-uv sync --extra dev
-
-# 2. Inspect available commands
-uv run magsag --help
-
-# 3. Start the FastAPI server (Ctrl+C to stop)
-uv run python -m magsag.api.server
-```
-
-The default configuration runs completely locally. Environment variables prefixed
-with `MAGSAG_` enable optional integrations (OpenAI, Anthropic, GitHub, Langfuse,
-etc.). See `docs/development/contributing.md` for a full configuration matrix.
+- Node.js **18.18+** (22.x LTS recommended for local development)
+- pnpm **9.x**
+- Codex CLI / Claude CLI installed and authenticated for subscription mode
+- Optional API engines: OpenAI Agents, Claude Agent SDK, Google ADK (requires credentials)
 
 ---
 
-## Common Tasks
-
-### Validation & Quality Gates
+## Setup & Bootstrap
 
 ```bash
-# Static checks
-uv run ruff check
-uv run mypy src/magsag tests
+# install dependencies for every package
+pnpm install
 
-# Test suite (parallel, skips slow fixtures)
-uv run pytest -q -m "not slow"
+# optional: build distributable artefacts (tsup)
+pnpm -r build
 
-# Documentation guard
-uv run python ops/tools/check_docs.py
+# explore CLI commands (subscription mode is default)
+pnpm --filter @magsag/cli exec magsag --help
 ```
 
-### CLI Highlights
+Each package defines standard scripts (`lint`, `typecheck`, `test`, `build`). Use `pnpm --filter <pkg> <script>` for targeted work or `pnpm -r <script>` for the entire workspace.
+
+---
+
+## Runtime Overview
+
+- **Engine resolution**: `ENGINE_MODE` (`auto|subscription|api|oss`) controls subscription vs API engines. `ENGINE_MAG` / `ENGINE_SAG` choose runners (`codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, `adk`). Defaults resolve to `codex-cli` (MAG) + `claude-cli` (SAG).
+- **CLI**: `pnpm --filter @magsag/cli exec magsag agent run --repo . "Investigate flaky CI"`  
+  Use `--mode`, `--mag`, `--sag`, and `--resume` to override defaults.
+- **Flow governance**: `@magsag/governance` evaluates flow summaries against YAML policies. Flow Runner tooling is being ported to TypeScript; interim manual review notes must be logged in the ExecPlan.
+- **MCP**: `@magsag/mcp-client` exposes HTTP/SSE/stdio transports. Server scaffolding continues under Workstream A; record schema or contract changes in `docs/development/plans/typescript-full-migration.md`.
+
+---
+
+## Quality Gates
 
 ```bash
-# Git worktree lifecycle (new/list/remove/lock/unlock/gc/repair)
-uv run magsag wt --help
-
-# Agent orchestration (run agents, inspect metadata)
-uv run magsag agent --help
-
-# Flow Runner integration (requires flow-runner checkout)
-uv run magsag flow --help
+pnpm -r lint
+pnpm -r typecheck
+pnpm -r test
 ```
 
-#### Agent Runtime (MAG/SAG)
+- Documentation & policy validation is **manual until the TypeScript tooling ships**. Review edited Markdown against `docs/governance/frontmatter.md`, confirm catalog schemas, and record the outcome in the ExecPlan (Surprises & Discoveries) while notifying Workstream E.
+- When touching a single package, prefer scoped checks: `pnpm --filter @magsag/<pkg> lint|typecheck|test`.
+- Capture all command results (including manual checks) in delivery notes or PR descriptions.
 
-`magsag agent` now routes tasks through configurable MAG/SAG engines with
-subscription-first defaults. The runtime resolves engines using:
+---
 
-- `MAGSAG_ENGINE_MODE` &mdash; `auto` (default), `subscription`, `api`, `oss`
-- `MAGSAG_ENGINE_MAG`, `MAGSAG_ENGINE_SAG` &mdash; engine assignments per role
-- OpenAI/Anthropic API keys &mdash; trigger API mode unless overridden
+## Release Workflow (2.0.x)
 
-Examples:
-
-```bash
-# Run with Codex CLI (MAG) and Claude CLI (SAG) without API keys
-uv run magsag agent --repo . "Review failing CI jobs and propose fixes"
-
-# Force API mode even when CLIs are available
-MAGSAG_ENGINE_MODE=api \
-MAGSAG_ENGINE_MAG=openai-api \
-MAGSAG_ENGINE_SAG=anthropic-api \
-uv run magsag agent --repo . "Draft a test plan for the new feature"
-
-# Resume the most recent Codex session in subscription mode
-uv run magsag agent --mode subscription --resume last \
-  --repo . "Continue the previous investigation"
-
-# Legacy slug-based execution remains available via the compatibility shim
-uv run magsag agent -- run offer-orchestrator-mag < payload.json
-```
-
-The corresponding FastAPI endpoint mirrors the CLI surface:
-
-```bash
-curl -X POST http://localhost:8000/api/v1/agent/run \
-  -H 'Content-Type: application/json' \
-  -d '{
-        "prompt": "Summarise failing tests",
-        "mode": "subscription",
-        "repo": "."
-      }' | jq
-```
-
-### Worktree Workflow (Recommended)
-
-1. Create an isolated branch/worktree:
+1. Update `CHANGELOG.md` (`## [Unreleased]`) and move entries under a dated `## [2.0.x]` section when shipping.  
+   Reference the governance updates, CLI surface, and deprecation of Python assets.
+2. Run validation:
    ```bash
-   uv run magsag wt new run-123 --task docs-refresh --base main
+   pnpm -r lint
+   pnpm -r typecheck
+   pnpm -r test
    ```
-2. Lock a long-running job while waiting for approval:
-   ```bash
-   uv run magsag wt lock run-123 --reason "awaiting review"
-   ```
-3. Clean up when finished:
-   ```bash
-   uv run magsag wt rm run-123
-   ```
-
-For automation examples see `docs/development/worktrees.md`.
+   Note doc/policy verification as manual.
+3. Draft release artifacts (CLI help, notable breaking changes) and share with Workstream E for docs alignment.
+4. Tag (dry-run): `git tag -a v2.0.x <sha>` → confirm → `git tag -d v2.0.x` until ready for push.
 
 ---
 
-## Documentation Map
+## Contributing & Workstreams
 
-- `docs/architecture/` – system design, governance model, and telemetry layers
-- `docs/guides/` – task-focused walkthroughs (API usage, moderation, MCP, etc.)
-- `docs/development/` – local development workflow, roadmap, changelog
-- `catalog/` – reference agents, skills, and JSON Schema contracts used in tests
-
-Each document has been trimmed to focus on actionable guidance. When in doubt,
-start with `docs/architecture/agents.md` for a high-level picture and branch out
-to the relevant guide.
+- The TypeScript migration is coordinated in `docs/development/plans/typescript-full-migration.md` and the workstream tracker (`docs/development/plans/typescript-full-migration-workstreams.md`).
+- Create dedicated git worktrees manually (e.g. `git worktree add ../wt-ts-migration-f typescript-full-migration`) and capture the command in hand-off notes—the legacy `magsag wt` command no longer exists.
+- Follow `AGENTS.md` for day-to-day expectations (pnpm workflow, validation gates, delivery notes).
+- Report surprises, missing tooling, or manual steps in the ExecPlan and alert the owning workstream.
 
 ---
 
-## Contributing
+## Packages at a Glance
 
-- Use `magsag wt` to keep branches isolated and reproducible.
-- Run the validation suite (`ruff`, `mypy`, `pytest`, `check_docs`) before sending
-a pull request.
-- Keep naming aligned with the `magsag` package and `MAGSAG_` environment prefixes.
+| Package | Summary |
+| --- | --- |
+| `@magsag/cli` | oclif CLI exposing `agent`, flow governance, and upcoming worktree utilities |
+| `@magsag/core` | Engine contracts, runner interfaces, selection helpers |
+| `@magsag/schema` | Zod schemas (`RunSpec`, `RunnerEvent`, policy definitions) |
+| `@magsag/governance` | Flow gate evaluation + policy parsing |
+| `@magsag/observability` | Flow summaries, metrics orchestration |
+| `@magsag/runner-*` | MAG/SAG runners: Codex CLI, Claude CLI, OpenAI Agents, Claude Agent, ADK |
+| `@magsag/mcp-client` | MCP transport, circuit breaker, tests |
+| `@magsag/mcp-server` | MCP exposure of catalog + governance (under construction) |
+| `@magsag/shared-logging` | Minimal logger with console fallback |
 
-See `CONTRIBUTING.md` for review conventions and release automation.
+---
+
+## Documentation
+
+- `AGENTS.md` – Operational expectations for humans & AI assistants
+- `SSOT.md` – Canonical documentation map
+- `docs/development/plans/` – ExecPlan, workstream board, migration threads
+- `docs/governance/` – Frontmatter schema, style guide, taxonomy
+- `catalog/` – Reference agents, skills, policies, templates
+
+Update all living documents with frontmatter metadata and append to their update logs. Override instructions only with explicit approval.
 
 ---
 

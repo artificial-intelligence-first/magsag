@@ -5,6 +5,12 @@ import split2 from 'split2';
 
 const SUCCESS_STATUSES = new Set(['ok', 'success', 'succeeded', 'completed']);
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const toRecord = (value: unknown): Record<string, unknown> | undefined =>
+  isRecord(value) ? value : undefined;
+
 export interface FlowSummary {
   runs: number;
   successes: number;
@@ -24,7 +30,7 @@ export interface FlowSummary {
     };
     cost_usd: number;
   };
-  steps: Array<{
+  steps: {
     name: string;
     runs: number;
     successes: number;
@@ -37,8 +43,8 @@ export interface FlowSummary {
     };
     models?: string[];
     error_types?: Record<string, number>;
-  }>;
-  models: Array<{
+  }[];
+  models: {
     name: string;
     calls: number;
     errors: number;
@@ -48,7 +54,7 @@ export interface FlowSummary {
       total: number;
     };
     cost_usd: number;
-  }>;
+  }[];
 }
 
 interface StepMetrics {
@@ -132,15 +138,15 @@ const defaultSummary = (): FlowSummary => ({
 const loadJson = async (path: string): Promise<Record<string, unknown> | undefined> => {
   try {
     const raw = await fs.readFile(path, 'utf8');
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, unknown>) : undefined;
+    const parsed = JSON.parse(raw) as unknown;
+    return toRecord(parsed);
   } catch {
     return undefined;
   }
 };
 
 const extractModelName = (record: Record<string, unknown>): string => {
-  const directKeys: Array<keyof typeof record> = ['model', 'model_name'];
+  const directKeys: (keyof typeof record)[] = ['model', 'model_name'];
   for (const key of directKeys) {
     const value = record[key];
     if (typeof value === 'string' && value) {
@@ -148,17 +154,17 @@ const extractModelName = (record: Record<string, unknown>): string => {
     }
   }
 
-  const usage = record.usage;
-  if (usage && typeof usage === 'object') {
-    const candidate = (usage as Record<string, unknown>).model;
+  const usage = toRecord(record.usage);
+  if (usage) {
+    const candidate = usage.model;
     if (typeof candidate === 'string' && candidate) {
       return candidate;
     }
   }
 
-  const config = record.config;
-  if (config && typeof config === 'object') {
-    const candidate = (config as Record<string, unknown>).model;
+  const config = toRecord(record.config);
+  if (config) {
+    const candidate = config.model;
     if (typeof candidate === 'string' && candidate) {
       return candidate;
     }
@@ -180,43 +186,41 @@ const classifyError = (
     }
   }
 
-  const errorObj = record.error;
-  if (errorObj && typeof errorObj === 'object') {
-    const errorRecord = errorObj as Record<string, unknown>;
+  const errorObj = toRecord(record.error);
+  if (errorObj) {
     for (const key of ['type', 'code', 'category', 'reason']) {
-      const value = errorRecord[key];
+      const value = errorObj[key];
       if (typeof value === 'string') {
         tokens.push(value.toLowerCase());
       }
     }
-    const message = errorRecord.message;
+    const message = errorObj.message;
     if (typeof message === 'string') {
       tokens.push(message.toLowerCase());
     }
-  } else if (typeof errorObj === 'string') {
-    tokens.push(errorObj.toLowerCase());
+  } else if (typeof record.error === 'string') {
+    tokens.push(record.error.toLowerCase());
   }
 
   if (extra) {
-    const extraError = extra.error;
-    if (extraError && typeof extraError === 'object') {
-      const extraErrorRecord = extraError as Record<string, unknown>;
+    const extraError = toRecord(extra.error);
+    if (extraError) {
       for (const key of ['type', 'code', 'category', 'reason']) {
-        const value = extraErrorRecord[key];
+        const value = extraError[key];
         if (typeof value === 'string') {
           tokens.push(value.toLowerCase());
         }
       }
-      const message = extraErrorRecord.message;
+      const message = extraError.message;
       if (typeof message === 'string') {
         tokens.push(message.toLowerCase());
       }
-    } else if (typeof extraError === 'string') {
-      tokens.push(extraError.toLowerCase());
+    } else if (typeof extra.error === 'string') {
+      tokens.push(extra.error.toLowerCase());
     }
   }
 
-  const classifiers: Array<[string, string[]]> = [
+  const classifiers: [string, string[]][] = [
     ['timeout', ['timeout', 'deadline']],
     ['tool', ['tool', 'tools']],
     ['validation', ['validation', 'schema', 'invalid']],
@@ -241,30 +245,31 @@ const accumulateRunsFile = async (runDir: string, metrics: RunMetrics): Promise<
   }
 
   let runFailed = false;
-  const stream = createReadStream(runsPath, { encoding: 'utf8' }).pipe(split2());
+  const stream = createReadStream(runsPath, { encoding: 'utf8' }).pipe(split2()) as AsyncIterable<string>;
 
   for await (const line of stream) {
-    const text = typeof line === 'string' ? line : line.toString();
-    if (!text.trim()) {
+    const text = line.trim();
+    if (!text) {
       continue;
     }
-    let record: Record<string, unknown>;
+    let parsed: unknown;
     try {
-      record = JSON.parse(text);
+      parsed = JSON.parse(text) as unknown;
     } catch {
       continue;
     }
-    if (record.event !== 'end') {
+    const record = toRecord(parsed);
+    if (!record || record.event !== 'end') {
       continue;
     }
 
-    const step = record.step;
-    if (typeof step !== 'string' || !step) {
+    const stepValue = record.step;
+    if (typeof stepValue !== 'string' || !stepValue) {
       continue;
     }
 
-    const stepMetrics = metrics.stepStats.get(step) ?? initStepMetrics();
-    metrics.stepStats.set(step, stepMetrics);
+    const stepMetrics = metrics.stepStats.get(stepValue) ?? initStepMetrics();
+    metrics.stepStats.set(stepValue, stepMetrics);
     stepMetrics.runs += 1;
 
     const latency = record.latency_ms;
@@ -274,10 +279,7 @@ const accumulateRunsFile = async (runDir: string, metrics: RunMetrics): Promise<
       metrics.completedSteps += 1;
     }
 
-    const extra =
-      record.extra && typeof record.extra === 'object'
-        ? (record.extra as Record<string, unknown>)
-        : undefined;
+    const extra = toRecord(record.extra);
 
     if (extra) {
       const model = extra.model;
@@ -319,23 +321,27 @@ const aggregateMcpLogs = async (runDir: string, metrics: RunMetrics) => {
     return;
   }
 
-  const stream = createReadStream(mcpPath, { encoding: 'utf8' }).pipe(split2());
+  const stream = createReadStream(mcpPath, { encoding: 'utf8' }).pipe(split2()) as AsyncIterable<string>;
 
   for await (const line of stream) {
-    const text = typeof line === 'string' ? line : line.toString();
-    if (!text.trim()) {
+    const text = line.trim();
+    if (!text) {
       continue;
     }
-    let record: Record<string, unknown>;
+    let parsed: unknown;
     try {
-      record = JSON.parse(text);
+      parsed = JSON.parse(text) as unknown;
     } catch {
+      continue;
+    }
+    const record = toRecord(parsed);
+    if (!record) {
       continue;
     }
 
     metrics.mcpCalls += 1;
     const status = typeof record.status === 'string' ? record.status.toLowerCase() : '';
-    const isSuccess = ['ok', 'success'].includes(status);
+    const isSuccess = status === 'ok' || status === 'success';
     if (!isSuccess) {
       metrics.mcpErrors += 1;
     }
@@ -348,10 +354,7 @@ const aggregateMcpLogs = async (runDir: string, metrics: RunMetrics) => {
       stats.errors += 1;
     }
 
-    const usage =
-      record.usage && typeof record.usage === 'object'
-        ? (record.usage as Record<string, unknown>)
-        : undefined;
+    const usage = toRecord(record.usage);
     if (usage) {
       stats.inputTokens += Number(usage.input_tokens ?? 0) || 0;
       stats.outputTokens += Number(usage.output_tokens ?? 0) || 0;
@@ -388,9 +391,12 @@ const summaryIndicatesSuccess = (summary: Record<string, unknown>): boolean => {
     if (failures instanceof Map) {
       return [...failures.values()].every((value) => !value);
     }
-    const failureValues = Object.values(failures as Record<string, unknown>);
-    if (failureValues.length > 0) {
-      return failureValues.every((value) => !value);
+    const failureRecord = toRecord(failures);
+    if (failureRecord) {
+      const failureValues = Object.values(failureRecord);
+      if (failureValues.length > 0) {
+        return failureValues.every((value) => !value);
+      }
     }
   }
 

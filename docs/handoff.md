@@ -134,7 +134,7 @@ print(f"Result: {result['result']}")
 ### CLI Delegation (`magsag agent handoff`)
 
 ```bash
-uv run magsag agent handoff auto <skill-name> \
+pnpm --filter @magsag/cli exec magsag agent handoff auto <skill-name> \
   --budget 500 \
   --capability fs --capability "cli:pytest" \
   --meta preferred_target=codex \

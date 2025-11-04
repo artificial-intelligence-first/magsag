@@ -8,14 +8,15 @@ export interface GoogleAdkRunnerOptions {
   userId?: string;
 }
 
-const loadAdk = async () =>
-  (await import('@google/adk')) as typeof import('@google/adk');
+type GoogleAdkSdk = typeof import('@google/adk');
+
+const loadAdk = async (): Promise<GoogleAdkSdk> => import('@google/adk');
 
 const DEFAULT_MODEL = 'gemini-2.0-flash';
 const DEFAULT_APP_NAME = 'magsag-adk';
 const DEFAULT_USER_ID = 'default-user';
 
-const textFromEvent = async (adk: typeof import('@google/adk'), event: unknown) => {
+const textFromEvent = (adk: GoogleAdkSdk, event: unknown): string | undefined => {
   try {
     if (!event || typeof event !== 'object') {
       return undefined;
@@ -26,18 +27,19 @@ const textFromEvent = async (adk: typeof import('@google/adk'), event: unknown) 
   }
 };
 
-const functionCallsFromEvent = (adk: typeof import('@google/adk'), event: unknown) => {
+const functionCallsFromEvent = (adk: GoogleAdkSdk, event: unknown): { name?: unknown; args?: unknown }[] => {
   try {
     if (!event || typeof event !== 'object') {
       return [];
     }
-    return adk.getFunctionCalls(event as Parameters<typeof adk.getFunctionCalls>[0]) ?? [];
+    const calls = adk.getFunctionCalls(event as Parameters<typeof adk.getFunctionCalls>[0]);
+    return Array.isArray(calls) ? calls : [];
   } catch {
     return [];
   }
 };
 
-const isFinalResponse = (adk: typeof import('@google/adk'), event: unknown) => {
+const isFinalResponse = (adk: GoogleAdkSdk, event: unknown): boolean => {
   try {
     if (!event || typeof event !== 'object') {
       return false;
@@ -67,20 +69,18 @@ const eventTimestamp = (event: unknown): number | undefined => {
 const eventActions = (event: unknown): unknown =>
   event && typeof event === 'object' ? (event as { actions?: unknown }).actions : undefined;
 
-const toolCallEvents = (calls: Array<{ name?: unknown; args?: unknown }>): RunnerEvent[] => {
+const toRecord = (value: unknown): Record<string, unknown> =>
+  typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {};
+
+const toolCallEvents = (calls: { name?: unknown; args?: unknown }[]): RunnerEvent[] => {
   const events: RunnerEvent[] = [];
   for (const call of calls) {
-    if (typeof call !== 'object' || call === null) {
-      continue;
-    }
     const name = typeof call.name === 'string' ? call.name : 'anonymous_tool';
-    const args =
-      typeof call.args === 'object' && call.args !== null ? call.args : {};
     events.push({
       type: 'tool-call',
       call: {
         name,
-        arguments: args as Record<string, unknown>
+        arguments: toRecord(call.args)
       }
     });
   }
@@ -134,14 +134,14 @@ export class GoogleAdkRunner implements Runner {
         sessionService
       });
 
-      const newMessage = {
+      const newMessage: Parameters<typeof runner.runAsync>[0]['newMessage'] = {
         role: 'user',
         parts: [
           {
             text: validated.prompt
           }
         ]
-      } as Parameters<typeof runner.runAsync>[0]['newMessage'];
+      };
 
       const events = runner.runAsync({
         userId,
@@ -159,7 +159,7 @@ export class GoogleAdkRunner implements Runner {
           continue;
         }
 
-        const text = await textFromEvent(adk, event);
+        const text = textFromEvent(adk, event);
         if (text && text.trim().length > 0) {
           yield {
             type: 'message',
@@ -168,10 +168,7 @@ export class GoogleAdkRunner implements Runner {
           };
         }
 
-        const calls = toolCallEvents(functionCallsFromEvent(adk, event) as Array<{
-          name?: unknown;
-          args?: unknown;
-        }>);
+        const calls = toolCallEvents(functionCallsFromEvent(adk, event));
         for (const call of calls) {
           yield call;
         }

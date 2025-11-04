@@ -9,6 +9,7 @@ export const parseFlowAvailable = async (argv: string[]): Promise<ParsedFlowAvai
   if (argv.length > 0) {
     throw new Error(`Unexpected arguments: ${argv.join(' ')}`);
   }
+  await Promise.resolve();
   return { kind: 'flow:available' };
 };
 

@@ -31,7 +31,7 @@ Break down the subject with predictable H2/H3 headings. Use ordered lists for pr
 
 ```bash
 # Replace with runnable commands or code samples
-uv run magsag --help
+pnpm --filter @magsag/cli exec magsag --help
 ```
 
 ## Validation

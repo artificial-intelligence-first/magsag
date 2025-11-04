@@ -3,7 +3,7 @@ title: MAGSAG Single Source of Truth
 slug: ssot
 status: living
 last_updated: 2025-11-03
-last_synced: '2025-11-03'
+last_synced: '2025-11-04'
 tags:
 - governance
 - ssot
@@ -39,7 +39,7 @@ sources:
 | Documentation standards | `docs/governance/` | Frontmatter schema, style, taxonomy |
 | Documentation workflows | `docs/workflows/` | Changelog, ExecPlan, and operational runbooks |
 | Architecture overview | `docs/architecture/` | System design, workflows, skill conventions |
-| External SDK drivers | `src/magsag/sdks/` | OpenAI Agents, Claude Agent SDK, Codex integrations |
+| Engine & runner packages | `packages/` | CLI, governance, observability, runners, MCP |
 | Development process | `docs/development/` | Roadmap, plans, contributing guides |
 | Catalog assets | `catalog/` | Agent, skill, and policy definitions |
 | Changelog | `CHANGELOG.md`, `docs/development/changelog.md` | Release notes and historical changes |
@@ -59,11 +59,7 @@ sources:
 1. **Identify** the SSOT location for the domain you are changing.
 2. **Draft** changes in the canonical file, applying the style and frontmatter rules.
 3. **Propagate** updates to dependent documents (e.g., README excerpts, guides).
-4. **Validate** using governance and documentation checks:
-   ```bash
-   uv run python ops/tools/check_docs.py
-   uv run ruff check docs catalog
-   ```
+4. **Validate** changes manually (doc tooling is pending). Capture review notes in delivery logs and notify Workstream E.
 5. **Record** outcomes in the change log or plan update log.
 
 Document skipped steps or deferred updates in delivery notes so follow-up actions remain visible.
@@ -82,15 +78,14 @@ Document skipped steps or deferred updates in delivery notes so follow-up action
 | Candidate Profile | `catalog/contracts/candidate_profile.schema.json` | Offer orchestrators, compensation skills |
 | Offer Packet | `catalog/contracts/offer_packet.schema.json` | Result aggregation, doc generation |
 | Salary Band | `catalog/contracts/salary_band.schema.json` | Compensation advisor, governance checks |
-| Flow Summary | `src/magsag/assets/contracts/flow_summary.schema.json` | Governance gate, flow metrics tooling |
+| Flow Summary | `catalog/contracts/flow_summary.schema.json` | Governance gate, flow metrics tooling |
 
 ## MCP Standard Support
 
-- **Canonical presets** – `ops/adk/servers/*.yaml` store editable MCP definitions; `src/magsag/mcp/presets/servers/` provides bundled defaults for bootstrapping.
-- **Generated artefacts** – `magsag mcp sync` renders deterministic JSON into `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json`, tagging each document with `metadata.source` and `metadata.source_digest` for provenance checks.
-- **Transports** – Streamable HTTP is primary, Server-Sent Events provide backward compatibility, and stdio (`mcp-remote` / `mcp-obsidian`) acts as a rescue path.
-- **CLI workflow** – `magsag mcp bootstrap|ls|doctor|login|inspect` bootstraps configs, diagnoses connectivity, and documents authentication flows.
-- **Observability** – MCP calls emit entries to `.runs/<run_id>/mcp_calls.jsonl` and attach transport/session attributes to OTel spans.
+- **Canonical presets** – `ops/adk/servers/*.yaml` store editable MCP definitions. Regenerated artefacts will ship with the TypeScript sync tool; record manual JSON generation steps in delivery notes until available.
+- **Transports** – Streamable HTTP is primary, Server-Sent Events provide backward compatibility, and stdio (`mcp-remote` / `mcp-obsidian`) remains a fallback.
+- **CLI workflow** – `pnpm --filter @magsag/cli exec magsag mcp <command>` bootstraps configs, diagnoses connectivity, and documents authentication flows.
+- **Observability** – MCP calls emit events through the TypeScript observability layer; attach manual context when automated summaries are missing.
 - **Policies** – Agent YAML files may declare `policies.tools` overrides (`allow`, `require-approval`, `deny`) which are enforced before MCP execution.
 
 ## Conflict Resolution
@@ -150,7 +145,7 @@ git checkout -b docs/refresh-<topic>
 $EDITOR docs/architecture/ssot.md
 # Propagate references
 rg "old-term" -g"*.md" | xargs sed -i '' 's/old-term/new-term/g'
-uv run python ops/tools/check_docs.py
+# Manual doc validation (tooling pending Workstream E)
 git commit -am "docs(ssot): refresh <topic>"
 ```
 

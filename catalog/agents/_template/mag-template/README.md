@@ -107,7 +107,7 @@ All executions produce artifacts in `.runs/agents/<RUN_ID>/`:
 uv run -m pytest tests/agents/test_your_orchestrator_mag.py -v
 
 # Integration test
-echo '{"field1":"test"}' | uv run magsag agent run your-orchestrator-mag
+echo '{"field1":"test"}' | pnpm --filter @magsag/cli exec magsag agent run your-orchestrator-mag
 ```
 
 ## Development Notes

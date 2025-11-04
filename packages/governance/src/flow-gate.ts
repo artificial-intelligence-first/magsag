@@ -1,119 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { createRequire } from 'node:module';
-import type { ValidateFunction, ErrorObject } from 'ajv';
 import yaml from 'yaml';
-
-const FLOW_SUMMARY_SCHEMA = {
-  $schema: 'https://json-schema.org/draft/2020-12/schema',
-  title: 'FlowSummary',
-  type: 'object',
-  required: [
-    'runs',
-    'successes',
-    'success_rate',
-    'avg_latency_ms',
-    'errors',
-    'mcp',
-    'steps',
-    'models'
-  ],
-  properties: {
-    runs: { type: 'integer', minimum: 0 },
-    successes: { type: 'integer', minimum: 0 },
-    success_rate: { type: 'number', minimum: 0, maximum: 1 },
-    avg_latency_ms: { type: 'number', minimum: 0 },
-    errors: {
-      type: 'object',
-      required: ['total', 'by_type'],
-      properties: {
-        total: { type: 'integer', minimum: 0 },
-        by_type: {
-          type: 'object',
-          additionalProperties: { type: 'integer', minimum: 0 }
-        }
-      },
-      additionalProperties: true
-    },
-    mcp: {
-      type: 'object',
-      required: ['calls', 'errors', 'tokens', 'cost_usd'],
-      properties: {
-        calls: { type: 'integer', minimum: 0 },
-        errors: { type: 'integer', minimum: 0 },
-        tokens: {
-          type: 'object',
-          required: ['input', 'output', 'total'],
-          properties: {
-            input: { type: 'integer', minimum: 0 },
-            output: { type: 'integer', minimum: 0 },
-            total: { type: 'integer', minimum: 0 }
-          },
-          additionalProperties: true
-        },
-        cost_usd: { type: 'number', minimum: 0 }
-      },
-      additionalProperties: true
-    },
-    steps: {
-      type: 'array',
-      items: {
-        type: 'object',
-        required: ['name', 'runs', 'successes', 'errors'],
-        properties: {
-          name: { type: 'string', minLength: 1 },
-          runs: { type: 'integer', minimum: 0 },
-          successes: { type: 'integer', minimum: 0 },
-          errors: { type: 'integer', minimum: 0 },
-          success_rate: { type: 'number', minimum: 0, maximum: 1 },
-          avg_latency_ms: { type: 'number', minimum: 0 },
-          mcp: {
-            type: 'object',
-            properties: {
-              calls: { type: 'integer', minimum: 0 },
-              errors: { type: 'integer', minimum: 0 }
-            },
-            additionalProperties: true
-          },
-          models: {
-            type: 'array',
-            items: { type: 'string' }
-          },
-          error_types: {
-            type: 'object',
-            additionalProperties: { type: 'integer', minimum: 0 }
-          }
-        },
-        additionalProperties: true
-      }
-    },
-    models: {
-      type: 'array',
-      items: {
-        type: 'object',
-        required: ['name', 'calls', 'errors', 'tokens', 'cost_usd'],
-        properties: {
-          name: { type: 'string', minLength: 1 },
-          calls: { type: 'integer', minimum: 0 },
-          errors: { type: 'integer', minimum: 0 },
-          tokens: {
-            type: 'object',
-            required: ['input', 'output', 'total'],
-            properties: {
-              input: { type: 'integer', minimum: 0 },
-              output: { type: 'integer', minimum: 0 },
-              total: { type: 'integer', minimum: 0 }
-            },
-            additionalProperties: true
-          },
-          cost_usd: { type: 'number', minimum: 0 }
-        },
-        additionalProperties: true
-      }
-    }
-  },
-  additionalProperties: true
-} as const;
 
 const DEFAULT_POLICY_YAML = `
 min_runs: 1
@@ -139,19 +26,22 @@ models:
     - internal-experimental-*
 `.trim();
 
-type FlowSummary = Record<string, unknown>;
-type FlowPolicy = Record<string, unknown>;
+type JsonRecord = Record<string, unknown>;
+type FlowSummary = JsonRecord;
+type FlowPolicy = JsonRecord;
 
-const require = createRequire(import.meta.url);
-const Ajv2020Factory = require('ajv/dist/2020').default as any;
-const ajv = new Ajv2020Factory({ allErrors: true, strict: false });
-let validator: ValidateFunction | undefined;
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
 
-const getValidator = (): ValidateFunction => {
-  if (!validator) {
-    validator = ajv.compile(FLOW_SUMMARY_SCHEMA);
+const toRecord = (value: unknown): JsonRecord | undefined =>
+  isRecord(value) ? value : undefined;
+
+const requireRecord = (value: unknown, message: string): JsonRecord => {
+  const record = toRecord(value);
+  if (!record) {
+    throw new Error(message);
   }
-  return validator!;
+  return record;
 };
 
 const ratio = (numerator?: number, denominator?: number): number | undefined => {
@@ -176,38 +66,6 @@ const matchPattern = (value: string, pattern: string): boolean => {
   return patternToRegex(pattern).test(value);
 };
 
-const loadSummary = async (summaryPath: string): Promise<FlowSummary> => {
-  const raw = await readFile(summaryPath, 'utf8');
-  const parsed = JSON.parse(raw) as FlowSummary;
-  const validate = getValidator();
-  if (!validate(parsed)) {
-    const message = validate.errors
-      ?.map((err: ErrorObject) => `${err.instancePath} ${err.message}`)
-      .join(', ');
-    throw new Error(`Summary does not match schema: ${message ?? 'unknown error'}`);
-  }
-  return parsed;
-};
-
-const loadPolicy = async (policyPath?: string): Promise<FlowPolicy> => {
-  if (!policyPath) {
-    return (yaml.parse(DEFAULT_POLICY_YAML) ?? {}) as FlowPolicy;
-  }
-  const raw = await readFile(policyPath, 'utf8');
-  const parsed = yaml.parse(raw);
-  if (parsed === null) {
-    return {};
-  }
-  if (typeof parsed !== 'object') {
-    throw new Error('Policy data must be a mapping');
-  }
-  const entries = Object.entries(parsed as Record<string, unknown>).map(([key, value]) => [
-    String(key),
-    value
-  ]);
-  return Object.fromEntries(entries);
-};
-
 const numbers = (value: unknown): number | undefined => {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
@@ -222,14 +80,35 @@ const numbers = (value: unknown): number | undefined => {
 const stringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.map((item) => String(item)) : [];
 
-const ensureRecord = (value: unknown): Record<string, unknown> | undefined =>
-  value && typeof value === 'object' ? (value as Record<string, unknown>) : undefined;
+const loadSummary = async (summaryPath: string): Promise<FlowSummary> => {
+  const raw = await readFile(summaryPath, 'utf8');
+  const parsed = JSON.parse(raw) as unknown;
+  return requireRecord(parsed, 'Summary must be a JSON object');
+};
+
+const toFlowPolicy = (value: unknown): FlowPolicy => {
+  if (value === null || value === undefined) {
+    return {};
+  }
+  const record = requireRecord(value, 'Policy data must be a mapping');
+  return Object.fromEntries(
+    Object.entries(record).map(([key, entry]) => [String(key), entry])
+  );
+};
+
+const loadPolicy = async (policyPath?: string): Promise<FlowPolicy> => {
+  if (!policyPath) {
+    return toFlowPolicy(yaml.parse(DEFAULT_POLICY_YAML) as unknown);
+  }
+  const raw = await readFile(policyPath, 'utf8');
+  return toFlowPolicy(yaml.parse(raw) as unknown);
+};
 
 const evaluateStep = (
-  step: Record<string, unknown>,
-  stepPolicy: Record<string, unknown>,
+  step: JsonRecord,
+  stepPolicy: JsonRecord,
   errors: string[],
-  rootPolicy: Record<string, unknown>
+  rootPolicy: JsonRecord
 ) => {
   const name = String(step.name ?? '<unknown>');
   const runs = numbers(step.runs) ?? 0;
@@ -243,9 +122,7 @@ const evaluateStep = (
   const avgLatency = numbers(step.avg_latency_ms);
   const maxLatency = numbers(stepPolicy.max_avg_latency_ms);
   if (avgLatency !== undefined && maxLatency !== undefined && avgLatency > maxLatency) {
-    errors.push(
-      `step ${name}: avg_latency_ms ${avgLatency.toFixed(1)} > max ${maxLatency.toFixed(1)}`
-    );
+    errors.push(`step ${name}: avg_latency_ms ${avgLatency.toFixed(1)} > max ${maxLatency.toFixed(1)}`);
   }
 
   const models = step.models;
@@ -256,28 +133,24 @@ const evaluateStep = (
     model = step.model;
   }
   if (typeof model === 'string') {
-    const modelPolicy = ensureRecord(rootPolicy.models) ?? {};
+    const modelPolicy = toRecord(rootPolicy.models) ?? {};
     const denylist = stringArray(modelPolicy.denylist);
-    if (denylist.some((pattern) => matchPattern(model!, pattern))) {
+    if (denylist.some((pattern) => matchPattern(model, pattern))) {
       errors.push(`step ${name}: model '${model}' is denied`);
     }
 
     const allowlist = stringArray(modelPolicy.allowlist);
-    if (allowlist.length > 0 && !allowlist.some((pattern) => matchPattern(model!, pattern))) {
+    if (allowlist.length > 0 && !allowlist.some((pattern) => matchPattern(model, pattern))) {
       errors.push(`step ${name}: model '${model}' not allowed`);
     }
   }
 
-  const mcp = ensureRecord(step.mcp);
+  const mcp = toRecord(step.mcp);
   const mcpCalls = numbers(mcp?.calls);
   const mcpErrors = numbers(mcp?.errors);
   const mcpErrorRate = ratio(mcpErrors, mcpCalls);
   const maxMcpErrorRate = numbers(stepPolicy.max_mcp_error_rate);
-  if (
-    mcpErrorRate !== undefined &&
-    maxMcpErrorRate !== undefined &&
-    mcpErrorRate > maxMcpErrorRate
-  ) {
+  if (mcpErrorRate !== undefined && maxMcpErrorRate !== undefined && mcpErrorRate > maxMcpErrorRate) {
     errors.push(
       `step ${name}: mcp.error_rate ${mcpErrorRate.toFixed(3)} > max ${maxMcpErrorRate.toFixed(3)}`
     );
@@ -301,61 +174,53 @@ export const evaluateFlowSummary = async (
 
   const minSuccessRate = numbers(policy.min_success_rate);
   const successRate = numbers(summary.success_rate);
-  if (
-    minSuccessRate !== undefined &&
-    successRate !== undefined &&
-    successRate < minSuccessRate
-  ) {
-    errors.push(
-      `success_rate ${successRate.toFixed(3)} < min ${minSuccessRate.toFixed(3)}`
-    );
+  if (minSuccessRate !== undefined && successRate !== undefined && successRate < minSuccessRate) {
+    errors.push(`success_rate ${successRate.toFixed(3)} < min ${minSuccessRate.toFixed(3)}`);
   }
 
   const maxAvgLatency = numbers(policy.max_avg_latency_ms);
   const avgLatency = numbers(summary.avg_latency_ms);
   if (maxAvgLatency !== undefined && avgLatency !== undefined && avgLatency > maxAvgLatency) {
-    errors.push(
-      `avg_latency_ms ${avgLatency.toFixed(1)} > max ${maxAvgLatency.toFixed(1)}`
-    );
+    errors.push(`avg_latency_ms ${avgLatency.toFixed(1)} > max ${maxAvgLatency.toFixed(1)}`);
   }
 
   const steps = Array.isArray(summary.steps)
-    ? (summary.steps as Array<Record<string, unknown>>)
+    ? summary.steps.filter((item): item is JsonRecord => isRecord(item))
     : [];
 
   const requiredSteps = stringArray(policy.required_steps);
   if (requiredSteps.length > 0) {
     const presentSteps = new Set(steps.map((step) => String(step.name ?? '')));
-    const missing = requiredSteps.filter((step) => !presentSteps.has(step));
+    const missing = requiredSteps.filter((stepName) => !presentSteps.has(stepName));
     if (missing.length > 0) {
       errors.push(`missing required steps: ${missing.join(', ')}`);
     }
   }
 
-  const perStepPolicy = ensureRecord(policy.per_step) ?? {};
-  const defaultStepPolicy = ensureRecord(perStepPolicy.default) ?? {};
+  const perStepPolicy = toRecord(policy.per_step) ?? {};
+  const defaultStepPolicy = toRecord(perStepPolicy.default) ?? {};
 
   for (const step of steps) {
     const name = String(step.name ?? '<unknown>');
-    const stepPolicy = ensureRecord(perStepPolicy[name]) ?? defaultStepPolicy;
+    const stepPolicy = toRecord(perStepPolicy[name]) ?? defaultStepPolicy;
     evaluateStep(step, stepPolicy, errors, policy);
   }
 
-  const mcpPolicy = ensureRecord(policy.mcp);
+  const mcpPolicy = toRecord(policy.mcp);
   const maxMcpRate = numbers(mcpPolicy?.max_error_rate);
   if (maxMcpRate !== undefined) {
-    const mcpSummary = ensureRecord(summary.mcp) ?? {};
+    const mcpSummary = toRecord(summary.mcp) ?? {};
     let totalCalls = numbers(mcpSummary.calls);
     let totalErrors = numbers(mcpSummary.errors);
     if (totalCalls === undefined) {
       totalCalls = steps.reduce(
-        (acc, step) => acc + (numbers(ensureRecord(step.mcp)?.calls) ?? 0),
+        (acc, step) => acc + (numbers(toRecord(step.mcp)?.calls) ?? 0),
         0
       );
     }
     if (totalErrors === undefined) {
       totalErrors = steps.reduce(
-        (acc, step) => acc + (numbers(ensureRecord(step.mcp)?.errors) ?? 0),
+        (acc, step) => acc + (numbers(toRecord(step.mcp)?.errors) ?? 0),
         0
       );
     }

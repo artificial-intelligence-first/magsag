@@ -1,8 +1,8 @@
 ---
 title: MAGSAG Framework Hardening ExecPlan
 slug: roadmap-hardening
-status: living
-last_updated: 2025-11-02
+status: deprecated
+last_updated: 2025-11-04
 tags:
 - plans
 - governance
@@ -10,7 +10,7 @@ summary: ExecPlan tracking governance, release, and documentation hardening effo
   for the MAGSAG platform.
 authors: []
 sources: []
-last_synced: '2025-11-02'
+last_synced: '2025-11-04'
 description: ExecPlan tracking governance, release, and documentation hardening efforts
   for the MAGSAG platform.
 ---
@@ -82,12 +82,12 @@ Framework deliverables are in place with passing tests and policy checks, ready 
 4. Update contributor documentation to reference ExecPlan lifecycle and validation expectations.
 
 ## Validation and Acceptance
-- [ ] `uv run -m pytest -q`
-- [ ] `uv run python ops/tools/check_docs.py`
-- [ ] `echo '{"role":"Engineer","level":"Mid"}' | uv run magsag agent run offer-orchestrator-mag`
-- [ ] `uv run magsag flow available`
-- [ ] `uv run magsag flow summarize --output /tmp/summary.json`
-- [ ] `uv run magsag flow gate /tmp/summary.json`
+- [ ] `pnpm -r test`
+- [ ] `# Manual doc validation (tooling pending Workstream E)`
+- [ ] `echo '{"role":"Engineer","level":"Mid"}' | pnpm --filter @magsag/cli exec magsag agent run offer-orchestrator-mag`
+- [ ] `pnpm --filter @magsag/cli exec magsag flow available`
+- [ ] `pnpm --filter @magsag/cli exec magsag flow summarize --output /tmp/summary.json`
+- [ ] `pnpm --filter @magsag/cli exec magsag flow gate /tmp/summary.json`
 - [ ] `uv build` (smoke test packaging when bundled resources change)
 
 ## Idempotence and Recovery

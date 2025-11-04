@@ -17,31 +17,30 @@ export class CircuitBreaker {
   }
 
   canAttempt(nowMs: number): boolean {
-    if (this.state === 'closed') {
-      return true;
-    }
-
-    if (this.state === 'open') {
-      if (this.lastFailureTimeMs === null) {
+    switch (this.state) {
+      case 'closed':
+        return true;
+      case 'open': {
+        if (this.lastFailureTimeMs === null) {
+          return false;
+        }
+        const elapsedSeconds = (nowMs - this.lastFailureTimeMs) / 1000;
+        if (elapsedSeconds >= this.config.timeoutSeconds) {
+          this.transitionToHalfOpen();
+          return this.canAttempt(nowMs);
+        }
         return false;
       }
-      const elapsedSeconds = (nowMs - this.lastFailureTimeMs) / 1000;
-      if (elapsedSeconds >= this.config.timeoutSeconds) {
-        this.transitionToHalfOpen();
-        return this.canAttempt(nowMs);
+      case 'half_open': {
+        const canAttempt = this.halfOpenCalls < this.config.halfOpenMaxCalls;
+        if (canAttempt) {
+          this.halfOpenCalls += 1;
+        }
+        return canAttempt;
       }
-      return false;
+      default:
+        return false;
     }
-
-    if (this.state === 'half_open') {
-      if (this.halfOpenCalls < this.config.halfOpenMaxCalls) {
-        this.halfOpenCalls += 1;
-        return true;
-      }
-      return false;
-    }
-
-    return false;
   }
 
   recordSuccess(): void {
@@ -80,10 +79,8 @@ export class CircuitBreaker {
       return;
     }
 
-    if (this.state === 'open') {
-      // Keep failure count saturated while open.
-      this.failureCount = this.config.failureThreshold;
-    }
+    // Remaining state is 'open'; keep failure count saturated while open.
+    this.failureCount = this.config.failureThreshold;
   }
 
   getState(): CircuitState {

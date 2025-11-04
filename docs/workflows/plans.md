@@ -2,8 +2,8 @@
 title: ExecPlan Workflow
 slug: workflows-plans
 status: living
-last_updated: 2025-11-03
-last_synced: '2025-11-03'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - documentation
 - workflow
@@ -65,7 +65,7 @@ Store plans under `docs/development/plans/<slug>.md` using this outline:
 
 1. **Draft** the plan file and add it to `docs/architecture/plans.md` under “Active Plans.”
 2. **Trace** progress by appending timestamped status entries in UTC as work evolves.
-3. **Validate** each deliverable by recording executed commands and outcomes in the `Validation` section.
+3. **Validate** each deliverable. Until doc tooling returns, rely on manual review and note outcomes in the `Validation` section.
 4. **Decide**: document approvals, blockers, or scope changes in the decision log.
 5. **Close** after completion: finalise validation evidence, move the plan to “Completed Plans” in the index, and link related changelog entries.
 
@@ -83,15 +83,10 @@ Store plans under `docs/development/plans/<slug>.md` using this outline:
 
 ## Validation Commands
 
-```bash
-uv run python ops/tools/check_docs.py
-uv run ruff check docs
-uv run magsag mcp sync --dry-run  # Run after editing ops/adk/ sources
-```
-
-Log pass/fail results and remediation notes in delivery updates or the plan’s `Validation` section.
+Document validation evidence manually (frontmatter, timestamps, links, MCP artefacts) until the TypeScript doc tooling is available. Record findings and remediation notes in delivery updates or the plan’s `Validation` section.
 
 ## Update Log
 
+- 2025-11-04: Switched to manual documentation validation notes while TypeScript tooling is in-flight.
 - 2025-11-03: Added MCP sync dry-run to validation checklist.
 - 2025-11-02: Established workflow outlining plan triggers, canonical structure, review cadence, and validation commands.

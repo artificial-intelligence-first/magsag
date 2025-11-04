@@ -1,9 +1,9 @@
 ---
 title: Tracking Issue – mypy/ruff debt cleanup
 slug: issue-mypy-ruff-cleanup
-status: stable
-last_updated: '2025-11-02'
-last_synced: '2025-11-02'
+status: deprecated
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - tracking
 - quality
@@ -18,6 +18,8 @@ related_plans:
 - ../roadmap.md
 - ../../PLANS.md
 ---
+
+> **Notice**: Historical Python cleanup record. Retained for audit only.
 
 # Summary
 

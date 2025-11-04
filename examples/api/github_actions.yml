@@ -51,7 +51,7 @@ jobs:
 
       - name: Run agent
         run: |
-          echo '${{ inputs.payload }}' | uv run magsag agent run '${{ inputs.agent_slug }}'
+          echo '${{ inputs.payload }}' | pnpm --filter @magsag/cli exec magsag agent run '${{ inputs.agent_slug }}'
 
       - name: Upload run artifacts
         uses: actions/upload-artifact@v4
@@ -135,7 +135,7 @@ jobs:
 #       - run: uv python install 3.12
 #       - run: uv sync
 #       - run: |
-#           echo '{"scheduled": true}' | uv run magsag agent run daily-report-mag
+#           echo '{"scheduled": true}' | pnpm --filter @magsag/cli exec magsag agent run daily-report-mag
 
 # Example: PR comment trigger
 #
@@ -159,5 +159,5 @@ jobs:
 #           comment="${{ github.event.comment.body }}"
 #           if echo "$comment" | grep -q "/run-agent"; then
 #             agent_slug=$(echo "$comment" | sed -n 's#/run-agent \([a-z0-9-]*\).*#\1#p')
-#             echo '{"triggered_by": "comment"}' | uv run magsag agent run "$agent_slug"
+#             echo '{"triggered_by": "comment"}' | pnpm --filter @magsag/cli exec magsag agent run "$agent_slug"
 #           fi

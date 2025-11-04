@@ -38,7 +38,7 @@ export interface RunnerErrorPayload {
 export type RunnerEvent =
   | { type: 'log'; data: string }
   | { type: 'message'; role: 'assistant' | 'tool' | 'system'; content: string }
-  | { type: 'diff'; files: Array<{ path: string; patch: string }> }
+  | { type: 'diff'; files: { path: string; patch: string }[] }
   | { type: 'tool-call'; call: ToolCallPayload }
   | { type: 'done'; sessionId?: string; stats?: Record<string, unknown> }
   | { type: 'error'; error: RunnerErrorPayload };

@@ -69,18 +69,23 @@ const mergePythonPath = (env: NodeJS.ProcessEnv): NodeJS.ProcessEnv => {
 
 const pathDelimiter = () => (process.platform === 'win32' ? ';' : ':');
 
-const buildEnvironment = (env?: Record<string, string | undefined>) => {
-  const baseEnv: NodeJS.ProcessEnv = { ...process.env };
+const buildEnvironment = (env?: Record<string, string | undefined>): NodeJS.ProcessEnv => {
+  const mergedEntries = new Map<string, string>();
+  for (const [key, value] of Object.entries(process.env)) {
+    if (typeof value === 'string') {
+      mergedEntries.set(key, value);
+    }
+  }
   if (env) {
     for (const [key, value] of Object.entries(env)) {
       if (value === undefined) {
-        delete baseEnv[key];
+        mergedEntries.delete(key);
       } else {
-        baseEnv[key] = value;
+        mergedEntries.set(key, value);
       }
     }
   }
-  return mergePythonPath(baseEnv);
+  return mergePythonPath(Object.fromEntries(mergedEntries) as NodeJS.ProcessEnv);
 };
 
 export interface FlowRunnerResult {

@@ -963,7 +963,7 @@ obs.log("delegation_complete", {...}) # When delegation completes
 obs.log("delegation_error", {...})    # On delegation error
 
 # Query delegation history
-uv run magsag data search "delegation" --agent my-mag --limit 100
+pnpm --filter @magsag/cli exec magsag data search "delegation" --agent my-mag --limit 100
 ```
 
 ## Troubleshooting

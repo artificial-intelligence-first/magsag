@@ -22,6 +22,7 @@ const collectStream = () => {
 const createStubRunner = (events: RunnerEvent[]): Runner => ({
   async *run(_spec: RunSpec) {
     void _spec;
+    await Promise.resolve();
     for (const event of events) {
       yield event;
     }

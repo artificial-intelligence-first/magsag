@@ -5,21 +5,43 @@ import { runSpecSchema } from '@magsag/schema';
 
 const DEFAULT_BINARY = 'codex';
 
-type CodexNdjsonEvent = {
+const CODEX_ROLES = ['assistant', 'tool', 'system'] as const;
+
+type CodexRunnerRole = (typeof CODEX_ROLES)[number];
+
+interface CodexNdjsonFile {
+  path: string;
+  patch: string;
+}
+
+interface CodexNdjsonError {
+  message?: string;
+  code?: string;
+  details?: Record<string, unknown>;
+}
+
+interface CodexNdjsonEvent {
   type?: string;
   content?: string;
-  role?: 'assistant' | 'tool' | 'system';
-  files?: Array<{ path: string; patch: string }>;
+  role?: CodexRunnerRole;
+  files?: CodexNdjsonFile[];
   session_id?: string;
   stats?: Record<string, unknown>;
-  error?: { message?: string; code?: string; details?: Record<string, unknown> };
+  error?: CodexNdjsonError;
   data?: string;
+}
+
+const isCodexNdjsonEvent = (value: unknown): value is CodexNdjsonEvent =>
+  typeof value === 'object' && value !== null;
+
+const resolveCodexRole = (role?: CodexRunnerRole): CodexRunnerRole => {
+  if (role && CODEX_ROLES.includes(role)) {
+    return role;
+  }
+  return 'assistant';
 };
 
 const mapCodexEvent = (evt: CodexNdjsonEvent, raw: string): RunnerEvent[] => {
-  if (!evt || typeof evt !== 'object') {
-    return [{ type: 'log', data: raw }];
-  }
 
   switch (evt.type) {
     case 'message':
@@ -27,7 +49,7 @@ const mapCodexEvent = (evt: CodexNdjsonEvent, raw: string): RunnerEvent[] => {
         return [
           {
             type: 'message',
-            role: evt.role ?? 'assistant',
+            role: resolveCodexRole(evt.role),
             content: evt.content
           }
         ];
@@ -52,7 +74,7 @@ const mapCodexEvent = (evt: CodexNdjsonEvent, raw: string): RunnerEvent[] => {
       if (evt.content) {
         events.push({
           type: 'message',
-          role: evt.role ?? 'assistant',
+          role: resolveCodexRole(evt.role),
           content: evt.content
         });
       }
@@ -84,7 +106,7 @@ const mapCodexEvent = (evt: CodexNdjsonEvent, raw: string): RunnerEvent[] => {
         return [
           {
             type: 'message',
-            role: evt.role ?? 'assistant',
+            role: resolveCodexRole(evt.role),
             content: evt.content
           }
         ];
@@ -125,19 +147,22 @@ export class CodexCliRunner implements Runner {
 
     let sawDone = false;
 
-    for await (const line of stream.pipe(split2())) {
-      const text = line.toString();
+    const lineStream = stream.pipe(split2());
+    for await (const chunk of lineStream as AsyncIterable<string | Buffer>) {
+      const text = typeof chunk === 'string' ? chunk : chunk.toString();
       if (!text.trim()) {
         continue;
       }
-      let parsed: CodexNdjsonEvent | undefined;
+      let parsed: unknown;
       try {
-        parsed = JSON.parse(text);
+        parsed = JSON.parse(text) as unknown;
       } catch {
         parsed = undefined;
       }
       const fallbackEvent: RunnerEvent = { type: 'log', data: text };
-      const events = parsed ? mapCodexEvent(parsed, text) : [fallbackEvent];
+      const events = isCodexNdjsonEvent(parsed)
+        ? mapCodexEvent(parsed, text)
+        : [fallbackEvent];
       for (const event of events) {
         if (event.type === 'done') {
           sawDone = true;

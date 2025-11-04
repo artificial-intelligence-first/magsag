@@ -92,7 +92,7 @@ All Markdown documents follow this order:
 ### Code Blocks
 
 ```bash
-uv run python ops/tools/check_docs.py
+# Manual doc validation (tooling pending Workstream E)
 ```
 
 - Always include a language identifier.
@@ -124,14 +124,9 @@ uv run python ops/tools/check_docs.py
 - Update the `last_updated` field and append to the document’s update log after substantive changes.
 - Embed relative links instead of absolute URLs for repository resources.
 
-## Validation Commands
+## Validation
 
-```bash
-uv run python ops/tools/check_docs.py
-uv run ruff check docs catalog
-```
-
-Capture pass/fail results in PR descriptions or delivery notes so reviewers can audit coverage.
+Automated doc validation is temporarily paused. Perform manual checks (frontmatter completeness, tag usage, link hygiene, update logs) and capture findings in PR descriptions or delivery notes so reviewers can audit coverage.
 
 ## Taxonomy
 
@@ -149,5 +144,6 @@ Use the controlled vocabulary maintained in `docs/governance/taxonomy.md`; exten
 
 ## Change Log
 
+- 2025-11-04: Updated validation guidance for manual review during the TypeScript tooling migration.
 - 2025-11-02: Redirected tag guidance to the dedicated taxonomy reference.
 - 2025-11-01: Established and expanded documentation style rules with detailed structures, formatting, and hygiene guidance.

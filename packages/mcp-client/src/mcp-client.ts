@@ -193,8 +193,11 @@ export class McpClient {
             );
           }
         } else {
-          if (error instanceof McpError && error.code === ErrorCode.ConnectionClosed) {
-            await this.resetConnection();
+          if (error instanceof McpError) {
+            const mcpError = error as McpError & { code: ErrorCode };
+            if (mcpError.code === ErrorCode.ConnectionClosed) {
+              await this.resetConnection();
+            }
           }
 
           if (attempt >= this.retryConfig.maxAttempts) {
@@ -244,11 +247,12 @@ export class McpClient {
 
     await this.initialize();
 
-    if (!this.client) {
-      throw new McpClientError('Failed to establish MCP connection');
+    const client: Client | null = this.client;
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- reconnect may fail leaving client null
+    if (client) {
+      return client;
     }
-
-    return this.client;
+    throw new McpClientError('Failed to establish MCP connection');
   }
 
   private async resetConnection(): Promise<void> {
@@ -280,7 +284,8 @@ export class McpClient {
 
 const isTimeoutError = (error: unknown): boolean => {
   if (error instanceof McpError) {
-    return error.code === ErrorCode.RequestTimeout;
+    const mcpError = error as McpError & { code: ErrorCode };
+    return mcpError.code === ErrorCode.RequestTimeout;
   }
 
   if (error instanceof Error && error.name === 'AbortError') {

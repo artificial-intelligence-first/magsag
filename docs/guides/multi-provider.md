@@ -242,7 +242,7 @@ The observability layer automatically tracks model usage:
 
 ```bash
 # View model usage in run summary
-uv run magsag flow summarize --output summary.json
+pnpm --filter @magsag/cli exec magsag flow summarize --output summary.json
 cat summary.json | jq '.model_stats'
 
 # Example output:
@@ -270,10 +270,10 @@ cat summary.json | jq '.model_stats'
 
 ```bash
 # Query runs by model usage
-uv run magsag data query --agent my-mag --limit 20
+pnpm --filter @magsag/cli exec magsag data query --agent my-mag --limit 20
 
 # Search for specific model errors
-uv run magsag data search "claude.*error" --limit 50
+pnpm --filter @magsag/cli exec magsag data search "claude.*error" --limit 50
 ```
 
 ## Best Practices
@@ -440,10 +440,10 @@ All model invocations are logged for compliance:
 
 ```bash
 # Query model usage audit trail
-uv run magsag data query --run-id mag-abc123
+pnpm --filter @magsag/cli exec magsag data query --run-id mag-abc123
 
 # Export for compliance review
-uv run magsag data query --agent sensitive-data-mag --format csv > audit.csv
+pnpm --filter @magsag/cli exec magsag data query --agent sensitive-data-mag --format csv > audit.csv
 ```
 
 ## Migration Guide
@@ -500,7 +500,7 @@ Monitor rate limit headers and implement backoff:
 
 ```python
 # Check observability logs for rate limit errors
-uv run magsag data search "rate_limit" --limit 100
+pnpm --filter @magsag/cli exec magsag data search "rate_limit" --limit 100
 
 # Implement request throttling in high-volume scenarios
 ```
@@ -509,10 +509,10 @@ uv run magsag data search "rate_limit" --limit 100
 
 ```bash
 # Monitor daily costs
-uv run magsag flow summarize | jq '.model_stats[].cost_usd' | awk '{s+=$1} END {print s}'
+pnpm --filter @magsag/cli exec magsag flow summarize | jq '.model_stats[].cost_usd' | awk '{s+=$1} END {print s}'
 
 # Set up alerts in governance policies
-uv run magsag flow gate summary.json --policy catalog/policies/model_governance.yaml
+pnpm --filter @magsag/cli exec magsag flow gate summary.json --policy catalog/policies/model_governance.yaml
 ```
 
 ## Related Documentation

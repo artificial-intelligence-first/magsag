@@ -2,146 +2,133 @@
 title: MAGSAG Agent Guidelines
 slug: architecture-agents
 status: living
-last_updated: 2025-11-03
-last_synced: '2025-11-03'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - agents
 - workflow
-summary: Detailed operating procedures for contributors working inside the MAGSAG
-  repository.
+summary: Detailed operating procedures for contributors working inside the TypeScript MAGSAG monorepo.
+description: Deep dive into the TypeScript packages, tooling, and governance expectations that drive agent contributions.
 authors: []
-source_of_truth: https://github.com/artificial-intelligence-first/ssot/blob/main/docs/core/agents-guide.md
 sources:
 - id: R1
   title: MAGSAG Agent Playbook
   url: ../../AGENTS.md
-  accessed: '2025-11-01'
-description: Detailed operating procedures for contributors working inside the MAGSAG
-  repository.
+  accessed: '2025-11-04'
+- id: R2
+  title: MAGSAG README
+  url: ../../README.md
+  accessed: '2025-11-04'
 ---
 
 # MAGSAG Agent Guidelines
 
-> **For Humans**: Use this guide to understand the repository layout, required tooling, and governance hooks that shape daily work.
+> **For Humans**: Use this guide to understand the TypeScript monorepo layout, required tooling, and governance hooks that shape daily work.
 >
-> **For AI Agents**: Mirror these procedures when editing code or docs. Ask for clarification when instructions conflict.
+> **For AI Agents**: Mirror these procedures when editing code or docs. Pause when instructions conflict and surface ambiguities early.
 
 ## Overview
 
-This guide expands on `AGENTS.md` with deeper context about the development environment, architecture, and validation routines that keep changes safe and traceable.
+This guide expands on `AGENTS.md` with deeper context about packages, validation routines, and governance expectations in the TypeScript (pnpm) monorepo.
 
 ## Environment Essentials
 
-- Use Python 3.12 with [`uv`](https://docs.astral.sh/uv/) for dependency
-  management: `uv sync --extra dev`.
-- Source code lives under `src/magsag/`, catalog assets under `catalog/`, docs in
-  `docs/`. Keep new modules inside `src/magsag/` unless instructed otherwise.
-- The Typer CLI is the primary entry point: `uv run magsag --help`.
-- Delegate work to Claude or Codex via `uv run magsag agent handoff` (defaults to auto target resolution; add `--capability` hints as needed), and regenerate MCP artefacts with `uv run magsag mcp sync` after editing YAML in `ops/adk/servers/`.
-- Run the API server locally with `uv run python -m magsag.api.server`.
-- Configuration is namespaced by `MAGSAG_`; defaults are in
-  `magsag.api.config.Settings`.
+- Install Node.js 18.18+ (22.x LTS recommended) and pnpm 9.
+- Run `pnpm install` per worktree to sync dependencies.
+- TypeScript packages live under `packages/` (CLI, core, governance, observability, runners, MCP, shared logging, worktree utilities).
+- Catalog assets remain under `catalog/`; docs stay under `docs/`.
+- Execute CLI commands with `pnpm --filter @magsag/cli exec magsag <command>`.
+- Manual worktrees: `git worktree add ../wt-<id>-typescript-full-migration main` until the TypeScript worktree utility lands. Document the command in hand-off notes.
+- Engine defaults: `ENGINE_MODE=subscription`, `ENGINE_MAG=codex-cli`, `ENGINE_SAG=claude-cli`. Override per run when testing API engines.
 
 ## Architecture Snapshot
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                          Interfaces                          │
-│   Typer CLI (wt/agent/flow)  FastAPI API  GitHub Hooks & Jobs │
-└───────────────┬────────────────────┬──────────────────────────┘
-                │                    │
-                ▼                    ▼
+│                           Interfaces                         │
+│   CLI (oclif)                        GitHub/CI (planned)      │
+└───────────────┬──────────────────────────────┬────────────────┘
+                │                              │
+                ▼                              ▼
 ┌──────────────────────────────────────────────────────────────┐
 │                 Orchestration & Governance                    │
-│   Runner Hooks ─ Approvals ─ Policies ─ Worktree Manager     │
-│   Agent Runner ─ Skill Runtime ─ Flow Runner adapters        │
+│  Runner registry ─ governance policies ─ worktree utilities  │
+│  CLI commands  ─ MCP client  ─ session management            │
 └──────────────────────────┬────────────────────────────────────┘
                            │
                            ▼
 ┌──────────────────────────────────────────────────────────────┐
-│                 Execution & Observability                     │
-│   Catalog (agents/skills/contracts)                           │
-│   Storage (SQLite, Postgres) + MCP Providers                   │
-│   Telemetry (OpenTelemetry, Langfuse)                          │
+│                 Execution & Observability                    │
+│  Runners (Codex, Claude, OpenAI Agents, ADK)                 │
+│  Catalog assets + MCP providers                              │
+│  Observability (summaries, metrics, logs)                    │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-- Interfaces feed the orchestration layer.
-- Governance enforces approvals and emits audit events.
-- Catalog assets, storage backends, and MCP providers execute the work.
-
-## Repository Layout
+## Repository Layout (TypeScript)
 
 ```
-src/magsag/          → Core package code (api, runners, sdks, worktree, governance, observability)
-catalog/             → Agents, skills, schemas, policies
-docs/                → Architecture notes, guides, development docs
-ops/                 → Maintenance scripts and tooling (ADK registry lives in ops/adk/)
-benchmarks/          → Performance harnesses
-tests/               → Unit, integration, observability, MCP suites
+packages/             → TypeScript packages (cli, core, governance, observability, runners, mcp, shared-logging, worktree)
+catalog/              → Agents, skills, schemas, policies
+docs/                 → Architecture notes, workflows, governance guides
+ops/adk/              → MCP server definitions (YAML)
+apps/                 → Demo entry points (placeholder CLI/API)
+examples/             → Reference flows and snippets
 ```
 
 ## Required Checks Before Any PR
 
 ```bash
-uv run ruff check
-uv run mypy src/magsag tests
-uv run pytest -q -m "not slow"
-uv run python ops/tools/check_docs.py
+pnpm -r lint
+pnpm -r typecheck
+pnpm -r test
 ```
 
-If a check is intentionally skipped, state the reason in the delivery message.
+- Narrow scope with `pnpm --filter @magsag/<pkg> lint|typecheck|test` for targeted packages.
+- Document manual doc validation (frontmatter/taxonomy) until the TypeScript tooling ships; record results in delivery notes.
 
 ## Change Workflow
 
-1. Create an isolated worktree: `uv run magsag wt new <run> --task <slug> --base main`.
-2. Implement the change with type hints and focused tests.
-3. Update documentation or catalog entries impacted by the change.
-4. Record the commands you executed and their outcomes.
-5. Stage changes with `git add -u` (rename-aware) and avoid unrelated drive-by edits.
+1. Create an isolated worktree (`git worktree add ...`) and note it in hand-off docs.
+2. Implement changes with strict typing and focused tests.
+3. Update documentation, SSOT entries, or catalog artefacts affected by behaviour changes.
+4. Record executed commands and their results (lint, typecheck, test, manual doc review).
+5. Stage related files only (`git add -u`), avoiding drive-by edits.
 
 ## Governance Expectations
 
-- Never commit secrets. Use environment variables or the secret manager referenced
-  in `docs/policies/security.md`.
-- Keep naming consistent with the `magsag` package. Do not reintroduce legacy `agdd`
-  tokens or directories.
-- Update `CHANGELOG.md` under `## [Unreleased]` whenever public behaviour or docs shift.
-- Prefer incremental plans (`docs/development/plans/`) for multi-session work and
-  close them with validation notes once delivered.
+- Never commit secrets. Use environment variables or the secret solutions referenced in `docs/policies/security.md`.
+- Keep naming consistent with the `@magsag/*` package family.
+- Update `CHANGELOG.md` under `## [Unreleased]` for user-visible changes.
+- Use ExecPlans (`docs/development/plans/`) for multi-session work and close them with validation notes once delivered.
 
-## When to Pause and Ask
+## When to Pause
 
-- Requirements conflict with `docs/architecture/ssot.md`.
-- A destructive action is requested without explicit approval (e.g., rewriting git
-  history, purging data).
-- External dependencies (OpenAI, Anthropic, Flow Runner) fail and no fallback
-  exists.
-- Governance policies or security guidelines seem ambiguous.
+- Requirements conflict with `SSOT.md` or governance policies.
+- Destructive actions (rewriting history, purging data) are requested without explicit approval.
+- Subscription/API engines fail and no fallback is defined.
+- Security or governance expectations are ambiguous.
 
 ## Reference Surfaces
 
-- `src/magsag/runners/agent_runner.py` – canonical executor.
-- `src/magsag/sdks/claude_agent/` and `src/magsag/sdks/codex/` – external SDK drivers and sandbox policies.
-- `src/magsag/sdks/google_adk/` – registry parsers and renderers for MCP/catalog generation.
-- `catalog/registry/` – agent and skill registry entries.
-- `docs/guides/` – integration-specific walkthroughs (MCP, moderation, GitHub).
-- `docs/development/worktrees.md` – detailed worktree automation.
-- `docs/workflows/` – changelog and ExecPlan operating procedures.
-- `docs/governance/taxonomy.md` – controlled documentation tags.
+- `packages/core/src/index.ts` – engine contracts and runner registry helpers.
+- `packages/cli/src/commands/` – CLI entry points (agent run, flow tooling).
+- `packages/runner-*/src/index.ts` – Codex, Claude, OpenAI Agents, Claude Agent, and ADK runners.
+- `packages/mcp-client/src/` – MCP transport helpers and circuit breaker.
+- `packages/governance/src/flow-gate.ts` – flow summary evaluation logic.
+- `packages/observability/src/flow-summary.ts` – flow aggregation and metrics.
+- `docs/workflows/` – changelog and ExecPlan operations.
+- `docs/governance/` – style, taxonomy, and frontmatter guidance.
+- `catalog/registry/` – agent and skill registry definitions.
 
 ## External Execution Drivers
 
-- `ExternalHandoffTool` bridges OpenAI Agents SDK with Claude Agent SDK and Codex drivers.
-- `BudgetController` enforces spend guards for external handoffs; set `MAGSAG_BUDGET_*` env vars before invoking CLI/API.
-- Use `src/magsag/sdks/claude_agent/sandbox.py` to adjust command allowlists or readonly policy.
-- Codex driver supports CLI (`codex run`) and Responses API (`codex-mini-latest`); configure mode via metadata or environment.
-- Google ADK sync (`magsag mcp sync`) renders `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json` from `ops/adk/catalog.yaml` + `ops/adk/servers/*.yaml`.
-- API endpoint `POST /api/v1/agents/handoff` mirrors CLI behaviour for cloud orchestration.
+- CLI defaults rely on subscription runners; switch to API engines by exporting `ENGINE_MODE=api` and selecting `ENGINE_MAG` / `ENGINE_SAG` accordingly.
+- `packages/runner-claude-agent` and `packages/runner-openai-agents` bridge SDK integrations; ensure credentials are set before executing.
+- MCP presets live in `ops/adk/servers/*.yaml`. Regeneration tooling is pending TypeScript replacement—log any manual JSON generation steps and notify Workstream E.
 
 ## Update Log
 
-- 2025-11-03: Documented external SDK drivers, ADK sync workflow, BudgetController guardrails, and JSON-only MCP artefacts.
-- 2025-11-02: Added workflow and taxonomy references for documentation alignment.
-- 2025-11-01: Migrated to the unified documentation standard and refreshed metadata.
-- 2025-11-01: Linked canonical ssot repository reference and clarified governance pointers.
+- 2025-11-04: Replaced Python/uv guidance with TypeScript + pnpm instructions and updated package references.
+- 2025-11-03: Documented external SDK drivers, ADK sync workflow, and governance guardrails.
+- 2025-11-02: Linked workflow and taxonomy references for documentation alignment.

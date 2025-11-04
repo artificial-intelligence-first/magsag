@@ -50,9 +50,13 @@ const readPromptFromStdin = async (): Promise<string | undefined> => {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) {
     if (typeof chunk === 'string') {
+      chunks.push(Buffer.from(chunk, 'utf8'));
+    } else if (Buffer.isBuffer(chunk)) {
+      chunks.push(chunk);
+    } else if (chunk instanceof Uint8Array) {
       chunks.push(Buffer.from(chunk));
     } else {
-      chunks.push(chunk);
+      chunks.push(Buffer.from(String(chunk), 'utf8'));
     }
   }
 
@@ -103,12 +107,13 @@ export const parseAgentRun = async (argv: string[]): Promise<ParsedAgentRun> => 
   const engine = resolveEngine(parsed.flags.engine);
   const repo = resolveRepo(parsed.flags.repo);
   const resumeId = parsed.flags.resume;
+  const trimmedResumeId = resumeId?.trim();
 
   return {
     spec: buildRunSpec(prompt, {
       engine,
       repo,
-      resumeId: resumeId?.trim() || undefined
+      resumeId: trimmedResumeId && trimmedResumeId.length > 0 ? trimmedResumeId : undefined
     })
   };
 };

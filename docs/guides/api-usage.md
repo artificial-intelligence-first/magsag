@@ -1,7 +1,8 @@
 ---
 title: MAGSAG HTTP API Reference
 slug: guide-api-usage
-status: living
+> **Notice**: This guide describes the legacy Python API stack and is retained for reference. The TypeScript server rework is tracked in Workstream C.
+status: deprecated
 last_updated: 2025-11-02
 tags:
 - api

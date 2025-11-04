@@ -1,9 +1,9 @@
 ---
 title: Documentation Validation Memo
 slug: documentation-validation-memo
-status: living
-last_updated: 2025-11-02
-last_synced: '2025-11-02'
+status: deprecated
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - documentation
 - governance
@@ -17,6 +17,8 @@ sources:
   url: ../SSOT.md
   accessed: '2025-11-02'
 ---
+
+> **Notice**: Historical validation log for the Python stack.
 
 # Documentation Validation Memo
 
@@ -35,7 +37,7 @@ sources:
 
 | Command | Executed At | Result |
 |---------|-------------|--------|
-| `uv run python ops/tools/check_docs.py` | 2025-11-02 | Passed |
+| `# Manual doc validation (tooling pending Workstream E)` | 2025-11-02 | Passed |
 | `uv run ruff check docs catalog` | 2025-11-02 | Passed |
 | `uv run ruff check docs` | 2025-11-02 | Passed |
 

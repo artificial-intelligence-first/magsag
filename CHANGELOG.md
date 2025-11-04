@@ -3,7 +3,7 @@ title: MAGSAG Changelog
 slug: changelog
 status: living
 last_updated: 2025-11-04
-last_synced: '2025-11-03'
+last_synced: '2025-11-04'
 tags:
 - magsag
 - changelog
@@ -49,40 +49,30 @@ sources:
 
 ### [Unreleased]
 
+_No entries yet._
+
+### [2.0.0] - 2025-11-04
+
 #### Added
-- Subscription-first MAG/SAG execution runtime with `RunSpec`, Codex/Claude CLI runners, OpenAI/Anthropic SDK adapters, Typer `magsag agent` options (`--mode/--mag/--sag/--resume`), REST endpoint `POST /api/v1/agent/run`, session metadata store, and health metrics (`GET /api/v1/health/metrics`).
-- External handoff pipeline linking OpenAI Agents SDK to Claude Agent SDK and Codex drivers via `ExternalHandoffTool`, `POST /api/v1/agents/handoff`, and `magsag agent handoff`.
-- Google ADK sync workflow (`magsag mcp sync`) rendering `.mcp/servers/<provider>.json` and `catalog/tools/<provider>/*.json` from `ops/adk/catalog.yaml` + `ops/adk/servers/*.yaml`.
-- BudgetController for provider spend limits with environment-driven configuration and integration into external handoffs.
-- Traceparent helper (`observability.tracing.current_traceparent`) for downstream integrations needing explicit context strings.
-- Durable runner snapshot store now auto-creates run metadata, persists snapshots to configured storage backends, and emits `run.snapshot.saved` / `run.resume` events.
-- Async MCP client and decorators gained full JSON-RPC transport support (stdio/websocket/http), approval-gated invocation flow, and dedicated unit coverage.
-- Handoff tool now records `handoff.requested` / `handoff.completed` events via the storage backend with regression tests covering the event path.
-- MCP governance now includes explicit `fetch` server policies and approval prompts for remote web fetch operations.
-- Standard MCP presets (Notion, Supabase, GitHub, Obsidian) with Typer CLI helpers, bundled YAML assets, and sample skills for each provider.
-- MCP observability ledger (`mcp_calls.jsonl`) and OTel span attributes capturing transport, session ID, protocol version, and policy outcomes.
+- TypeScript-only monorepo managed by pnpm/turborepo with shared ESLint and TS configs.
+- `@magsag/cli` (oclif) exposing MAG/SAG runners, engine overrides, and resumable sessions.
+- Governance/observability/runner/MCP/shared-logging packages refactored to TypeScript ESM.
+- Workstream coordination docs and README/AGENTS/SSOT refreshed for subscription-first defaults.
 
 #### Changed
-- README/AGENTS playbook refreshed for subscription-vs-API engine selection, session persistence, and new Makefile helpers (`make qa`, `make agent-codex`, `make agent-claude`).
-- PlanIR expanded to capture versioning, capability requirements, budgets, and audit metadata; AgentRunner now resolves external targets and enforces approvals/budgets before delegation.
-- External handoff CLI/API resolve targets automatically when `--target auto` or capability hints are supplied, and the runtime ensures Claude/Codex dispatchers are always registered.
-- Claude and Codex drivers register with the external dispatcher registry, apply sandbox enforcement, and propagate trace context for Langfuse/OTel correlation.
-- AgentRunner automatically captures session `input`/`output` memories when memory IR is enabled and routes MAGSAG handoffs through the configured runner payload.
-- Catalog skills (`doc-gen`, `salary-band-lookup`, `example-web-search`) now require the configured MCP runtime, query governed data sources, and surface errors when MCP is unavailable; associated docs, YAML policies, and tests were updated.
-- FastMCP server integration executes real skills via `AgentRunner`/`SkillRuntime`, replacing the Phase 2 placeholder response pipeline.
-- MCP runtime prioritises HTTP → SSE → stdio fallback, enforces agent-level tool policies, and masks arguments before logging observability records.
-- Documentation workflows, templates, and tag taxonomy were consolidated (`docs/workflows/*`, `docs/_templates/*`, `docs/governance/taxonomy.md`) with cross-references added across AGENTS/SSOT/CONTRIBUTING.
-- MCP integration guide and `.mcp/README` were refreshed for HTTP-first presets, Typer CLI tooling, and provider-specific authentication guidance.
-- Fetch sample server now uses `@pulsemcp/pulse-fetch`, and the legacy git preset was removed from `.mcp/servers/` to avoid broken npx installs.
+- Default workflow uses `pnpm install`, `pnpm -r lint`, `pnpm -r typecheck`, `pnpm -r test`.
+- Engine environment variables renamed to `ENGINE_MODE`, `ENGINE_MAG`, and `ENGINE_SAG`; docs updated accordingly.
+- Claude/Codex CLI runners hardened against unsafe assignments and unnecessary conditions.
+- Flow summary evaluation aligns with new schema helpers and emits stricter model/policy checks.
 
-#### Fixed
-- Session metadata store now acquires cross-process locks to prevent concurrent writers from truncating or overwriting sibling sessions during CLI/API runs.
-- Claude CLI runner positions `-p` directly before the prompt, keeping stream-output flags active and restoring correct SAG prompt handling.
-- `AgentRunner.delegate_external()` now raises a clear error when invoked inside a running event loop, preventing illegal loop reuse.
-- External handoff budget enforcement accepts zero-cent limits, ensuring budget guards trigger even for no-spend delegations.
-- Approval gating for external handoffs normalizes risk tags, so mixed-case values still require review.
-- `observability.tracing.current_traceparent()` and `sdks.base.build_trace_context()` no longer treat `is_valid` as callable, avoiding runtime errors when spans are active.
-- Planner lazily imports `PlanIR`/`PlanStep` at runtime so `Planner.plan()` returns a valid PlanIR instead of raising `TypeError`.
+#### Removed
+- Python/FastAPI/uv runtime, Typer CLI, legacy tests/benchmarks, and flowrunner wrappers.
+- Automated doc/policy validators (`ops/tools/*.py`); manual review is required until TypeScript tooling lands.
+- Vendored MCP artefacts produced by the Python toolchain; MCP sync is temporarily manual.
+
+#### Known Gaps
+- Documentation and policy checks rely on manual review (see ExecPlan Surprises). Workstream E is tracking the replacement.
+- Flow Runner governance tooling is pending; record interim validation steps in delivery notes.
 
 ### [0.2.0] - 2025-10-31
 
@@ -159,7 +149,8 @@ sources:
 
 ## Links
 
-- [Unreleased]: https://github.com/artificial-intelligence-first/magsag/compare/v0.2.0...HEAD
+- [Unreleased]: https://github.com/artificial-intelligence-first/magsag/compare/v2.0.0...HEAD
+- [2.0.0]: https://github.com/artificial-intelligence-first/magsag/compare/v0.2.0...v2.0.0
 - [0.2.0]: https://github.com/artificial-intelligence-first/magsag/compare/v0.1.0...v0.2.0
 - [0.1.0]: https://github.com/artificial-intelligence-first/magsag/releases/tag/v0.1.0
 

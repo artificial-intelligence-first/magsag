@@ -47,9 +47,9 @@ sources:
 2. Sync dependencies: `uv sync --extra dev` (add `--extra production` when working with Postgres/Redis/MCP).
 3. Verify local environment by running:
    ```bash
-   uv run -m pytest -q
-   uv run mypy src tests
-   uv run ruff check .
+   pnpm -r test
+   pnpm -r typecheck
+   pnpm -r lint
    ```
 4. Confirm feature alignment against `docs/development/roadmap.md` and open issues.
 
@@ -84,15 +84,15 @@ sources:
 
 | Command | Purpose |
 |---------|---------|
-| `uv run -m pytest -q` | Fast test suite (excludes `slow`). |
+| `pnpm -r test` | Fast test suite (excludes `slow`). |
 | `uv run -m pytest -m slow` | Slow/integration scenarios (run when affecting flows, MCP, or storage). |
-| `uv run mypy src tests` | Strict type checking. |
+| `pnpm -r typecheck` | Strict type checking. |
 | `uv run ruff format .` | Auto-format. |
-| `uv run ruff check .` | Lint enforcement. |
+| `pnpm -r lint` | Lint enforcement. |
 | `uv run bandit -r src` | Security scanning for Python code. |
 | Catalog validation | Covered by pytest (catalog tests validate schemas). |
-| `uv run magsag flow validate <flow>` | Ensure Flow Runner configs remain valid. |
-| `uv run magsag flow gate <summary.json>` | Apply governance thresholds to flow summaries. |
+| `pnpm --filter @magsag/cli exec magsag flow validate <flow>` | Ensure Flow Runner configs remain valid. |
+| `pnpm --filter @magsag/cli exec magsag flow gate <summary.json>` | Apply governance thresholds to flow summaries. |
 
 Record pass/fail results for each command in the PR description.
 

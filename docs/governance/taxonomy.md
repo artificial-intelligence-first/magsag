@@ -95,13 +95,9 @@ sources:
 
 ## Validation Commands
 
-```bash
-uv run python ops/tools/check_docs.py
-uv run ruff check docs
-```
-
-Record pass/fail status in delivery notes when adjusting tag assignments.
+Automated validation is unavailable. When adjusting tag assignments, manually verify frontmatter tags and document the review in delivery notes.
 
 ## Update Log
 
+- 2025-11-04: Documented manual validation flow during TypeScript tooling migration.
 - 2025-11-02: Expanded the controlled vocabulary to cover all in-repo tags and refreshed metadata.

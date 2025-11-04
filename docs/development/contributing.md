@@ -2,7 +2,7 @@
 title: Development Contribution Guide
 slug: dev-contributing
 status: living
-last_updated: 2025-11-02
+last_updated: 2025-11-04
 tags:
 - contributing
 - development
@@ -14,7 +14,7 @@ sources:
   title: Repository Contribution Guide
   url: ../../CONTRIBUTING.md
   accessed: '2025-11-01'
-last_synced: '2025-11-02'
+last_synced: '2025-11-04'
 description: Developer-focused setup, validation, and delivery workflow for contributing
   to MAGSAG.
 ---
@@ -33,24 +33,23 @@ MAGSAG is primarily maintained for internal use, but external contributions alig
 
 ### Prerequisites
 
-- Python 3.12 or later.
-- [`uv`](https://docs.astral.sh/uv/) for dependency management.
+- Node.js 18.18+ (22.x LTS recommended).
+- [pnpm 9](https://pnpm.io/installation).
+- Codex CLI / Claude CLI signed in for subscription mode (optional).
 
 ### Initial Steps
 
 ```bash
 git clone https://github.com/artificial-intelligence-first/magsag.git
 cd magsag
-cp .env.example .env  # Populate credentials if required
-uv sync              # Install runtime dependencies
-uv sync --extra dev  # Install development extras (recommended)
+pnpm install
 ```
 
-Verify tooling:
+Explore tooling:
 
 ```bash
-uv run python --version
-uv run magsag --help
+pnpm --filter @magsag/cli exec magsag --help
+pnpm --filter @magsag/cli exec magsag agent run --repo . "Smoke test prompt"
 ```
 
 ## Validation Checklist
@@ -58,14 +57,14 @@ uv run magsag --help
 Run these commands before creating a pull request. Record pass/fail results in the delivery note.
 
 ```bash
-uv run ruff check .
-uv run mypy src tests
-uv run pytest -q
-uv run python ops/tools/check_docs.py
+pnpm -r lint
+pnpm -r typecheck
+pnpm -r test
 ```
 
-- Use `uv run pytest -m slow` for changes affecting flows, storage, or MCP integrations.
-- Update or add tests alongside code modifications.
+- Narrow scope with `pnpm --filter @magsag/<pkg> lint|typecheck|test` for focused changes.
+- Document manuals: until doc tooling returns, perform frontmatter/tag review by hand and log results in delivery notes.
+- Add or update tests alongside code modifications.
 
 ## Branching & Workflow
 
@@ -90,19 +89,19 @@ uv run python ops/tools/check_docs.py
 
 ## Code Quality Standards
 
-### Python
+### TypeScript & Tooling
 
-- Line length: 100 characters (configured in `pyproject.toml`).
-- Formatting: `uv run ruff format .`
-- Linting: `uv run ruff check .`
-- Type hints: Strict `mypy` coverage; avoid `Any` when possible.
-- Document public APIs with concise docstrings.
+- Target ECMAScript 2022; modules ship as ESM.
+- Formatting/Linting: follow `eslint.config.js` (`pnpm --filter @magsag/<pkg> lint`).
+- Type checking: `pnpm --filter @magsag/<pkg> typecheck`.
+- Use explicit types; avoid `any` unless justified with comments.
+- Keep `packages/shared-logging` light—prefer dependency injection over ad-hoc logging.
 
 ### Testing
 
-- Use pytest with async fixtures (`pytest-asyncio`) where needed.
-- Group tests by surface (`tests/unit`, `tests/agents`, `tests/mcp`, etc.).
-- Provide descriptive assertions and fixtures instead of duplicating setup logic.
+- Vitest is the default test runner (`pnpm --filter @magsag/<pkg> test`).
+- Group tests per package (`packages/*/src/*.test.ts`).
+- For integration coverage (CLI, runners), add dedicated suites under `packages/cli` or the relevant runner package.
 
 ### Documentation
 
@@ -135,6 +134,7 @@ PR expectations:
 
 ## Update Log
 
+- 2025-11-04: Migrated the contribution workflow to the TypeScript + pnpm toolchain and documented manual doc validation.
 - 2025-11-02: Linked documentation templates and taxonomy usage.
 - 2025-11-01: Rebuilt guide using the unified documentation standard.
 - 2025-10-24: Added structured contribution guidelines and setup notes.

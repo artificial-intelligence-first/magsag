@@ -2,12 +2,13 @@ import tseslint from "typescript-eslint";
 import eslintPluginVitest from "eslint-plugin-vitest";
 
 export default tseslint.config(
-  tseslint.configs.strictTypeChecked,
-  tseslint.configs.stylisticTypeChecked,
+  ...tseslint.configs.strictTypeChecked,
+  ...tseslint.configs.stylisticTypeChecked,
   {
     files: ["**/*.ts"],
     ignores: ["dist", "coverage"],
     languageOptions: {
+      parser: tseslint.parser,
       parserOptions: {
         project: true,
         tsconfigRootDir: import.meta.dirname
@@ -24,6 +25,14 @@ export default tseslint.config(
         {
           ignoreIIFE: true,
           ignoreVoid: true
+        }
+      ],
+      "@typescript-eslint/restrict-template-expressions": [
+        "error",
+        {
+          allowNumber: true,
+          allowBoolean: true,
+          allowNullish: true
         }
       ]
     }

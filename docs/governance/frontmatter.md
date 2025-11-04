@@ -83,21 +83,14 @@ sources:
 
 ## Validation
 
-Automation in `ops/tools/check_docs.py` enforces:
+Automatic validators are temporarily unavailable. Perform manual review for:
 
 - Presence of required fields.
-- Slug pattern compliance.
-- Tag count and casing.
-- Summary length.
-- Date formatting.
+- Slug pattern, tag casing, and controlled vocabulary usage.
+- Summary length (≤160 characters) and descriptive accuracy.
+- `last_updated` / `last_synced` ISO 8601 dates.
 
-Run the validator before pushing:
-
-```bash
-uv run python ops/tools/check_docs.py
-```
-
-Augment checks as needed when adding new metadata fields.
+Log the manual check in delivery notes and notify Workstream E if issues are discovered.
 
 ## Status Lifecycle
 
@@ -118,6 +111,7 @@ Use tags from the controlled vocabulary in `docs/governance/taxonomy.md`. Update
 
 Record frontmatter schema updates here:
 
+- 2025-11-04: Documented manual frontmatter review while TypeScript doc tooling is in-flight.
 - 2025-11-02: Redirected tag guidance to the dedicated taxonomy document.
 - 2025-11-02: Restored `last_synced` and `description` as required fields to align with `ops/tools/check_docs.py`.
 - 2025-11-01: Introduced v1 schema and validation requirements for the MAGSAG repository.

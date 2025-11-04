@@ -1,9 +1,9 @@
 ---
 title: Git Worktree Operations
 slug: worktree-operations
-status: living
-last_updated: '2025-11-02'
-last_synced: '2025-11-02'
+status: deprecated
+last_updated: '2025-11-04'
+last_synced: '2025-11-04'
 tags:
 - workflow
 - tooling
@@ -14,6 +14,8 @@ description: Managed Git worktree automation used to isolate MAGSAG runs and kee
 authors: []
 sources: []
 ---
+
+> **Notice**: Legacy Typer CLI worktree automation; use manual `git worktree` commands until the TypeScript utility ships.
 
 # Git Worktree Operations
 
@@ -43,13 +45,13 @@ Protected bases (`main`, `release/*`) and `--force` removals are guarded by poli
 ## CLI Usage
 
 ```
-uv run magsag wt new <runId> --task <slug> --base <branch|sha> [--detach] [--no-checkout] [--lock] [--lock-reason]
-uv run magsag wt ls [--json]
-uv run magsag wt rm <runId> [--force]
-uv run magsag wt lock <runId> [--reason]
-uv run magsag wt unlock <runId>
-uv run magsag wt gc [--expire <duration>]
-uv run magsag wt repair
+pnpm --filter @magsag/cli exec magsag wt new <runId> --task <slug> --base <branch|sha> [--detach] [--no-checkout] [--lock] [--lock-reason]
+pnpm --filter @magsag/cli exec magsag wt ls [--json]
+pnpm --filter @magsag/cli exec magsag wt rm <runId> [--force]
+pnpm --filter @magsag/cli exec magsag wt lock <runId> [--reason]
+pnpm --filter @magsag/cli exec magsag wt unlock <runId>
+pnpm --filter @magsag/cli exec magsag wt gc [--expire <duration>]
+pnpm --filter @magsag/cli exec magsag wt repair
 ```
 
 The CLI surfaces structured errors for conflicts, dirty trees, or policy violations.

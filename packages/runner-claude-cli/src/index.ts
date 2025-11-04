@@ -5,34 +5,50 @@ import { runSpecSchema } from '@magsag/schema';
 
 const DEFAULT_BINARY = 'claude';
 
-const MESSAGE_ROLES: Array<'assistant' | 'tool' | 'system'> = [
-  'assistant',
-  'tool',
-  'system'
-];
+const MESSAGE_ROLES = ['assistant', 'tool', 'system'] as const;
 
 type RunnerMessageRole = (typeof MESSAGE_ROLES)[number];
 
-type ClaudeStreamEvent = {
+interface ClaudeStreamMessage {
+  role?: RunnerMessageRole;
+  content?: string;
+}
+
+interface ClaudeStreamFile {
+  path: string;
+  patch: string;
+}
+
+interface ClaudeStreamError {
+  message?: string;
+  code?: string;
+  details?: Record<string, unknown>;
+}
+
+interface ClaudeStreamEvent {
   type?: string;
-  message?: { role?: RunnerMessageRole; content?: string };
+  message?: ClaudeStreamMessage;
   content?: string;
   role?: RunnerMessageRole;
-  files?: Array<{ path: string; patch: string }>;
+  files?: ClaudeStreamFile[];
   session_id?: string;
   stats?: Record<string, unknown>;
-  error?: { message?: string; code?: string; details?: Record<string, unknown> };
+  error?: ClaudeStreamError;
+}
+
+const isClaudeStreamEvent = (value: unknown): value is ClaudeStreamEvent =>
+  typeof value === 'object' && value !== null;
+
+const resolveRole = (role?: RunnerMessageRole): RunnerMessageRole => {
+  if (role && MESSAGE_ROLES.includes(role)) {
+    return role;
+  }
+  return 'assistant';
 };
 
 const mapClaudeEvent = (evt: ClaudeStreamEvent, raw: string): RunnerEvent[] => {
-  if (!evt || typeof evt !== 'object') {
-    return [{ type: 'log', data: raw }];
-  }
-
-  const payload = evt.message ?? evt;
-  const role: RunnerMessageRole = MESSAGE_ROLES.includes(payload.role as RunnerMessageRole)
-    ? (payload.role as RunnerMessageRole)
-    : 'assistant';
+  const payload: ClaudeStreamMessage | ClaudeStreamEvent = evt.message ?? evt;
+  const role = resolveRole(payload.role);
 
   switch (evt.type) {
     case 'message':
@@ -136,18 +152,19 @@ export class ClaudeCliRunner implements Runner {
 
     let sawDone = false;
 
-    for await (const line of stream.pipe(split2())) {
-      const text = line.toString();
+    const lineStream = stream.pipe(split2());
+    for await (const chunk of lineStream as AsyncIterable<string | Buffer>) {
+      const text = typeof chunk === 'string' ? chunk : chunk.toString();
       if (!text.trim()) {
         continue;
       }
-      let parsed: ClaudeStreamEvent | undefined;
+      let parsed: unknown;
       try {
-        parsed = JSON.parse(text);
+        parsed = JSON.parse(text) as unknown;
       } catch {
         parsed = undefined;
       }
-      const events: RunnerEvent[] = parsed
+      const events: RunnerEvent[] = isClaudeStreamEvent(parsed)
         ? mapClaudeEvent(parsed, text)
         : [{ type: 'log', data: text }];
       for (const event of events) {

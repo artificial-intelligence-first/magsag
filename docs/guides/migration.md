@@ -1,17 +1,19 @@
 ---
 title: MAGSAG Migration Guide
 slug: guide-migration
-status: living
-last_updated: 2025-11-03
+status: deprecated
+last_updated: 2025-11-04
 tags:
 - migration
 - upgrades
 summary: Steps for adopting the current MAGSAG conventions.
 authors: []
 sources: []
-last_synced: '2025-11-02'
+last_synced: '2025-11-04'
 description: End-to-end checklist for adopting the current MAGSAG conventions.
 ---
+
+> **Notice**: Historical migration notes. Current TypeScript plan lives in docs/development/plans/typescript-full-migration.md.
 
 # MAGSAG Migration Guide
 
@@ -158,13 +160,13 @@ Run these commands to verify your migration:
 uv run python ops/tools/validate_catalog.py
 
 # Check documentation
-uv run python ops/tools/check_docs.py
+# Manual doc validation (tooling pending Workstream E)
 
 # Run tests
-uv run pytest tests/
+pnpm --filter @magsag/cli test
 
 # Test a specific agent
-echo '{"role":"Engineer","level":"Senior"}' | uv run magsag agent run your-agent
+echo '{"role":"Engineer","level":"Senior"}' | pnpm --filter @magsag/cli exec magsag agent run your-agent
 ```
 
 ## Need Help?

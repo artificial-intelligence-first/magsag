@@ -1,8 +1,8 @@
 ---
 title: Agent Development Guide
 slug: guide-agent-development
-status: living
-last_updated: 2025-11-02
+status: deprecated
+last_updated: 2025-11-04
 tags:
 - agents
 - development
@@ -15,10 +15,12 @@ sources:
   title: MAGSAG Agent Playbook
   url: ../../AGENTS.md
   accessed: '2025-11-01'
-last_synced: '2025-11-02'
+last_synced: '2025-11-04'
 description: Operational guidance for building, validating, and shipping agents in
   the MAGSAG repository.
 ---
+
+> **Notice**: Legacy Python workflows; see AGENTS.md and README.md for the TypeScript toolchain.
 
 # Agent Development Guide
 
@@ -33,7 +35,7 @@ For canonical agent design principles, start with `AGENTS.md`. This guide expand
   Install or refresh dependencies with `uv sync`, and include development tools
   when needed via `uv sync --extra dev`.
 - Test the agent orchestration system early:
-  `echo '{"role":"Engineer","level":"Mid"}' | uv run magsag agent run offer-orchestrator-mag`
+  `echo '{"role":"Engineer","level":"Mid"}' | pnpm --filter @magsag/cli exec magsag agent run offer-orchestrator-mag`
   ensures the registry, agent runner, contracts, and skills integrate correctly.
 - Flow Runner integration is optional but recommended when working on runner
   boundaries. Use the automated setup script:
@@ -101,7 +103,7 @@ uv run -m pytest tests/integration/ -v
 
 - **All tests:**
   ```bash
-  uv run -m pytest -q
+  pnpm -r test
   ```
 
 - **With coverage:**
@@ -111,14 +113,14 @@ uv run -m pytest tests/integration/ -v
 
 - **Documentation checks:**
   ```bash
-  uv run python ops/tools/check_docs.py
+  # Manual doc validation (tooling pending Workstream E)
   ```
 
 ### Manual Validation
 
 - Test agent orchestration after changes:
   ```bash
-  echo '{"role":"Engineer","level":"Mid"}' | uv run magsag agent run offer-orchestrator-mag
+  echo '{"role":"Engineer","level":"Mid"}' | pnpm --filter @magsag/cli exec magsag agent run offer-orchestrator-mag
   ```
 
 - Check observability artifacts:
@@ -130,37 +132,37 @@ uv run -m pytest tests/integration/ -v
 - When Flow Runner is installed:
   ```bash
   # List available flow commands
-  uv run magsag flow available
+  pnpm --filter @magsag/cli exec magsag flow available
 
   # Validate flow definition
-  uv run magsag flow validate <flow.yaml> [--schema <schema-path>]
+  pnpm --filter @magsag/cli exec magsag flow validate <flow.yaml> [--schema <schema-path>]
 
   # Execute flow (with optional dry-run, step selection, or resume)
-  uv run magsag flow run <flow.yaml> [--dry-run] [--only <step>] [--continue-from <step>]
+  pnpm --filter @magsag/cli exec magsag flow run <flow.yaml> [--dry-run] [--only <step>] [--continue-from <step>]
 
   # Summarize flow execution results
-  uv run magsag flow summarize [--base .runs] [--output <path>]
+  pnpm --filter @magsag/cli exec magsag flow summarize [--base .runs] [--output <path>]
 
   # Apply governance policy to flow summary
-  uv run magsag flow gate <summary.json> --policy catalog/policies/flow_governance.yaml
+  pnpm --filter @magsag/cli exec magsag flow gate <summary.json> --policy catalog/policies/flow_governance.yaml
   ```
 
 - Data management and observability:
   ```bash
   # Initialize storage backend (SQLite or PostgreSQL)
-  uv run magsag data init [--backend sqlite|postgres] [--db-path .magsag/storage.db] [--fts/--no-fts]
+  pnpm --filter @magsag/cli exec magsag data init [--backend sqlite|postgres] [--db-path .magsag/storage.db] [--fts/--no-fts]
 
   # Query run data with filters
-  uv run magsag data query [--run-id <id>] [--agent <slug>] [--status <status>] [--limit 10]
+  pnpm --filter @magsag/cli exec magsag data query [--run-id <id>] [--agent <slug>] [--status <status>] [--limit 10]
 
   # Full-text search across run data (requires FTS5)
-  uv run magsag data search "<query>" [--agent <slug>] [--limit 100]
+  pnpm --filter @magsag/cli exec magsag data search "<query>" [--agent <slug>] [--limit 100]
 
   # Vacuum old run data (with dry-run preview)
-  uv run magsag data vacuum [--hot-days 7] [--max-disk <mb>] [--dry-run]
+  pnpm --filter @magsag/cli exec magsag data vacuum [--hot-days 7] [--max-disk <mb>] [--dry-run]
 
   # Archive run data to cold storage
-  uv run magsag data archive <s3://bucket/prefix> [--since 7] [--format parquet|ndjson]
+  pnpm --filter @magsag/cli exec magsag data archive <s3://bucket/prefix> [--since 7] [--format parquet|ndjson]
   ```
 
 ## Running Agents via HTTP API
@@ -237,9 +239,9 @@ All tests must pass before a pull request is opened.
   logic or bundled assets change materially.
 
 ## Linting & Code Quality
-- Run `uv run ruff check .` to enforce formatting and linting rules (configured
-  in `pyproject.toml`). Use `uv run ruff check . --fix` for safe autofixes.
-- Enforce typing guarantees with `uv run mypy src tests`.
+- Run `pnpm -r lint` to enforce formatting and linting rules (configured
+  in `pyproject.toml`). Use `pnpm -r lint --fix` for safe autofixes.
+- Enforce typing guarantees with `pnpm -r typecheck`.
 - Maintain observability instrumentation under `src/magsag/observability/` so generated
   summaries expose `runs`, `success_rate`, latency metrics, and MCP statistics.
 - Cost tracking artifacts are persisted under `.runs/costs/` for downstream governance.
@@ -253,7 +255,7 @@ All tests must pass before a pull request is opened.
   touching runners, policies, or observability. Capture expected
   `magsag.cli flow ...` behaviors in the description when applicable.
 - Only open a PR after all required commands succeed locally:
-  `uv run -m pytest -q`, `uv run python tools/check_docs.py`, and the walking
+  `pnpm -r test`, `uv run python tools/check_docs.py`, and the walking
   skeleton CLI checks listed above.
 
 ## MAG/SAG Development Guide

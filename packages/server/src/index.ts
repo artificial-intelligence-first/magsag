@@ -41,8 +41,7 @@ export const createAgentApp = ({ registry, defaultRunner }: AgentServerOptions) 
   const app = new Hono();
 
   app.post('/api/v1/agent/run', async (c) => {
-    const json = await c.req.json();
-    const spec = runSpecSchema.parse(json);
+    const spec = runSpecSchema.parse(await c.req.json<unknown>());
     const runner = ensureRunner(registry, spec, defaultRunner);
 
     return streamSSE(c, async (stream) => {
@@ -63,10 +62,23 @@ export const validateRunnerEvent = (event: RunnerEvent) => runnerEventSchema.par
 
 const isWebSocketOpen = (socket: WebSocket): boolean => socket.readyState === WebSocket.OPEN;
 
+const decodeRawData = (raw: RawData): string => {
+  if (typeof raw === 'string') {
+    return raw;
+  }
+  if (raw instanceof ArrayBuffer) {
+    return Buffer.from(raw).toString('utf8');
+  }
+  if (Array.isArray(raw)) {
+    return Buffer.concat(raw).toString('utf8');
+  }
+  return raw.toString('utf8');
+};
+
 const parseRunSpecMessage = (raw: RawData): RunSpec => {
-  const text = typeof raw === 'string' ? raw : raw.toString();
-  const json = JSON.parse(text);
-  return runSpecSchema.parse(json);
+  const text = decodeRawData(raw);
+  const payload: unknown = JSON.parse(text) as unknown;
+  return runSpecSchema.parse(payload);
 };
 
 const sendRunnerEvent = (socket: WebSocket, event: RunnerEvent) => {

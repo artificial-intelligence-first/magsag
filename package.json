@@ -5,5 +5,19 @@
   "engines": {
     "node": ">=18.18"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "eslint": "8.57.1",
+    "eslint-plugin-vitest": "^0.5.4",
+    "rimraf": "^5.0.5",
+    "tsup": "^8.0.1",
+    "tsx": "^4.7.0",
+    "typescript": "^5.6.3",
+    "typescript-eslint": "7.18.0",
+    "vitest": "1.6.1",
+    "@types/split2": "^4.0.2",
+    "vite-tsconfig-paths": "^4.3.1"
+  },
+  "type": "module"
 }

@@ -1,8 +1,8 @@
 ---
 title: Cost Optimization Guide
 slug: guide-cost-optimization
-status: living
-last_updated: 2025-11-02
+status: deprecated
+last_updated: 2025-11-04
 tags:
 - cost
 - governance
@@ -10,10 +10,12 @@ summary: Strategies for controlling LLM spend through routing, budgeting, and ob
   in MAGSAG.
 authors: []
 sources: []
-last_synced: '2025-11-02'
+last_synced: '2025-11-04'
 description: Strategies for controlling LLM spend through routing, budgeting, and
   observability in MAGSAG.
 ---
+
+> **Notice**: Legacy Python scripts referenced here are deprecated pending the TypeScript observability refresh.
 
 # Cost Optimization Guide
 
@@ -83,7 +85,7 @@ Cost data is captured in multiple observability artifacts:
 .runs/costs.db
 
 # Storage layer (queryable)
-uv run magsag data query --run-id <RUN_ID>
+pnpm --filter @magsag/cli exec magsag data query --run-id <RUN_ID>
 ```
 
 The JSONL ledger and SQLite database are maintained by `magsag.observability.cost_tracker` and initialize automatically on first use.
@@ -94,17 +96,17 @@ The JSONL ledger and SQLite database are maintained by `magsag.observability.cos
 
 ```bash
 # Summarize costs for recent runs
-uv run magsag flow summarize --output summary.json
+pnpm --filter @magsag/cli exec magsag flow summarize --output summary.json
 cat summary.json | jq '.model_stats'
 
 # Query specific run costs
-uv run magsag data query --run-id mag-abc123
+pnpm --filter @magsag/cli exec magsag data query --run-id mag-abc123
 
 # Query runs by agent
-uv run magsag data query --agent my-mag --limit 100
+pnpm --filter @magsag/cli exec magsag data query --agent my-mag --limit 100
 
 # Search for cost-related events
-uv run magsag data search "cost_usd" --limit 50
+pnpm --filter @magsag/cli exec magsag data search "cost_usd" --limit 50
 ```
 
 ### Programmatic Access
@@ -435,7 +437,7 @@ def run(payload: dict, **deps) -> dict:
 
 ```bash
 # Gate on cost thresholds
-uv run magsag flow gate summary.json \
+pnpm --filter @magsag/cli exec magsag flow gate summary.json \
   --policy catalog/policies/cost_governance.yaml
 
 # Fail CI if costs exceed limits
@@ -674,7 +676,7 @@ python ops/scripts/analyze_cost_trends.py --weeks 4
 # Or manually review recent run costs
 for agent in offer-orchestrator-mag compensation-advisor-sag; do
   echo "Agent: $agent"
-  uv run magsag data query --agent "$agent" --limit 100 | \
+  pnpm --filter @magsag/cli exec magsag data query --agent "$agent" --limit 100 | \
     jq -r '.[] | "\(.run_id): \(.total_cost_usd // 0)"'
 done
 ```
@@ -706,10 +708,10 @@ jobs:
       - name: Run test suite
         run: uv run -m pytest
       - name: Generate cost summary
-        run: uv run magsag flow summarize --output summary.json
+        run: pnpm --filter @magsag/cli exec magsag flow summarize --output summary.json
       - name: Check cost governance
         run: |
-          uv run magsag flow gate summary.json \
+          pnpm --filter @magsag/cli exec magsag flow gate summary.json \
             --policy catalog/policies/cost_governance.yaml
       - name: Compare with baseline
         run: |
@@ -728,13 +730,13 @@ jobs:
 
 ```bash
 # Query recent runs to find expensive ones
-uv run magsag data query --limit 100
+pnpm --filter @magsag/cli exec magsag data query --limit 100
 
 # Search for cost metrics
-uv run magsag data search "cost_usd" --limit 100
+pnpm --filter @magsag/cli exec magsag data search "cost_usd" --limit 100
 
 # Analyze specific agent's cost patterns
-uv run magsag data query --agent my-mag --limit 50
+pnpm --filter @magsag/cli exec magsag data query --agent my-mag --limit 50
 
 # Use custom script for detailed analysis
 uv run python ops/scripts/analyze_token_usage.py --agent my-mag
@@ -744,17 +746,17 @@ uv run python ops/scripts/analyze_token_usage.py --agent my-mag
 
 ```bash
 # Review recent spending
-uv run magsag data query --agent my-mag --limit 50
+pnpm --filter @magsag/cli exec magsag data query --agent my-mag --limit 50
 
 # Analyze cost trends in summaries
-uv run magsag flow summarize --output summary.json
+pnpm --filter @magsag/cli exec magsag flow summarize --output summary.json
 cat summary.json | jq '.model_stats'
 
 # Adjust budget limits
 vim catalog/policies/cost_governance.yaml
 
 # Test with dry-run
-uv run magsag flow gate summary.json --dry-run
+pnpm --filter @magsag/cli exec magsag flow gate summary.json --dry-run
 ```
 
 ## Related Documentation
