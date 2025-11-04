@@ -33,14 +33,16 @@ const noopTransport = {} as Transport;
 
 describe('McpClient', () => {
   test('initializes and invokes tools successfully', async () => {
-    const connect = vi.fn<Client['connect']>().mockResolvedValue(undefined);
-    const listTools = vi.fn<Client['listTools']>().mockResolvedValue({ tools: [TOOL_FIXTURE] });
+    const connect: MockedFunction<Client['connect']> = vi.fn().mockResolvedValue(undefined);
+    const listTools: MockedFunction<Client['listTools']> = vi
+      .fn()
+      .mockResolvedValue({ tools: [TOOL_FIXTURE] });
     const callTool: MockedFunction<Client['callTool']> = vi.fn();
     callTool.mockResolvedValue({
       content: [],
       isError: false
     } satisfies Awaited<ReturnType<Client['callTool']>>);
-    const close = vi.fn<Client['close']>().mockResolvedValue(undefined);
+    const close: MockedFunction<Client['close']> = vi.fn().mockResolvedValue(undefined);
 
     const client = new McpClient(
       {
@@ -54,7 +56,7 @@ describe('McpClient', () => {
             listTools,
             callTool,
             close
-          }) satisfies Client,
+          }) as unknown as Client,
         createTransport: () => noopTransport,
         random: () => 0.5
       }
@@ -78,8 +80,10 @@ describe('McpClient', () => {
   });
 
   test('retries failed invocations and honours timeout errors', async () => {
-    const connect = vi.fn<Client['connect']>().mockResolvedValue(undefined);
-    const listTools = vi.fn<Client['listTools']>().mockResolvedValue({ tools: [TOOL_FIXTURE] });
+    const connect: MockedFunction<Client['connect']> = vi.fn().mockResolvedValue(undefined);
+    const listTools: MockedFunction<Client['listTools']> = vi
+      .fn()
+      .mockResolvedValue({ tools: [TOOL_FIXTURE] });
     const timeoutError = new McpError(ErrorCode.RequestTimeout, 'timeout');
     const callTool: MockedFunction<Client['callTool']> = vi.fn();
     callTool
@@ -88,7 +92,7 @@ describe('McpClient', () => {
         content: [],
         isError: false
       } satisfies Awaited<ReturnType<Client['callTool']>>);
-    const close = vi.fn<Client['close']>().mockResolvedValue(undefined);
+    const close: MockedFunction<Client['close']> = vi.fn().mockResolvedValue(undefined);
     const sleep = vi.fn().mockResolvedValue(undefined);
 
     const client = new McpClient(
@@ -104,7 +108,7 @@ describe('McpClient', () => {
             listTools,
             callTool,
             close
-          }) satisfies Client,
+          }) as unknown as Client,
         createTransport: () => noopTransport,
         sleep,
         random: () => 0.5
@@ -118,11 +122,13 @@ describe('McpClient', () => {
   });
 
   test('throws McpTimeoutError after exhausting retries', async () => {
-    const connect = vi.fn<Client['connect']>().mockResolvedValue(undefined);
-    const listTools = vi.fn<Client['listTools']>().mockResolvedValue({ tools: [TOOL_FIXTURE] });
+    const connect: MockedFunction<Client['connect']> = vi.fn().mockResolvedValue(undefined);
+    const listTools: MockedFunction<Client['listTools']> = vi
+      .fn()
+      .mockResolvedValue({ tools: [TOOL_FIXTURE] });
     const timeoutError = new McpError(ErrorCode.RequestTimeout, 'timeout');
-    const callTool = vi.fn().mockRejectedValue(timeoutError);
-    const close = vi.fn().mockResolvedValue(undefined);
+    const callTool: MockedFunction<Client['callTool']> = vi.fn().mockRejectedValue(timeoutError);
+    const close: MockedFunction<Client['close']> = vi.fn().mockResolvedValue(undefined);
     const sleep = vi.fn().mockResolvedValue(undefined);
 
     const client = new McpClient(
@@ -138,7 +144,7 @@ describe('McpClient', () => {
             listTools,
             callTool,
             close
-          }) satisfies Client,
+          }) as unknown as Client,
         createTransport: () => noopTransport,
         sleep,
         random: () => 0.5
@@ -153,11 +159,13 @@ describe('McpClient', () => {
   });
 
   test('opens circuit after repeated failures', async () => {
-    const connect = vi.fn<Client['connect']>().mockResolvedValue(undefined);
-    const listTools = vi.fn<Client['listTools']>().mockResolvedValue({ tools: [TOOL_FIXTURE] });
+    const connect: MockedFunction<Client['connect']> = vi.fn().mockResolvedValue(undefined);
+    const listTools: MockedFunction<Client['listTools']> = vi
+      .fn()
+      .mockResolvedValue({ tools: [TOOL_FIXTURE] });
     const failure = new Error('boom');
-    const callTool = vi.fn().mockRejectedValue(failure);
-    const close = vi.fn().mockResolvedValue(undefined);
+    const callTool: MockedFunction<Client['callTool']> = vi.fn().mockRejectedValue(failure);
+    const close: MockedFunction<Client['close']> = vi.fn().mockResolvedValue(undefined);
     const now = vi.fn().mockReturnValue(1000);
 
     const client = new McpClient(
@@ -179,7 +187,7 @@ describe('McpClient', () => {
             listTools,
             callTool,
             close
-          }) satisfies Client,
+          }) as unknown as Client,
         createTransport: () => noopTransport,
         now,
         random: () => 0.5
