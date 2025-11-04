@@ -5,6 +5,10 @@ export default defineConfig({
   format: ['esm'],
   platform: 'node',
   target: 'node18',
+  external: [
+    'execa',
+    /^@magsag\//
+  ],
   dts: true,
   clean: true,
   sourcemap: false,

@@ -33,16 +33,16 @@ sources: []
 uv sync --extra dev
 
 # 2. Bootstrap bundled presets (Notion, Supabase, GitHub, Obsidian)
-uv run magsag mcp bootstrap
+pnpm --filter @magsag/cli exec magsag mcp bootstrap
 
 # 3. Inspect available providers
-uv run magsag mcp ls
+pnpm --filter @magsag/cli exec magsag mcp ls
 
 # 4. Diagnose connectivity with automatic HTTP → SSE → stdio fallback
-uv run magsag mcp doctor
+pnpm --filter @magsag/cli exec magsag mcp doctor
 ```
 
-Use `uv run magsag mcp bootstrap --force` to refresh `ops/adk/servers/*.yaml` when presets change upstream, then run `uv run magsag mcp sync` to regenerate JSON artefacts.
+Use `pnpm --filter @magsag/cli exec magsag mcp bootstrap --force` to refresh `ops/adk/servers/*.yaml` when presets change upstream, then run `pnpm --filter @magsag/cli exec magsag mcp sync` to regenerate JSON artefacts.
 
 ## Bundled Preset Reference
 
@@ -86,7 +86,7 @@ permissions:
 notes: "Use browser OAuth by default. Reserve PAT + project_ref for CI or headless environments."
 ```
 
-- **OAuth flow**: `uv run magsag mcp login supabase` launches the browser-based flow.  
+- **OAuth flow**: `pnpm --filter @magsag/cli exec magsag mcp login supabase` launches the browser-based flow.  
 - **CI mode**: Set `MAGSAG_MCP_SUPABASE_ACCESS_TOKEN` and `MAGSAG_MCP_SUPABASE_PROJECT_REF` (optional) before invoking MCP clients.  
 - **Read-only guard**: Honour `MAGSAG_MCP_SUPABASE_READONLY` when exposing SQL tooling.
 
@@ -95,7 +95,7 @@ notes: "Use browser OAuth by default. Reserve PAT + project_ref for CI or headle
 ```yaml
 id: github
 version: "1"
-description: "GitHub MCP (remote HTTP; OAuth推奨/PAT可)"
+description: "GitHub MCP (remote HTTP; prefer OAuth and fall back to PAT when required)"
 transport:
   type: http
   url: "https://api.githubcopilot.com/mcp/"
