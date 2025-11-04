@@ -1,9 +1,37 @@
 {
   "name": "magsag-monorepo",
   "private": true,
+  "type": "module",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=18.18"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:unit": "vitest --run --project unit",
+    "test:integration": "vitest --run --project integration",
+    "test:cli": "vitest --run --project cli",
+    "test:e2e": "vitest --run --project e2e",
+    "ci:lint": "pnpm --filter @magsag/shared-logging lint",
+    "ci:typecheck": "pnpm --filter @magsag/shared-logging typecheck",
+    "ci:build": "pnpm --filter @magsag/shared-logging build",
+    "ci:test": "vitest --run",
+    "ci:e2e": "vitest --run tests/vitest/e2e/runner.e2e.test.ts",
+    "ci:size": "node ops/scripts/check_package_size.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.5",
+    "@types/split2": "^4.2.3",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vitest": "^0.5.4",
+    "tsup": "^8.1.0",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.18.0",
+    "vitest": "^1.6.1"
+  }
 }

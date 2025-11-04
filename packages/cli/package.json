@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "src/index.ts",
   "bin": {
     "magsag": "dist/index.js"
   },
@@ -27,6 +27,7 @@
     "@magsag/runner-claude-cli": "workspace:*",
     "@magsag/runner-codex-cli": "workspace:*",
     "@magsag/runner-openai-agents": "workspace:*",
-    "@oclif/core": "3.27.0"
+    "@oclif/core": "3.27.0",
+    "execa": "^8.0.1"
   }
 }
