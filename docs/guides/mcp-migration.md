@@ -1,8 +1,8 @@
 ---
 title: MCP Client Migration Guide
 slug: guide-mcp-migration
-status: living
-last_updated: '2025-11-02'
+status: deprecated
+last_updated: '2025-11-05'
 last_synced: '2025-11-02'
 tags:
 - mcp
@@ -18,6 +18,8 @@ sources: []
 > **For Humans**: Use this walkthrough to retrofit skills with MCP client support under the Phase 3 baseline where MCP runtime is required.
 >
 > **For AI Agents**: Ensure permissions, contracts, and tests align with migration steps. Document any deviations in SSOT.
+
+> **Notice**: The Python-based instructions below are retained only for historical context. The repository now ships TypeScript MCP tooling via `@magsag/catalog-mcp` and the CLI runner hooks; prefer those surfaces for new work and do not reintroduce `magsag.mcp` modules.
 
 This guide covers migrating existing skills to support MCP (Model Context Protocol) client integration, enabling skills to access external data sources, tools, and services through standardized MCP servers.
 

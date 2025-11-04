@@ -49,7 +49,24 @@ sources:
 
 ### [Unreleased]
 
-_No entries yet._
+#### Added
+- Sandbox policy guard: `scripts/preflight.ts`, `scripts/sandbox-entry.sh`, and `.github/workflows/sandbox-check.yml` enforce the locked container image, network isolation, resource limits, and privilege dropping before `npm run exec`.
+- TypeScript `@magsag/worktree` implementation providing git worktree management, metadata persistence, and an event bus for downstream consumers.
+- Flow summary observability events streamed via `/api/v1/agent/run` (SSE/WebSocket) and exposed through `/api/v1/observability/flow-summary`; CLI now renders `flow-summary` payloads inline.
+- OpenAPI document generation for `@magsag/server` (`dist/openapi.json`) to keep API contracts auditable.
+- Vitest coverage for worktree automation, server SSE/WebSocket flows, and CLI flow summary handling.
+- `@magsag/catalog-mcp` package exposing catalog MCP tool definitions for the TypeScript runtime.
+- Runner registry hook that launches the catalog MCP server for MAG/SAG engines.
+- Vitest e2e scenario that streams a MAG/SAG run end-to-end across the CLI, runner registry, `@magsag/server` SSE endpoint, and WebSocket bridge (including MCP metadata).
+
+#### Changed
+- README, AGENTS, PLANS, and SSOT now document the sandbox preflight/exec workflow and reiterate the shared `pnpm ci:*` validation gates.
+- Consolidated observability/worktree schemas in `@magsag/schema` and extended `RunnerEvent`/`runnerEventSchema` with a `flow-summary` variant consumed across server/CLI.
+- `magsag agent run` now injects MCP metadata into all runners and surfaces runtime/tool logs before execution.
+- TypeScript CI workflow now runs workspace gates plus a package matrix (`cli`, `core`, `server`, `mcp-client`, `mcp-server`, `observability`, `governance`, `catalog-mcp`) and enforces bundle-size budgets.
+
+#### Removed
+- Legacy Python MCP skill implementations and tests from `catalog/skills/**/impl/*.py`.
 
 ### [2.0.0] - 2025-11-04
 

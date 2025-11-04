@@ -2,13 +2,13 @@
 title: Model Context Protocol (MCP) Integration
 slug: guide-mcp-integration
 status: living
-last_updated: 2025-11-03
-last_synced: '2025-11-03'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
   - mcp
   - integration
-summary: How MAGSAG discovers MCP servers, authenticates providers, and observes HTTP-first tool calls with governance safeguards.
-description: End-to-end reference for configuring MCP transports, diagnosing connectivity, enforcing approval policies, and wiring skills to the shared runtime.
+summary: TypeScript-first workflow for discovering MCP servers, authenticating providers, and observing HTTP-first tool calls with governance safeguards.
+description: End-to-end reference for configuring MCP transports, diagnosing connectivity, enforcing approval policies, and wiring skills to the shared TypeScript runtime and CLI.
 authors: []
 sources: []
 ---
@@ -22,31 +22,32 @@ sources: []
 
 - Streamable HTTP is the primary transport for remote MCP servers.  
 - Server-Sent Events (SSE) provides backward compatibility, and stdio (`mcp-remote -y` or `uvx mcp-obsidian`) is the last-resort fallback.  
-- `magsag mcp bootstrap|ls|doctor|login|inspect` covers preset generation, diagnostics, auth, and inspection.  
+- `magsag mcp ls|doctor` covers preset discovery, tool enumeration, and connectivity diagnostics.  Remaining automation (preset sync, auth helpers) will be reintroduced once the TypeScript CLI surface stabilises—track it in Workstream E.
+- Catalog skills now publish MCP tools via `@magsag/catalog-mcp`, and the CLI auto-registers them for MAG/SAG runners.
 - Supabase defaults to browser OAuth; CI runs may supply a PAT plus `project_ref`. GitHub tooling may require an active Copilot license.  
 - Observability records `mcp.session_id`, `mcp.protocol_version`, HTTP status, retries, and policy outcomes for every invocation.
 
 ## Quick Start
 
 ```bash
-# 1. Install dependencies
-uv sync --extra dev
+# 1. Install workspace dependencies
+pnpm install
 
-# 2. Bootstrap bundled presets (Notion, Supabase, GitHub, Obsidian)
-pnpm --filter @magsag/cli exec magsag mcp bootstrap
-
-# 3. Inspect available providers
+# 2. List preset IDs sourced from ops/adk/servers/*.yaml
 pnpm --filter @magsag/cli exec magsag mcp ls
 
-# 4. Diagnose connectivity with automatic HTTP → SSE → stdio fallback
-pnpm --filter @magsag/cli exec magsag mcp doctor
+# 3. Enumerate tools for a specific preset (HTTP → SSE → stdio fallback)
+pnpm --filter @magsag/cli exec magsag mcp ls notion
+
+# 4. Diagnose connectivity and authentication issues
+pnpm --filter @magsag/cli exec magsag mcp doctor supabase --json
 ```
 
-Use `pnpm --filter @magsag/cli exec magsag mcp bootstrap --force` to refresh `ops/adk/servers/*.yaml` when presets change upstream, then run `pnpm --filter @magsag/cli exec magsag mcp sync` to regenerate JSON artefacts.
+Edit `ops/adk/servers/<provider>.yaml` directly when presets change upstream, then capture the update in delivery notes plus `docs/development/plans/typescript-full-migration.md`. A TypeScript-based preset synchroniser will follow in Workstream E.
 
 ## Bundled Preset Reference
 
-Each preset lives in `src/magsag/mcp/presets/servers/` and is copied into `ops/adk/servers/<provider>.yaml` before `magsag mcp sync` emits `.mcp/servers/<provider>.json`.
+Each preset lives in `ops/adk/servers/<provider>.yaml`; the CLI reads these files at runtime and expands `${VAR}` placeholders using `process.env`.
 
 ### Notion (`notion.yaml`)
 
@@ -178,22 +179,39 @@ The runtime blocks execution when a policy requires approval or denial and recor
 
 ## Skill Runtime Integration
 
-`SkillRuntime` lazily starts MCP servers and yields a shared `MCPRuntime` instance to skills. Remote connections rely on:
+The Python `magsag.mcp` runtime has been retired. Until the TypeScript skill runtime lands (Workstream B/D), treat MCP access as an explicit dependency inside each skill.
 
-```python
-from mcp.client.streamable_http import streamablehttp_client
-from mcp.client.session import ClientSession
+For Node/TypeScript skills import `McpClient` directly:
 
-async with streamablehttp_client(url) as (read, write, get_session_id):
-    async with ClientSession(read, write) as session:
-        await session.initialize()
-        tools = await session.list_tools()
+```ts
+import { McpClient } from '@magsag/mcp-client';
+
+const ensureMcp = async () => {
+  const client = new McpClient({
+    serverId: 'supabase',
+    transport: { type: 'http', url: process.env.SUPABASE_MCP_URL! }
+  });
+  await client.initialize();
+  return client;
+};
+
+export const run = async (payload: unknown) => {
+  const client = await ensureMcp();
+  try {
+    const result = await client.invokeTool('sql.readonly', {
+      statement: 'select now()'
+    });
+    if (result.isError) {
+      throw new Error(result.content.at(0)?.text ?? 'MCP call failed');
+    }
+    return result.content;
+  } finally {
+    await client.close();
+  }
+};
 ```
 
-- SSE fallback uses `mcp.client.sse.sse_client`.  
-- stdio fallback wraps `npx mcp-remote -y` or `uvx mcp-obsidian`. The `-y` flag suppresses interactive npm prompts for unattended runs.
-
-Skills are responsible for calling `SkillBase.requires_mcp(mcp, "<server>")`; failures raise explicit `SkillMCPError` exceptions rather than silently returning defaults.
+Skills must fail loudly when MCP credentials or transports are missing—do not silently downgrade to local fallbacks. Catalog metadata should declare `permissions: ["mcp:<server>"]` so governance policies can block execution when approvals are outstanding.
 
 ## Catalog & Documentation Expectations
 
@@ -204,10 +222,11 @@ Skills are responsible for calling `SkillBase.requires_mcp(mcp, "<server>")`; fa
 
 ## Additional Servers
 
-Local reference servers (filesystem, git, memory, fetch, pg-readonly) remain available for specialised workflows. Their maintenance guidelines live in `docs/guides/mcp-server.md` and `.mcp/README.md`; update those surfaces when changing local server behaviour.
+Local reference servers (filesystem, git, memory, fetch, pg-readonly) remain available for specialised workflows. Their maintenance guidelines live in `docs/guides/mcp-server.md`; update that surface (and `docs/mcp.md`) when changing server behaviour.
 
 ## Update Log
 
+- **2025-11-04**: Replaced Python workflows with the TypeScript CLI (`mcp ls/doctor`), updated preset guidance, and documented interim skill integration patterns.  
 - **2025-11-03**: Reframed guide around HTTP-first presets, Typer CLI workflow, Supabase/GitHub authentication strategy, and observability requirements.  
 - **2025-11-02**: Refreshed metadata and aligned tags with the documentation taxonomy.  
 - **2025-10-29**: Documented implementation status and migration preview.  

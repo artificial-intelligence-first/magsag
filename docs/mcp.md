@@ -2,566 +2,202 @@
 title: Remote MCP Client
 slug: remote-mcp-client
 status: living
-last_updated: '2025-11-02'
-last_synced: '2025-11-02'
+last_updated: '2025-11-05'
+last_synced: '2025-11-04'
 tags:
-- mcp
-- integration
-summary: Async client architecture for integrating external Model Context Protocol
-  servers with resilience and governance.
-description: Async client architecture for integrating external Model Context Protocol
-  servers with resilience and governance.
+  - mcp
+  - integration
+summary: TypeScript-first MCP client guidance, fallback diagnostics, and CLI workflows for MAGSAG 2.0.
+description: End-to-end reference for configuring MCP transports, invoking servers with the new TypeScript client, running the CLI doctor tooling, and wiring the shared TypeScript runtime.
 authors: []
 sources: []
 ---
 
 # Remote MCP Client
 
-> **For Humans**: Configure and extend MCP integrations using the architecture and usage examples below.
+> **For Humans**: Use this document when provisioning MCP presets, validating connectivity, or embedding the TypeScript runtime inside new surfaces.
 >
-> **For AI Agents**: Apply these patterns when updating MCP transports or decorators. Keep feature flags and permissions in sync with catalog policies.
+> **For AI Agents**: Prefer the `@magsag/mcp-client` and CLI utilities described here. Do not resurrect the legacy Python runtime.
 
-## Overview
+## Highlights
 
-The Remote MCP (Model Context Protocol) Client provides robust, resilient integration with external MCP servers. It supports multiple transport protocols, automatic retry logic with exponential backoff, circuit breaker patterns for fault tolerance, and comprehensive permission management.
+- TypeScript `@magsag/mcp-client` delivers HTTP → SSE → stdio fallback, retries, and circuit breaking by default.
+- `magsag mcp ls` and `magsag mcp doctor` replace the Python CLI scripts for enumerating tools and diagnosing connectivity.
+- `@magsag/mcp-server` exposes a runtime helper for shipping MCP servers with minimal boilerplate.
+- `@magsag/catalog-mcp` publishes catalog tool definitions that the CLI auto-registers for MAG/SAG runners.
+- Presets live under `ops/adk/servers/*.yaml`; they are loaded by the CLI with environment interpolation.
 
-## Architecture
-
-### Core Components
-
-1. **AsyncMCPClient**: Async client for invoking remote MCP servers
-2. **CircuitBreaker**: Fault tolerance mechanism to prevent cascading failures
-3. **RetryConfig**: Exponential backoff with jitter configuration
-4. **TransportType**: Support for stdio, WebSocket, and HTTP transports
-5. **MCP Decorators**: Convenient decorators for tool integration
-
-### Transport Protocols
-
-- **stdio**: JSON-RPC over stdin/stdout (subprocess communication)
-- **websocket**: JSON-RPC over WebSocket (persistent connections)
-- **http**: JSON-RPC over HTTP (stateless requests)
-
-## Feature Flag
-
-Remote MCP client is controlled by the `MAGSAG_MCP_ENABLED` feature flag:
+## Quick Start
 
 ```bash
-# Enable remote MCP client
-export MAGSAG_MCP_ENABLED=true
+# 1. Ensure dependencies are installed
+pnpm install
 
-# Disable remote MCP client (default)
-export MAGSAG_MCP_ENABLED=false
+# 2. Inspect available presets (reads ops/adk/servers/*.yaml)
+pnpm --filter @magsag/cli exec magsag mcp ls
+
+# 3. Enumerate tools exposed by a preset with fallback transport resolution
+pnpm --filter @magsag/cli exec magsag mcp ls notion
+
+# 4. Diagnose connectivity issues and auth gaps
+pnpm --filter @magsag/cli exec magsag mcp doctor supabase --json
 ```
 
-## Usage
+The CLI commands automatically expand shell-style `${VAR}` placeholders defined inside each preset and attempt transports in the declared order. Results are printable as JSON for automation, or as human-readable text for local debugging.
 
-### Basic Client Usage
+## Runner Integration
 
-```python
-from magsag.mcp.client import AsyncMCPClient, TransportType
+- `magsag agent run` now launches the catalog MCP runtime automatically and injects `MAGSAG_MCP_*` environment variables into MAG/SAG engines.
+- Tool definitions are provided by `@magsag/catalog-mcp`; update the package when catalog skills evolve.
+- Runtime start/stop events are logged ahead of runner output so operators can confirm tool availability.
 
-# Create an HTTP-based MCP client
-client = AsyncMCPClient(
-    server_name="github-api",
-    transport=TransportType.HTTP,
-    config={
-        "url": "https://mcp.github.com",
-        "headers": {"Authorization": "Bearer ..."}
-    }
-)
+## CLI Reference
 
-# Initialize the client
-await client.initialize()
+### `mcp ls`
 
-# Invoke a tool
-result = await client.invoke(
-    tool="create_issue",
-    args={
-        "repo": "org/repo",
-        "title": "Bug report",
-        "body": "Description of the bug"
-    },
-    timeout=30.0
-)
-
-# Clean up
-await client.close()
-```
-
-### Retry Configuration
-
-```python
-from magsag.mcp.client import RetryConfig
-
-# Custom retry configuration
-retry_config = RetryConfig(
-    max_attempts=5,          # Retry up to 5 times
-    base_delay_ms=200,       # Start with 200ms delay
-    max_delay_ms=30000,      # Cap at 30 seconds
-    exponential_base=2.0,    # Double delay each retry
-    jitter=True              # Add randomness to prevent thundering herd
-)
-
-client = AsyncMCPClient(
-    server_name="stripe-api",
-    transport=TransportType.HTTP,
-    config={"url": "https://mcp.stripe.com"},
-    retry_config=retry_config
-)
-```
-
-### Circuit Breaker
-
-```python
-from magsag.mcp.client import CircuitBreakerConfig, CircuitState
-
-# Configure circuit breaker
-circuit_config = CircuitBreakerConfig(
-    failure_threshold=5,      # Open after 5 failures
-    success_threshold=2,      # Close after 2 successes in half-open
-    timeout_seconds=60,       # Wait 60s before half-open
-    half_open_max_calls=1     # Allow 1 test call in half-open
-)
-
-client = AsyncMCPClient(
-    server_name="external-api",
-    transport=TransportType.HTTP,
-    config={"url": "https://api.example.com"},
-    circuit_breaker_config=circuit_config
-)
-
-# Check circuit state
-if client.get_circuit_state() == CircuitState.OPEN:
-    print("Circuit is open, service is down")
-
-# Manually reset circuit (admin operation)
-client.reset_circuit()
-```
-
-### Using Decorators
-
-#### @mcp_tool Decorator
-
-```python
-from magsag.mcp.decorators import mcp_tool
-
-@mcp_tool(
-    server="github",
-    tool="create_issue",
-    auth={"token": "env://GITHUB_TOKEN"},  # Resolve from environment
-    timeout=30.0,
-    require_approval=True
-)
-async def create_github_issue(repo: str, title: str, body: str) -> dict:
-    """Create a GitHub issue (implementation replaced by decorator)."""
-    pass
-
-# Usage
-issue = await create_github_issue(
-    repo="org/repo",
-    title="Bug Report",
-    body="Description..."
-)
-```
-
-#### @mcp_authenticated Decorator
-
-```python
-from magsag.mcp.decorators import mcp_authenticated
-
-@mcp_authenticated(auth_env_var="API_KEY", auth_type="bearer")
-async def call_protected_api(auth_header: str) -> dict:
-    """Call API with authentication injected."""
-    # auth_header is automatically injected from environment
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            "https://api.example.com/data",
-            headers={"Authorization": auth_header}
-        )
-        return response.json()
-```
-
-#### @mcp_cached Decorator
-
-```python
-from magsag.mcp.decorators import mcp_cached, mcp_tool
-
-@mcp_cached(ttl_seconds=300)  # Cache for 5 minutes
-@mcp_tool(server="github", tool="get_user")
-async def get_github_user(username: str) -> dict:
-    """Get GitHub user (cached for 5 minutes)."""
-    pass
-
-# First call hits the API
-user1 = await get_github_user("octocat")
-
-# Second call within 5 minutes uses cache
-user2 = await get_github_user("octocat")  # Instant, no API call
-```
-
-## Permission Management
-
-### Permission Levels
-
-MCP tools are governed by three permission levels:
-
-- **ALWAYS**: Tool is always allowed without approval
-- **REQUIRE_APPROVAL**: Tool requires human approval before execution
-- **NEVER**: Tool is never allowed to execute
-
-### Configuration
-
-Permissions are defined in `catalog/policies/mcp_permissions.yaml`:
-
-```yaml
-# Default: require approval for all MCP operations
-default_permission: REQUIRE_APPROVAL
-
-# Tool-specific permissions
-tools:
-  "github.get_user":
-    permission: ALWAYS
-    description: "Read-only operation"
-
-  "github.create_issue":
-    permission: REQUIRE_APPROVAL
-    description: "Write operation"
-
-  "github.delete_repo":
-    permission: NEVER
-    description: "Destructive operation"
-```
-
-### Environment-Specific Overrides
-
-```yaml
-environments:
-  development:
-    default_permission: ALWAYS  # Relaxed for dev
-    overrides:
-      "github.delete_repo": NEVER
-
-  production:
-    default_permission: REQUIRE_APPROVAL  # Strict for prod
-    overrides:
-      "github.get_user": ALWAYS
-```
-
-### Context-Based Rules
-
-```yaml
-context_rules:
-  - name: "safe_repo_operations"
-    condition:
-      tool_pattern: "github.*"
-      args_match:
-        repo: "*/test-*"  # Test repos only
-    permission: ALWAYS
-
-  - name: "small_charges"
-    condition:
-      tool: "stripe.charge"
-      args_match:
-        amount_usd:
-          less_than: 10.0
-    permission: ALWAYS
-```
-
-## Authentication
-
-### Environment Variables
+Lists presets when no `server` argument is provided. When a server ID is supplied, it connects using HTTP → SSE → stdio fallbacks until a transport succeeds.
 
 ```bash
-# Store credentials in environment
-export GITHUB_TOKEN="ghp_xxxxxxxxxxxx"
-export STRIPE_API_KEY="sk_test_xxxxxxxx"
-export DATABASE_URL="postgresql://user:pass@localhost/db"
+pnpm --filter @magsag/cli exec magsag mcp ls github
 ```
 
-### Secrets Resolution
-
-```python
-from magsag.mcp.decorators import resolve_secret
-
-# Resolve from environment
-token = resolve_secret("env://GITHUB_TOKEN")
-
-# Resolve from secrets manager (placeholder for future)
-# secret = resolve_secret("secrets://path/to/secret")
-
-# Plain value (no resolution)
-value = resolve_secret("plain_text")
-```
-
-## Resilience Patterns
-
-### Exponential Backoff with Jitter
-
-Prevents thundering herd problem when services recover:
+Sample output:
 
 ```
-Attempt 1: 100ms
-Attempt 2: 200ms ± 25% jitter
-Attempt 3: 400ms ± 25% jitter
-Attempt 4: 800ms ± 25% jitter
-...
+Tools exposed by 'github' via HTTP https://api.githubcopilot.com/mcp/:
+  • github.get_repo — Retrieve repository metadata
+  • github.create_issue — Open an issue (approval gated)
 ```
 
-### Circuit Breaker States
+Add `--json` for machine-readable output.
 
-```
-CLOSED (normal) ──[5 failures]──> OPEN (failing)
-                                      │
-                                      │ [60s timeout]
-                                      ↓
-                             HALF_OPEN (testing)
-                                   ╱    ╲
-                   [2 successes] ╱        ╲ [1 failure]
-                               ╱            ╲
-                          CLOSED            OPEN
-```
+### `mcp doctor`
 
-### Timeout Handling
-
-```python
-try:
-    result = await client.invoke(
-        tool="slow_operation",
-        args={},
-        timeout=5.0  # 5 second timeout
-    )
-except MCPTimeoutError:
-    logger.error("Operation timed out")
-    # Handle timeout gracefully
-```
-
-## Error Handling
-
-### Exception Hierarchy
-
-```
-MCPClientError (base)
-├── MCPTimeoutError
-├── MCPCircuitOpenError
-└── MCPTransportError
-```
-
-### Example
-
-```python
-from magsag.mcp.client import (
-    MCPClientError,
-    MCPTimeoutError,
-    MCPCircuitOpenError,
-)
-
-try:
-    result = await client.invoke("tool", {})
-except MCPTimeoutError:
-    # Handle timeout
-    logger.error("Request timed out")
-except MCPCircuitOpenError:
-    # Handle circuit open
-    logger.error("Service is down, circuit breaker is open")
-except MCPClientError as e:
-    # Handle other MCP errors
-    logger.error(f"MCP error: {e}")
-```
-
-## Observability
-
-### Logging
-
-```python
-import logging
-
-# Enable debug logging for MCP client
-logging.getLogger("magsag.mcp.client").setLevel(logging.DEBUG)
-
-# Logs:
-# - Client initialization
-# - Tool invocations (with timing)
-# - Retry attempts
-# - Circuit state transitions
-# - Errors and timeouts
-```
-
-### Metrics
-
-MCP operations are automatically tracked:
-
-```python
-# Logged to unified storage
-await storage.append_event(
-    run_id=run_id,
-    agent_slug=agent_slug,
-    event_type="mcp.call",
-    payload={
-        "server": "github",
-        "tool": "create_issue",
-        "duration_ms": 234,
-        "success": True
-    }
-)
-```
-
-## Best Practices
-
-### 1. Use Appropriate Timeouts
-
-```python
-# Short timeout for fast operations
-result = await client.invoke("get_user", {}, timeout=5.0)
-
-# Longer timeout for slow operations
-result = await client.invoke("generate_report", {}, timeout=60.0)
-```
-
-### 2. Handle Circuit Breaker States
-
-```python
-if client.get_circuit_state() == CircuitState.OPEN:
-    # Provide fallback or skip operation
-    return cached_result
-
-result = await client.invoke("tool", {})
-```
-
-### 3. Configure Retry Appropriately
-
-```python
-# Idempotent operations: more retries OK
-idempotent_retry = RetryConfig(max_attempts=5)
-
-# Non-idempotent operations: fewer retries
-write_retry = RetryConfig(max_attempts=2)
-```
-
-### 4. Cache Read Operations
-
-```python
-@mcp_cached(ttl_seconds=300)
-@mcp_tool(server="github", tool="get_repo")
-async def get_repo(name: str) -> dict:
-    pass
-```
-
-### 5. Use Context-Based Permissions
-
-```python
-# In mcp_permissions.yaml
-context_rules:
-  - name: "safe_operations"
-    condition:
-      tool_pattern: "*.get_*"  # All read operations
-    permission: ALWAYS
-```
-
-## Configuration Examples
-
-### GitHub MCP Server
-
-```python
-github_client = AsyncMCPClient(
-    server_name="github",
-    transport=TransportType.HTTP,
-    config={
-        "url": "https://api.github.com",
-        "headers": {
-            "Authorization": f"Bearer {os.getenv('GITHUB_TOKEN')}",
-            "Accept": "application/vnd.github+json"
-        }
-    },
-    retry_config=RetryConfig(max_attempts=3),
-    circuit_breaker_config=CircuitBreakerConfig(
-        failure_threshold=5,
-        timeout_seconds=60
-    )
-)
-```
-
-### PostgreSQL MCP Server (stdio)
-
-```python
-postgres_client = AsyncMCPClient(
-    server_name="postgres",
-    transport=TransportType.STDIO,
-    config={
-        "command": ["mcp-server-postgres"],
-        "env": {
-            "DATABASE_URL": os.getenv("DATABASE_URL")
-        }
-    }
-)
-```
-
-### Stripe MCP Server
-
-```python
-stripe_client = AsyncMCPClient(
-    server_name="stripe",
-    transport=TransportType.HTTP,
-    config={
-        "url": "https://api.stripe.com/v1",
-        "headers": {
-            "Authorization": f"Bearer {os.getenv('STRIPE_API_KEY')}"
-        }
-    },
-    retry_config=RetryConfig(
-        max_attempts=2,  # Financial operations: fewer retries
-        base_delay_ms=500
-    )
-)
-```
-
-## Troubleshooting
-
-### Circuit Breaker Stuck Open
-
-```python
-# Check circuit state
-print(client.get_circuit_state())
-
-# Manually reset (admin operation)
-client.reset_circuit()
-```
-
-### Timeout Issues
-
-```python
-# Increase timeout
-result = await client.invoke("slow_tool", {}, timeout=120.0)
-
-# Or reduce retry attempts
-retry_config = RetryConfig(max_attempts=1)
-```
-
-### Authentication Errors
+Diagnoses connectivity, mapping common failure modes to `reachable`, `needs-auth`, `auth-failed`, or `unreachable`.
 
 ```bash
-# Verify environment variables are set
-env | grep TOKEN
-
-# Test secret resolution
-from magsag.mcp.decorators import resolve_secret
-print(resolve_secret("env://GITHUB_TOKEN"))
+pnpm --filter @magsag/cli exec magsag mcp doctor notion
 ```
 
-## Future Enhancements
+Example:
 
-- **WebSocket Support**: Full implementation of WebSocket transport
-- **Streaming**: Support for streaming responses
-- **Connection Pooling**: Reuse connections for HTTP transport
-- **Adaptive Timeouts**: Automatically adjust timeouts based on observed latency
-- **Distributed Circuit Breaker**: Share circuit state across instances
+```
+Server 'notion': REACHABLE via HTTP https://mcp.notion.com/mcp
+```
 
-## References
+If the primary transport fails, subsequent entries (e.g. SSE or stdio) are attempted automatically. Add `--json` to embed the results in scripts or CI logs.
 
-- [MCP Specification](https://modelcontextprotocol.io)
-- `catalog/policies/mcp_permissions.yaml` – Default permission matrix.
-- [Approval-as-a-Policy](./approval.md)
-- [MCP Integration Guide](./guides/mcp-integration.md)
+## TypeScript Client Usage
 
-## Update Log
+Use the `McpClient` directly when embedding MCP interactions in services or custom tooling.
 
-- 2025-11-01: Added frontmatter, refreshed references, and aligned with the unified documentation standard.
+```ts
+import { McpClient, McpClientError } from '@magsag/mcp-client';
+
+const client = new McpClient({
+  serverId: 'notion',
+  transport: {
+    type: 'http',
+    url: 'https://mcp.notion.com/mcp'
+  },
+  requestTimeoutMs: 15_000
+});
+
+await client.initialize();
+const tools = await client.listTools({ refresh: true });
+
+for (const tool of tools.tools) {
+  console.log(`${tool.name}: ${tool.description ?? '—'}`);
+}
+
+type EchoArgs = { text: string };
+const result = await client.invokeTool('echo', { text: 'hello world' } satisfies EchoArgs);
+
+if (result.isError) {
+  throw new McpClientError('Echo tool failed');
+}
+
+await client.close();
+```
+
+The client automatically applies exponential backoff with jitter, circuit-breaking, and transport-specific error handling. Inspect `client.getCircuitState()` after retries when surfacing status in observability dashboards.
+
+## Runtime Helper (`@magsag/mcp-server`)
+
+Bootstrap servers with the provided runtime helper instead of stitching together transports manually.
+
+```ts
+import { createMcpServerRuntime } from '@magsag/mcp-server';
+import { z } from 'zod';
+
+const runtime = createMcpServerRuntime({
+  implementation: {
+    name: 'magsag-sample-server',
+    version: '1.0.0'
+  },
+  http: {
+    host: '127.0.0.1',
+    port: 3210,
+    path: '/mcp'
+  }
+});
+
+runtime.registerTool({
+  name: 'echo',
+  description: 'Echo back the provided text',
+  inputSchema: {
+    text: z.string()
+  },
+  handler: async (args) => ({
+    content: [
+      {
+        type: 'text',
+        text: String(args.text)
+      }
+    ],
+    isError: false
+  })
+});
+
+await runtime.start();
+console.log('MCP runtime listening on', runtime.getHttpAddress()?.url.href);
+```
+
+The runtime assigns a unique HTTP session per client, sends `Mcp-Session-Id` headers automatically, and honours DNS re-binding guards when configured through the preset. Registering additional tools after startup updates active sessions and triggers `tools/list_changed` notifications automatically.
+
+## Presets & Environment Expansion
+
+Each preset in `ops/adk/servers/*.yaml` contains the primary transport plus ordered fallbacks:
+
+```yaml
+id: supabase
+transport:
+  type: http
+  url: "https://mcp.supabase.com/mcp"
+fallback:
+  - type: sse
+    url: "https://mcp.supabase.com/sse"
+  - type: stdio
+    command: "npx"
+    args: ["-y", "mcp-remote", "https://mcp.supabase.com/mcp"]
+```
+
+Strings like `${SUPABASE_TOKEN}` follow shell-style expansion. `mcp doctor` expands them using `process.env` so CI pipelines can inject credentials prior to diagnosis. Keep presets under source control and note changes in `docs/development/plans/typescript-full-migration.md`.
+
+## Governance & Observability
+
+- Gate write-capable tools using `catalog/policies/mcp_permissions.yaml`. The CLI reflects policy annotations when listing tools.
+- Log doctor runs inside delivery notes to capture skipped transports or manual interventions.
+- Emit MCP call metrics via `@magsag/observability` by forwarding `McpClient` events; the runtime exposes call counts and error rates through the session close hook.
+
+## Migration Notes
+
+- The legacy Python modules (`magsag.mcp.*`) were removed. Replace any remaining imports with the TypeScript client or CLI.
+- Skills still implemented in Python should guard against missing MCP runtimes and surface actionable errors until the TypeScript skill runtime lands.
+- Document fallback or authentication exceptions inside `docs/development/plans/typescript-full-migration.md` under *Surprises & Discoveries*.
+
+## Further Reading
+
+- `docs/guides/mcp-integration.md` — Operational playbook for presets, approval policies, and observability wiring.
+- `docs/guides/mcp-server.md` — Detailed walkthrough for authoring new MCP servers with the TypeScript runtime.
+- `catalog/policies/mcp_permissions.yaml` — Canonical permissions matrix.

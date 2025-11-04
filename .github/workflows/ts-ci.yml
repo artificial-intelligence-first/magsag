@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  quality:
+  workspace:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,26 +23,75 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint (shared logging)
+      - name: Workspace lint
         run: pnpm ci:lint
 
-      - name: Typecheck (shared logging)
+      - name: Workspace typecheck
         run: pnpm ci:typecheck
 
-      - name: Build (shared logging)
+      - name: Workspace build
         run: pnpm ci:build
 
       - name: Vitest suite
         run: pnpm ci:test
 
-      - name: Vitest e2e subset
+      - name: Vitest e2e project
         run: pnpm ci:e2e
 
       - name: Bundle size guard
         run: pnpm ci:size
+
+  package-matrix:
+    needs: workspace
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - name: cli
+            filter: '@magsag/cli'
+          - name: core
+            filter: '@magsag/core'
+          - name: server
+            filter: '@magsag/server'
+          - name: mcp-client
+            filter: '@magsag/mcp-client'
+          - name: mcp-server
+            filter: '@magsag/mcp-server'
+          - name: observability
+            filter: '@magsag/observability'
+          - name: governance
+            filter: '@magsag/governance'
+          - name: catalog-mcp
+            filter: '@magsag/catalog-mcp'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint ${{ matrix.package.name }}
+        run: pnpm --filter ${{ matrix.package.filter }} lint
+
+      - name: Typecheck ${{ matrix.package.name }}
+        run: pnpm --filter ${{ matrix.package.filter }} typecheck
+
+      - name: Test ${{ matrix.package.name }}
+        run: pnpm --filter ${{ matrix.package.filter }} test

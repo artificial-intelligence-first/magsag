@@ -34,9 +34,10 @@ sources:
 - Install Node.js 18.18+ (22.x LTS recommended) and [pnpm 9](https://pnpm.io/installation); bootstrap each worktree with `pnpm install`.
 - Build packages on demand (for example `pnpm --filter @magsag/cli build`) and execute the CLI via `pnpm --filter @magsag/cli exec node dist/index.js --help`.
 - Place new TypeScript modules under `packages/`; demo surfaces stay in `apps/`; catalog assets remain in `catalog/`; documentation continues under `docs/`.
-- Update MCP YAML in `ops/adk/servers/` and regenerate artefacts with the forthcoming TypeScript sync utility. Until it ships, run the Python fallback (`uv run magsag mcp sync`) and note it in delivery updates.
+- Update MCP YAML in `ops/adk/servers/` and document the manual JSON regeneration path until the TypeScript sync utility ships (Python `magsag mcp sync` was retired).
 - Start demo services with `pnpm --filter @magsag/demo-cli start` or `pnpm --filter @magsag/demo-api start` after building.
 - Configure secrets through neutral `ENGINE_*` variables or provider-specific keys. Never commit credentials or CLI configuration files.
+- Launch sandboxed executions via `npm run preflight && npm run exec`; `scripts/sandbox-entry.sh` must continue to drop privileges with `setpriv --no-new-privs` (UID/GID 65532). CI mirrors the policy in `.github/workflows/sandbox-check.yml`.
 
 ## Sandbox Execution
 
@@ -63,14 +64,18 @@ sources:
 Execute these checks before pushing or requesting review:
 
 ```bash
-pnpm -r lint
-pnpm -r typecheck
-pnpm -r test
+pnpm ci:lint
+pnpm ci:typecheck
+pnpm ci:build
+pnpm ci:test
+pnpm ci:e2e
+pnpm ci:size
 pnpm --filter docs lint || uv run python ops/tools/check_docs.py
 ```
 
-- Narrow scope with `pnpm --filter <pkg> lint|typecheck|test` when needed.
-- Run targeted integration suites (e.g. Flow Runner, observability) once the corresponding TypeScript packages land.
+- Narrow scope with `pnpm --filter <pkg> <script>` when iterating locally; the shared `ci:*` scripts fan out across every workspace package.
+- Keep the e2e project (`pnpm ci:e2e`) green—the CLI ↔ runner ↔ server SSE/WebSocket scenario is now part of gating.
+- Update bundle-size budgets in `ops/scripts/check_package_size.mjs` alongside intentional growth.
 - Capture command results in the delivery note or PR body. State any skipped gates and the reason.
 
 ## Documentation Workflow
@@ -110,7 +115,7 @@ pnpm --filter docs lint || uv run python ops/tools/check_docs.py
 
 1. Create an isolated worktree (record the `git worktree` command until the TypeScript replacement for `magsag wt` ships).
 2. Implement changes with complete typing and focused tests; rely on pnpm scripts for build/test loops.
-3. Run `pnpm -r lint typecheck test` (or filtered equivalents) for packages you touched and capture results.
+3. Run the shared gates (`pnpm ci:lint ci:typecheck ci:build ci:test ci:e2e ci:size`) plus `pnpm --filter docs lint` (or filtered equivalents) and capture results.
 4. Stage related files only (`git add -u`); avoid drive-by edits.
 5. Update `CHANGELOG.md` under `## [Unreleased]` for user-visible changes.
 6. Draft concise commits using imperative Conventional Commit-friendly summaries (≤72 chars).
@@ -139,7 +144,8 @@ pnpm --filter docs lint || uv run python ops/tools/check_docs.py
 
 ## Update Log
 
-- 2025-11-06: Documented codex-universal sandbox execution workflow and policy expectations.
+- 2025-11-06: Documented codex-universal sandbox execution workflow, policy expectations, and preflight/exec validation steps mirrored in CI.
+- 2025-11-05: Refreshed CI matrices, pnpm `ci:*` gates, and CLI↔runner↔server e2e expectations.
 - 2025-11-04: Added MAG/SAG runtime guidance (subscription-first defaults, session storage, metrics endpoint).
 - 2025-11-03: Documented MCP YAML sources under `ops/adk/servers/` and JSON-only runtime artefacts.
 - 2025-11-02: Linked workflow guides, templates, and taxonomy reference.

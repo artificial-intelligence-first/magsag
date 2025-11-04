@@ -45,27 +45,37 @@ This cheatsheet keeps skill development consistent without forcing you to read p
 
 ## Implementation Notes
 
-- Preferred signature:
-  ```python
-  async def run(payload: dict[str, Any], *, mcp: MCPRuntime | None = None) -> dict[str, Any]:
-      ...
+- Define tools in `packages/catalog-mcp/src/tools/<skill>.ts` and export a factory that returns a `ToolDefinition`.
+  ```ts
+  import { z } from 'zod';
+  import type { ToolDefinition } from '@magsag/mcp-server';
+
+  export const createExampleTool = (): ToolDefinition => ({
+    name: 'skill.example',
+    inputSchema: {
+      query: z.string().min(1)
+    },
+    handler: async (args) => ({
+      isError: false,
+      content: [{ type: 'text', text: JSON.stringify({ query: args.query }) }]
+    })
+  });
   ```
-- Validate inputs explicitly (JSON Schema or manual guards).
-- Handle `mcp is None` gracefully; log a warning and return a deterministic fallback.
-- Keep functions pure and avoid global state. Read configuration from payload or
-  `MAGSAG_` environment variables that are documented elsewhere.
+- Point `entrypoint` in `skill.yaml` to the TypeScript factory (`packages/catalog-mcp/src/tools/<skill>.ts:createExampleTool`).
+- Prefer Zod for validation and keep handlers deterministic; read configuration from payload or documented `MAGSAG_` environment variables.
+- Raise structured errors when prerequisites (e.g., remote MCP servers) are missing.
 
 ## Testing
 
 ```bash
-pnpm --filter @magsag/cli testskills/test_<skill>.py
-pnpm --filter @magsag/cli testmcp/test_skill_mcp_integration.py   # when MCP involved
-uv run mypy catalog/skills/<slug>/code
+pnpm --filter @magsag/catalog-mcp test
+pnpm --filter @magsag/catalog-mcp lint
+pnpm --filter @magsag/catalog-mcp typecheck
 ```
 
 Cover:
 - Success and failure paths.
-- MCP-enabled and MCP-disabled scenarios.
+- MCP-enabled and MCP-disabled scenarios (ensure helpful error messaging when dependencies are missing).
 - Contract compliance (return type matches calling agent expectations).
 
 ## Documentation & Release

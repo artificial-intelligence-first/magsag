@@ -27,7 +27,7 @@ sources: []
 - Place plan files under `docs/development/plans/`.
 - Reference active plans from `docs/architecture/plans.md` and mark status changes immediately.
 - Keep sections concise; link to supporting artefacts instead of duplicating details.
-- Record sandbox validation as `npm run preflight` → `npm run exec` → policy audit notes in every plan touching execution flows.
+- Capture sandbox validation steps (`npm run preflight`, `npm run exec`) and note policy audits for any plan that touches execution flows so the `.github/workflows/sandbox-check.yml` guard stays aligned.
 
 ## Active Plans
 

@@ -61,7 +61,7 @@ sources:
 1. **Identify** the SSOT location for the domain you are changing.
 2. **Draft** changes in the canonical file, applying the style and frontmatter rules.
 3. **Propagate** updates to dependent documents (e.g., README excerpts, guides).
-4. **Validate** with current tooling (run `pnpm -r lint`, `pnpm -r typecheck`, `pnpm --filter docs lint || uv run python ops/tools/check_docs.py`, `npm run preflight`) and log outputs in delivery notes.
+4. **Validate** with the shared gates (`pnpm ci:lint`, `pnpm ci:typecheck`, `pnpm ci:build`, `pnpm ci:test`, `pnpm ci:e2e`, `pnpm ci:size`, `pnpm --filter docs lint || uv run python ops/tools/check_docs.py`) and log outputs in delivery notes. Include `npm run preflight` → `npm run exec` results when execution flows change so the sandbox guard in `.github/workflows/sandbox-check.yml` stays aligned.
 5. **Record** outcomes in the change log or plan update log.
 
 Document skipped steps or deferred updates in delivery notes so follow-up actions remain visible.
@@ -190,7 +190,7 @@ Use this checklist during review to prevent drift and retain SSOT integrity.
 ## Update Log
 
 - 2025-11-06: Added sandbox execution SSOT entries and folded preflight validation into the canonical workflow.
-- 2025-11-05: Updated canonical surfaces for the TypeScript monorepo and aligned validation commands with pnpm workflows.
+- 2025-11-05: Updated canonical surfaces for the TypeScript monorepo, refreshed `pnpm ci:*` validation gates, and documented CLI↔runner↔server coverage.
 - 2025-11-03: Migrated MCP workflow to JSON runtime artefacts with YAML sources under `ops/adk/servers/`.
 - 2025-11-03: Documented external SDK drivers, ADK sync pipeline, and CLI touchpoints.
 - 2025-11-02: Added documentation workflows to the canonical map.
