@@ -1,5 +1,5 @@
 {
-  "name": "@magsag/demo-cli",
+  "name": "@magsag/manager",
   "version": "2.0.0-alpha.0",
   "private": true,
   "type": "module",
@@ -12,10 +12,9 @@
     "build": "tsup src/index.ts --dts --format esm",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "start": "node dist/index.js"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/demo-shared": "workspace:*"
+    "@magsag/core": "workspace:*"
   }
 }

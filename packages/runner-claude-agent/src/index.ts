@@ -196,6 +196,13 @@ export class ClaudeAgentRunner implements Runner {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = apiKey;
 
+    const extraEnv = validated.extra?.env ?? {};
+    const previousEnvEntries = new Map<string, string | undefined>();
+    for (const [key, value] of Object.entries(extraEnv)) {
+      previousEnvEntries.set(key, process.env[key]);
+      process.env[key] = value;
+    }
+
     const restoreMcpEnvironment = applyRunnerMcpEnv(validated.extra?.mcp);
 
     try {
@@ -240,6 +247,13 @@ export class ClaudeAgentRunner implements Runner {
         process.env.ANTHROPIC_API_KEY = prev;
       } else {
         delete process.env.ANTHROPIC_API_KEY;
+      }
+      for (const [key, previousValue] of previousEnvEntries.entries()) {
+        if (previousValue !== undefined) {
+          process.env[key] = previousValue;
+        } else {
+          delete process.env[key];
+        }
       }
       restoreMcpEnvironment();
     }

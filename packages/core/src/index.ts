@@ -38,6 +38,104 @@ export const RUNNER_MCP_ENV = {
   tools: 'MAGSAG_MCP_TOOLS'
 } as const;
 
+export interface AcceptanceCriterion {
+  id: string;
+  description: string;
+  required?: boolean;
+}
+
+export interface TaskSpec {
+  id: string;
+  goal: string;
+  inputs?: Record<string, unknown>;
+  acceptance?: AcceptanceCriterion[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface SubtaskSpec {
+  id: string;
+  taskId: string;
+  title: string;
+  description?: string;
+  acceptance?: AcceptanceCriterion[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface AgentContext {
+  repoDir: string;
+  worktreeRoot?: string;
+  env?: Record<string, string>;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DelegationContext {
+  worktreePath: string;
+  env: Record<string, string>;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DelegationRequest {
+  subtask: SubtaskSpec;
+  context: DelegationContext;
+}
+
+export interface DelegationResult {
+  subtaskId: string;
+  status: 'completed' | 'failed' | 'skipped';
+  detail?: string;
+  usage?: Record<string, unknown>;
+  artifacts?: Array<{ type: string; path?: string; metadata?: Record<string, unknown> }>;
+}
+
+export interface PlanStep {
+  id: string;
+  subtask: SubtaskSpec;
+  dependsOn?: string[];
+}
+
+export interface Plan {
+  id: string;
+  task: TaskSpec;
+  steps: PlanStep[];
+}
+
+export type DelegationEvent =
+  | {
+      type: 'state';
+      subtaskId: string;
+      state: 'queued' | 'running' | 'completed' | 'failed';
+      detail?: string;
+    }
+  | {
+      type: 'runner';
+      subtaskId: string;
+      event: RunnerEvent;
+    }
+  | { type: 'result'; result: DelegationResult };
+
+export interface ManagerRunOptions {
+  sagPool: readonly SpecialistAgent[];
+  maxConcurrency?: number;
+  signal?: AbortSignal;
+  prepareDelegation?: (step: PlanStep) => Promise<DelegationContext>;
+  finalizeDelegation?: (
+    step: PlanStep,
+    context: DelegationContext,
+    result: DelegationResult
+  ) => Promise<void> | void;
+}
+
+export interface ManagerAgent {
+  createPlan(task: TaskSpec, context: AgentContext): Promise<Plan>;
+  run(plan: Plan, options: ManagerRunOptions): AsyncIterable<DelegationEvent>;
+}
+
+export interface SpecialistAgent {
+  readonly id: string;
+  canHandle?(request: DelegationRequest): boolean | Promise<boolean>;
+  execute(request: DelegationRequest, signal?: AbortSignal): AsyncIterable<RunnerEvent>;
+}
+
 export const buildRunnerMcpEnv = (
   metadata?: RunnerMcpMetadata
 ): Record<string, string> => {
@@ -100,6 +198,7 @@ export const applyRunnerMcpEnv = (metadata?: RunnerMcpMetadata): (() => void) =>
 
 export interface RunSpecExtra extends Record<string, unknown> {
   mcp?: RunnerMcpMetadata;
+  env?: Record<string, string>;
 }
 
 export interface RunSpec {
@@ -204,4 +303,120 @@ export const resolveEngineSelection = (
 export interface RunnerDispatch {
   mag: Runner;
   sag: Runner;
+}
+
+export type TaskRunner<T> = (signal: AbortSignal) => Promise<T>;
+
+interface TaskQueueEntry<T> {
+  readonly runner: TaskRunner<T>;
+  readonly resolve: (value: T) => void;
+  readonly reject: (error: unknown) => void;
+  readonly controller: AbortController;
+}
+
+const createAbortError = (reason?: unknown): Error => {
+  if (reason instanceof Error) {
+    return reason;
+  }
+
+  const error = new Error(
+    typeof reason === 'string' ? reason : 'TaskQueue cancelled'
+  );
+  error.name = 'AbortError';
+  return error;
+};
+
+export class TaskQueue {
+  private readonly maxConcurrency: number;
+  private readonly pending: TaskQueueEntry<unknown>[] = [];
+  private readonly active = new Set<TaskQueueEntry<unknown>>();
+  private aborted = false;
+
+  constructor(maxConcurrency = 1) {
+    if (!Number.isInteger(maxConcurrency) || maxConcurrency < 1) {
+      throw new Error('TaskQueue requires maxConcurrency >= 1');
+    }
+
+    this.maxConcurrency = maxConcurrency;
+  }
+
+  push<T>(runner: TaskRunner<T>): Promise<T> {
+    if (this.aborted) {
+      return Promise.reject(createAbortError());
+    }
+
+    return new Promise<T>((resolve, reject) => {
+      const entry: TaskQueueEntry<T> = {
+        runner,
+        resolve,
+        reject,
+        controller: new AbortController()
+      };
+
+      this.pending.push(entry as TaskQueueEntry<unknown>);
+      this.drain();
+    });
+  }
+
+  cancelAll(reason?: unknown): void {
+    const error = createAbortError(reason);
+    this.aborted = true;
+
+    while (this.pending.length > 0) {
+      const entry = this.pending.shift();
+      if (!entry) {
+        continue;
+      }
+
+      entry.reject(error);
+    }
+
+    for (const entry of this.active) {
+      if (!entry.controller.signal.aborted) {
+        entry.controller.abort(error);
+      }
+    }
+  }
+
+  get pendingSize(): number {
+    return this.pending.length;
+  }
+
+  get activeSize(): number {
+    return this.active.size;
+  }
+
+  private drain(): void {
+    if (this.aborted) {
+      return;
+    }
+
+    while (
+      this.active.size < this.maxConcurrency &&
+      this.pending.length > 0
+    ) {
+      const entry = this.pending.shift();
+      if (!entry) {
+        continue;
+      }
+
+      this.startEntry(entry);
+    }
+  }
+
+  private startEntry(entry: TaskQueueEntry<unknown>): void {
+    this.active.add(entry);
+
+    Promise.resolve(entry.runner(entry.controller.signal))
+      .then(result => {
+        entry.resolve(result);
+      })
+      .catch(error => {
+        entry.reject(error);
+      })
+      .finally(() => {
+        this.active.delete(entry);
+        this.drain();
+      });
+  }
 }

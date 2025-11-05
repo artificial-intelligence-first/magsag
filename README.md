@@ -68,8 +68,8 @@ Each package defines standard scripts (`lint`, `typecheck`, `test`, `build`). Us
 ## Runtime Overview
 
 - **Engine resolution**: `ENGINE_MODE` (`auto|subscription|api|oss`) controls subscription vs API engines. `ENGINE_MAG` / `ENGINE_SAG` choose runners (`codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, `adk`). Defaults resolve to `codex-cli` (MAG) + `claude-cli` (SAG).
-- **CLI**: `pnpm --filter @magsag/cli exec magsag agent run --repo . "Investigate flaky CI"`  
-  Use `--mode`, `--mag`, `--sag`, and `--resume` to override defaults.
+- **CLI**: `pnpm --filter @magsag/cli exec magsag agent plan --repo . "Investigate flaky CI"` generates a JSON plan. Execute it via `agent exec` with concurrency and provider controls, e.g. `pnpm --filter @magsag/cli exec magsag agent exec --plan plan.json --concurrency 4 --provider-map "claude-cli:2,codex-cli"`. Runs stream subtask state and write JSONL logs to `.magsag/runs/<id>.jsonl`, which you can replay with `magsag runs describe <id>`.
+  Override engine defaults with `--mode`, `--mag`, `--sag`, or pass `--worktree-root` / `--base` when provisioning SAG worktrees.
 - **Flow governance**: `@magsag/governance` evaluates flow summaries against YAML policies. Flow Runner tooling is being ported to TypeScript; interim manual review notes must be logged in the ExecPlan.
 - **MCP**: `@magsag/mcp-client` exposes HTTP/SSE/stdio transports. Server scaffolding continues under Workstream A; record schema or contract changes in `docs/development/plans/repo-cleanup-execplan.md`.
 
@@ -139,6 +139,7 @@ pnpm catalog:validate
 | `@magsag/mcp-client` | MCP transport, circuit breaker, tests |
 | `@magsag/mcp-server` | MCP exposure of catalog + governance (under construction) |
 | `@magsag/shared-logging` | Minimal logger with console fallback |
+| `@magsag/demo-shared` | Shared helpers for demo CLI/API (MCP presets, ExecPlan summaries) |
 
 ---
 

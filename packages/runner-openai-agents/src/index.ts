@@ -57,6 +57,13 @@ export class OpenAiAgentsRunner implements Runner {
     const previous = process.env.OPENAI_API_KEY;
     process.env.OPENAI_API_KEY = apiKey;
 
+    const extraEnv = validated.extra?.env ?? {};
+    const previousEnvEntries = new Map<string, string | undefined>();
+    for (const [key, value] of Object.entries(extraEnv)) {
+      previousEnvEntries.set(key, process.env[key]);
+      process.env[key] = value;
+    }
+
     const restoreMcpEnvironment = applyRunnerMcpEnv(validated.extra?.mcp);
 
     try {
@@ -103,6 +110,13 @@ export class OpenAiAgentsRunner implements Runner {
         process.env.OPENAI_API_KEY = previous;
       } else {
         delete process.env.OPENAI_API_KEY;
+      }
+      for (const [key, previousValue] of previousEnvEntries.entries()) {
+        if (previousValue !== undefined) {
+          process.env[key] = previousValue;
+        } else {
+          delete process.env[key];
+        }
       }
       restoreMcpEnvironment();
     }

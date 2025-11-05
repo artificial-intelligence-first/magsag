@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   RUNNER_MCP_ENV,
+  TaskQueue,
   applyRunnerMcpEnv,
   buildRunnerMcpEnv,
   type RunnerMcpMetadata
@@ -105,5 +106,94 @@ describe('applyRunnerMcpEnv', () => {
     } else {
       process.env[toolsVar] = initialTools;
     }
+  });
+});
+
+const delay = (ms = 0): Promise<void> =>
+  new Promise(resolve => {
+    setTimeout(resolve, ms);
+  });
+
+describe('TaskQueue', () => {
+  it('respects the configured concurrency limit', async () => {
+    const queue = new TaskQueue(2);
+    const started: number[] = [];
+    const finished: number[] = [];
+    const finishers = new Map<number, () => void>();
+
+    const createTask = (id: number): Promise<number> =>
+      queue.push(async () => {
+        started.push(id);
+        await new Promise<void>(resolve => {
+          finishers.set(id, () => {
+            finished.push(id);
+            resolve();
+          });
+        });
+        return id;
+      });
+
+    const p1 = createTask(1);
+    const p2 = createTask(2);
+    const p3 = createTask(3);
+
+    await delay();
+
+    expect(started).toEqual([1, 2]);
+    expect(queue.activeSize).toBe(2);
+    expect(queue.pendingSize).toBe(1);
+
+    const finish1 = finishers.get(1);
+    expect(finish1).toBeDefined();
+    finish1?.();
+
+    await delay();
+
+    expect(started).toEqual([1, 2, 3]);
+    expect(queue.activeSize).toBe(2);
+
+    const finish2 = finishers.get(2);
+    const finish3 = finishers.get(3);
+    expect(finish2).toBeDefined();
+    expect(finish3).toBeDefined();
+
+    finish2?.();
+    finish3?.();
+
+    await expect(p1).resolves.toBe(1);
+    await expect(p2).resolves.toBe(2);
+    await expect(p3).resolves.toBe(3);
+
+    expect(finished).toEqual([1, 2, 3]);
+  });
+
+  it('rejects pending and active tasks when cancelled', async () => {
+    const queue = new TaskQueue(1);
+    const error = new Error('stop');
+
+    const active = queue.push<string>(signal => {
+      return new Promise((_, reject) => {
+        const abortHandler = (): void => {
+          signal.removeEventListener('abort', abortHandler);
+          reject(signal.reason ?? error);
+        };
+        signal.addEventListener('abort', abortHandler);
+      });
+    });
+
+    const pending = queue.push(() => Promise.resolve('later'));
+
+    queue.cancelAll(error);
+
+    await expect(active).rejects.toMatchObject({ message: 'stop' });
+    await expect(pending).rejects.toMatchObject({ message: 'stop' });
+    expect(queue.activeSize).toBe(0);
+    expect(queue.pendingSize).toBe(0);
+  });
+
+  it('throws when constructed with invalid concurrency', () => {
+    expect(() => new TaskQueue(0)).toThrow(
+      'TaskQueue requires maxConcurrency >= 1'
+    );
   });
 });

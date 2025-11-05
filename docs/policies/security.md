@@ -2,7 +2,7 @@
 title: Security Policy
 slug: security-policy
 status: living
-last_updated: 2025-11-02
+last_updated: 2025-11-05
 tags:
 - security
 - governance
@@ -107,7 +107,7 @@ export MAGSAG_REDIS_URL=redis://localhost:6379
 
 ### Data Security
 
-- Agent execution artifacts are stored in `.runs/` directory
+- Agent execution artifacts are stored in `.magsag/runs/` directory
 - Ensure appropriate filesystem permissions
 - Consider encryption at rest for sensitive data
 - Implement backup and retention policies
@@ -143,7 +143,7 @@ Before deploying MAGSAG to production, ensure the following security measures ar
 - [ ] **HTTPS/TLS**: Deploy behind HTTPS with valid SSL/TLS certificates (TLS 1.2+)
 - [ ] **Reverse Proxy**: Use nginx, Caddy, or similar for additional security layers
 - [ ] **Firewall Rules**: Restrict API access to known client IPs/networks
-- [ ] **Filesystem Permissions**: Ensure `.runs/` directory has appropriate permissions (read/write for API user only)
+- [ ] **Filesystem Permissions**: Ensure `.magsag/runs/` directory has appropriate permissions (read/write for API user only)
 
 ### Rate Limiting Behavior
 
@@ -182,7 +182,7 @@ export MAGSAG_REDIS_URL=redis://localhost:6379
 - [ ] Enable OpenTelemetry tracing for distributed request tracking
 - [ ] Configure log aggregation (ELK, Datadog, etc.)
 - [ ] Set up alerts for rate limit violations, authentication failures, and errors
-- [ ] Monitor `.runs/` directory disk usage and implement retention policies
+- [ ] Monitor `.magsag/runs/` directory disk usage and implement retention policies
 
 ### Deployment Validation
 
@@ -234,6 +234,7 @@ For general support and non-security issues, please use GitHub Issues.
 
 ## Update Log
 
+- 2025-11-05: Updated run artifact paths to `.magsag/runs/` and refreshed metadata.
 - 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added frontmatter and aligned the policy with the unified documentation standard.
 - 2025-10-24: Documented production deployment checklist and rate limiting defaults.

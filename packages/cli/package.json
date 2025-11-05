@@ -30,6 +30,8 @@
     "@magsag/runner-claude-cli": "workspace:*",
     "@magsag/runner-codex-cli": "workspace:*",
     "@magsag/runner-openai-agents": "workspace:*",
+    "@magsag/manager": "workspace:*",
+    "@magsag/specialist": "workspace:*",
     "@oclif/core": "3.27.0",
     "execa": "^8.0.1",
     "yaml": "^2.5.1",

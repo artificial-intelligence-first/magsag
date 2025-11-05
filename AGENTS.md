@@ -2,7 +2,7 @@
 title: MAGSAG Agent Playbook
 slug: agents
 status: living
-last_updated: 2025-11-04
+last_updated: 2025-11-05
 last_synced: '2025-11-04'
 tags:
 - agents
@@ -43,7 +43,7 @@ sources:
 
 - `ENGINE_MODE` accepts `auto|subscription|api|oss`. `auto` resolves to subscription CLIs when explicit overrides are absent.
 - `ENGINE_MAG` / `ENGINE_SAG` select `codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, or `adk`. Defaults: `codex-cli` (MAG) and `claude-cli` (SAG).
-- Invoke the CLI with `pnpm --filter @magsag/cli exec node dist/index.js agent run --repo . "Investigate flaky CI"`. Pipe prompts via stdin for longer instructions.
+- Generate plans with `pnpm --filter @magsag/cli exec node dist/index.js agent plan --repo . "Investigate flaky CI"`, then execute via `agent exec` (e.g. add `--concurrency 4 --provider-map "claude-cli:2,codex-cli"`). Use stdin for long prompts and replay results with `runs describe`.
 - Switch to API engines by exporting `ENGINE_MODE=api ENGINE_MAG=openai-agents ENGINE_SAG=claude-agent` alongside the necessary API keys.
 - Resume a session with `--resume <id>` once persistence lands in Workstream C; track readiness in `docs/development/plans/repo-cleanup-execplan.md`.
 
@@ -129,6 +129,7 @@ pnpm catalog:validate
 
 ## Update Log
 
+- 2025-11-05: Documented MAG/SAG plan → exec workflow and updated CLI guidance.
 - 2025-11-06: Removed Python fallbacks, adopted TypeScript ops tooling, and refreshed validation gates.
 - 2025-11-04: Revised MCP preset guidance to point at `tools/adk/servers/`, documented `MAGSAG_MCP_DIR`, and synced metadata.
 - 2025-11-04: Added MAG/SAG runtime guidance (subscription-first defaults, session storage, metrics endpoint).

@@ -2,7 +2,7 @@
 title: MAGSAG Agent Guidelines
 slug: architecture-agents
 status: living
-last_updated: 2025-11-04
+last_updated: 2025-11-05
 last_synced: '2025-11-04'
 tags:
 - agents
@@ -98,6 +98,14 @@ pnpm catalog:validate
 4. Record executed commands and their results (lint, typecheck, test, manual doc review).
 5. Stage related files only (`git add -u`), avoiding drive-by edits.
 
+## MAG/SAG Delegation Lifecycle
+
+- **State events**: `SimpleManager` emits `DelegationEvent` updates in the order `queued` → `running` → (`completed` | `failed`). Dependent subtasks that cannot start after an upstream failure receive a terminal `state=failed` event and a matching `status=skipped` result payload.
+- **Runner stream**: Each `RunnerSpecialistAgent` forwards the underlying `RunnerEvent` flow (`log`, `message`, `diff`, `tool-call`, `flow-summary`, `done`, `error`). These surface in the CLI via `renderRunnerEvent` and are persisted by `RunLogCollector` to JSONL.
+- **Result aggregation**: Every subtask ends with a `result` event containing `status`, optional `detail`, and any `usage` stats captured from `RunnerEvent.type === 'done'`. Usage metrics enter the run summary under the originating subtask ID.
+- **Error propagation**: Failures during `prepareDelegation` (e.g., worktree provisioning) short-circuit execution, emitting `state=failed` and a failed result without invoking a runner. Exceptions thrown inside a specialist become `state=failed` + `result.status=failed`, and downstream subtasks are skipped with the same detail string.
+- **Cancellation**: Abort signals trigger `TaskQueue.cancelAll`, causing in-flight subtasks to raise an `AbortError` and pending work to reject with the shared reason; observers record these as failed results with the cancellation message.
+
 ## Governance Expectations
 
 - Never commit secrets. Use environment variables or the secret solutions referenced in `docs/policies/security.md`.
@@ -115,7 +123,7 @@ pnpm catalog:validate
 ## Reference Surfaces
 
 - `packages/core/src/index.ts` – engine contracts and runner registry helpers.
-- `packages/cli/src/commands/` – CLI entry points (agent run, flow tooling).
+- `packages/cli/src/commands/` – CLI entry points (`agent plan`, `agent exec`, `runs describe`, flow tooling).
 - `packages/runner-*/src/index.ts` – Codex, Claude, OpenAI Agents, Claude Agent, and ADK runners.
 - `packages/mcp-client/src/` – MCP transport helpers and circuit breaker.
 - `packages/governance/src/flow-gate.ts` – flow summary evaluation logic.
@@ -132,6 +140,7 @@ pnpm catalog:validate
 
 ## Update Log
 
+- 2025-11-05: Documented MAG/SAG delegation lifecycle, RunnerEvent handling, and cancellation semantics.
 - 2025-11-04: Replaced Python/uv guidance with TypeScript + pnpm instructions, refreshed MCP preset path to `tools/adk/servers/`, and updated package references.
 - 2025-11-03: Documented external SDK drivers, ADK sync workflow, and governance guardrails.
 - 2025-11-02: Linked workflow and taxonomy references for documentation alignment.

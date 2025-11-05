@@ -129,6 +129,7 @@ export class CodexCliRunner implements Runner {
     const mcp = validated.extra?.mcp;
     const env = {
       ...process.env,
+      ...(validated.extra?.env ?? {}),
       ...buildRunnerMcpEnv(mcp)
     };
 

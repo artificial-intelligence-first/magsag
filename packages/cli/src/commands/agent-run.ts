@@ -64,7 +64,7 @@ const readPromptFromStdin = async (): Promise<string | undefined> => {
   return text.length > 0 ? text : undefined;
 };
 
-const resolvePrompt = async (argPrompt?: string): Promise<string> => {
+export const resolvePrompt = async (argPrompt?: string): Promise<string> => {
   if (argPrompt && argPrompt.trim().length > 0) {
     return argPrompt;
   }
@@ -89,7 +89,7 @@ const resolveEngine = (candidate?: string): EngineId => {
   return candidate;
 };
 
-const resolveRepo = (candidate?: string): string => {
+export const resolveRepo = (candidate?: string): string => {
   if (!candidate || candidate.trim().length === 0) {
     return process.cwd();
   }
@@ -118,13 +118,18 @@ export const parseAgentRun = async (argv: string[]): Promise<ParsedAgentRun> => 
   };
 };
 
-const renderRunnerEvent = (
+export const renderRunnerEvent = (
   event: RunnerEvent,
-  streams: CliStreams
+  streams: CliStreams,
+  options: { prefix?: string } = {}
 ) => {
+  const prefix = options.prefix ? `[${options.prefix}] ` : '';
+  const writeStdout = (message: string) => writeLine(streams.stdout, `${prefix}${message}`);
+  const writeStderr = (message: string) => writeLine(streams.stderr, `${prefix}${message}`);
+
   switch (event.type) {
     case 'log':
-      writeLine(streams.stderr, event.data);
+      writeStderr(event.data);
       break;
     case 'message': {
       const prefix =
@@ -133,28 +138,24 @@ const renderRunnerEvent = (
           : event.role === 'tool'
             ? '[tool] '
             : '[system] ';
-      writeLine(streams.stdout, `${prefix}${event.content}`);
+      writeStdout(`${prefix}${event.content}`);
       break;
     }
     case 'diff':
       event.files.forEach((file) => {
-        writeLine(streams.stdout, `diff -- ${file.path}`);
+        writeStdout(`diff -- ${file.path}`);
         if (file.patch.trim().length > 0) {
-          writeLine(streams.stdout, file.patch);
+          writeStdout(file.patch);
         }
       });
       break;
     case 'tool-call':
-      writeLine(
-        streams.stderr,
-        `Tool call: ${event.call.name} ${JSON.stringify(event.call.arguments)}`
-      );
+      writeStderr(`Tool call: ${event.call.name} ${JSON.stringify(event.call.arguments)}`);
       break;
     case 'flow-summary': {
       const { runs, success_rate: successRate, errors, avg_latency_ms: avgLatency } = event.summary;
       const successPercent = Number.isFinite(successRate) ? (successRate * 100).toFixed(1) : '0.0';
-      writeLine(
-        streams.stdout,
+      writeStdout(
         `Flow summary: runs=${runs} success=${successPercent}% errors=${errors.total} avg_latency_ms=${Math.round(
           avgLatency
         )}`
@@ -162,9 +163,9 @@ const renderRunnerEvent = (
       break;
     }
     case 'error':
-      writeLine(streams.stderr, `Error: ${event.error.message}`);
+      writeStderr(`Error: ${event.error.message}`);
       if (event.error.details) {
-        writeLine(streams.stderr, JSON.stringify(event.error.details, undefined, 2));
+        writeStderr(JSON.stringify(event.error.details, undefined, 2));
       }
       break;
     case 'done': {
@@ -176,11 +177,11 @@ const renderRunnerEvent = (
         summaryParts.push(`stats=${JSON.stringify(event.stats)}`);
       }
       const summary = summaryParts.length > 0 ? ` (${summaryParts.join(', ')})` : '';
-      writeLine(streams.stderr, `Run completed${summary}`);
+      writeStderr(`Run completed${summary}`);
       break;
     }
     default:
-      writeLine(streams.stderr, `Unhandled event: ${JSON.stringify(event)}`);
+      writeStderr(`Unhandled event: ${JSON.stringify(event)}`);
       break;
   }
 };

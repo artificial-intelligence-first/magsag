@@ -1,6 +1,12 @@
 import { pathToFileURL } from 'node:url';
 import { agentRunHandler, parseAgentRun } from './commands/agent-run.js';
 import type { ParsedAgentRun } from './commands/agent-run.js';
+import { agentPlanHandler, parseAgentPlan } from './commands/agent-plan.js';
+import type { ParsedAgentPlan } from './commands/agent-plan.js';
+import { agentExecHandler, parseAgentExec } from './commands/agent-exec.js';
+import type { ParsedAgentExec } from './commands/agent-exec.js';
+import { runsDescribeHandler, parseRunsDescribe } from './commands/runs-describe.js';
+import type { ParsedRunsDescribe } from './commands/runs-describe.js';
 import { flowAvailableHandler, parseFlowAvailable } from './commands/flow-available.js';
 import type { ParsedFlowAvailable } from './commands/flow-available.js';
 import { flowGateHandler, parseFlowGate } from './commands/flow-gate.js';
@@ -26,7 +32,10 @@ interface CommandRegistration {
 }
 
 type ParsedCommand =
+  | { kind: 'agent:plan'; payload: ParsedAgentPlan }
+  | { kind: 'agent:exec'; payload: ParsedAgentExec }
   | { kind: 'agent:run'; payload: ParsedAgentRun }
+  | { kind: 'runs:describe'; payload: ParsedRunsDescribe }
   | { kind: 'flow:available'; payload: ParsedFlowAvailable }
   | { kind: 'flow:validate'; payload: ParsedFlowValidate }
   | { kind: 'flow:run'; payload: ParsedFlowRun }
@@ -36,6 +45,34 @@ type ParsedCommand =
   | { kind: 'mcp:doctor'; payload: ParsedMcpDoctor };
 
 const COMMANDS: CommandRegistration[] = [
+  {
+    id: 'agent:plan',
+    summary: 'Generate a MAG/SAG execution plan for the provided prompt.',
+    async parse(argv: string[]) {
+      const payload = await parseAgentPlan(argv);
+      return { kind: 'agent:plan', payload };
+    },
+    execute(parsed, streams) {
+      if (parsed.kind !== 'agent:plan') {
+        throw new Error(`Unexpected command kind: ${parsed.kind}`);
+      }
+      return agentPlanHandler(parsed.payload, streams);
+    }
+  },
+  {
+    id: 'agent:exec',
+    summary: 'Execute a MAG/SAG plan with configurable concurrency and providers.',
+    async parse(argv: string[]) {
+      const payload = await parseAgentExec(argv);
+      return { kind: 'agent:exec', payload };
+    },
+    execute(parsed, streams) {
+      if (parsed.kind !== 'agent:exec') {
+        throw new Error(`Unexpected command kind: ${parsed.kind}`);
+      }
+      return agentExecHandler(parsed.payload, streams);
+    }
+  },
   {
     id: 'agent:run',
     summary: 'Execute a MAG/SAG agent run with the selected engine.',
@@ -49,6 +86,20 @@ const COMMANDS: CommandRegistration[] = [
         throw new Error(`Unexpected command kind: ${parsed.kind}`);
       }
       return agentRunHandler(parsed.payload, streams);
+    }
+  },
+  {
+    id: 'runs:describe',
+    summary: 'Describe a recorded run log and display aggregated results.',
+    async parse(argv: string[]) {
+      const payload = await parseRunsDescribe(argv);
+      return { kind: 'runs:describe', payload };
+    },
+    execute(parsed, streams) {
+      if (parsed.kind !== 'runs:describe') {
+        throw new Error(`Unexpected command kind: ${parsed.kind}`);
+      }
+      return runsDescribeHandler(parsed.payload, streams);
     }
   },
   {
@@ -157,7 +208,10 @@ const HELP_TEXT = `Usage
   magsag <command> [flags]
 
 Commands
+  agent plan         Generate a MAG/SAG execution plan.
+  agent exec         Execute a plan with multi-SAG orchestration.
   agent run          Execute a MAG/SAG agent run.
+  runs describe      Describe a recorded run log.
   flow available     Check Flow Runner CLI availability.
   flow validate      Validate a flow definition.
   flow run           Execute a flow via flowctl.

@@ -16,6 +16,6 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "yaml": "^2.6.0"
+    "@magsag/demo-shared": "workspace:*"
   }
 }

@@ -2,7 +2,7 @@
 title: MAGSAG Storage Layer
 slug: storage-layer
 status: living
-last_updated: 2025-11-03
+last_updated: 2025-11-05
 tags:
 - storage
 - observability
@@ -39,7 +39,7 @@ The storage layer provides CLI and API tools for managing observability data gen
 - **Data analysts/operators**: Use the storage layer CLI commands to query and manage execution data
 
 The storage layer complements (not replaces) the existing agent observability system.
-Cost tracking is handled separately by `magsag.observability.cost_tracker` and persists artifacts under `.runs/costs/` (JSONL ledger and SQLite database).
+Run-level JSONL logs live under `.magsag/runs/` and capture MAG→SAG delegation events; storage ingestion consumes those files when available. Cost tracking integration is planned for a future milestone.
 
 ## Architecture
 
@@ -389,6 +389,7 @@ Database is growing too large. Solutions:
 
 ## Update Log
 
+- 2025-11-05: Updated storage guidance for `.magsag/runs` JSONL inputs and noted pending cost tracking integration.
 - 2025-11-03: Removed legacy `.runs/agents` migration guidance and aligned storage docs with JSON MCP workflow.
 - 2025-11-02: Updated metadata and aligned tags with documentation taxonomy.
 - 2025-11-01: Applied the unified documentation standard and refreshed metadata.

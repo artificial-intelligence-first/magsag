@@ -106,6 +106,13 @@ export class GoogleAdkRunner implements Runner {
     const prev = process.env.GOOGLE_API_KEY;
     process.env.GOOGLE_API_KEY = apiKey;
 
+    const extraEnv = validated.extra?.env ?? {};
+    const previousEnvEntries = new Map<string, string | undefined>();
+    for (const [key, value] of Object.entries(extraEnv)) {
+      previousEnvEntries.set(key, process.env[key]);
+      process.env[key] = value;
+    }
+
     const restoreMcpEnvironment = applyMcpEnvironment(validated.extra?.mcp);
 
     const appName = this.options.appName ?? DEFAULT_APP_NAME;
@@ -203,6 +210,13 @@ export class GoogleAdkRunner implements Runner {
         process.env.GOOGLE_API_KEY = prev;
       } else {
         delete process.env.GOOGLE_API_KEY;
+      }
+      for (const [key, previousValue] of previousEnvEntries.entries()) {
+        if (previousValue !== undefined) {
+          process.env[key] = previousValue;
+        } else {
+          delete process.env[key];
+        }
       }
       restoreMcpEnvironment();
     }

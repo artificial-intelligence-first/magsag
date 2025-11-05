@@ -1,8 +1,10 @@
+import { resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const demoCliModuleUrl = new URL(
-  '../../../apps/demo-cli/src/index.ts',
-  import.meta.url
+const repoRoot = resolve(fileURLToPath(new URL('../../..', import.meta.url)));
+const demoCliModuleUrl = pathToFileURL(
+  resolve(repoRoot, 'apps', 'demo-cli', 'src', 'index.ts')
 );
 
 describe('demo CLI entrypoint', () => {
@@ -11,12 +13,17 @@ describe('demo CLI entrypoint', () => {
     vi.resetModules();
   });
 
-  it('logs the placeholder message', async () => {
+  it('logs the help message when no command is provided', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     await import(demoCliModuleUrl.href);
 
-    expect(logSpy).toHaveBeenCalledTimes(1);
-    expect(logSpy).toHaveBeenCalledWith('Demo CLI placeholder');
+    // The CLI now prints multiple lines for the help message
+    expect(logSpy).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith('Usage: magsag-demo-cli <command>');
+    expect(logSpy).toHaveBeenCalledWith('');
+    expect(logSpy).toHaveBeenCalledWith('Commands:');
+    expect(logSpy).toHaveBeenCalledWith('  mcp   Show available MCP presets and transports');
+    expect(logSpy).toHaveBeenCalledWith('  plan  Summarise the repository cleanup ExecPlan');
   });
 });

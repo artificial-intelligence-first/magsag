@@ -2,7 +2,7 @@
 title: Runner Integration Guide
 slug: guide-runner-integration
 status: living
-last_updated: 2025-11-06
+last_updated: 2025-11-05
 tags:
 - runners
 - integration
@@ -27,7 +27,7 @@ This document captures the expectations for runner adapters that integrate with 
 - **Flow Runner (`FlowRunner`)**
   - Capabilities: `dry-run`, `artifacts`
   - CLI support: `magsag cli flow available|validate|run|summarize|gate`
-  - Artifacts: `.runs/<RUN_ID>/logs.jsonl`, `summary.json`, `mcp_calls.jsonl`
+  - Artifacts: `.magsag/runs/<RUN_ID>.jsonl` plus related summary assets emitted by the flow runner
   - Governance: `policies/flow_governance.yaml`, validated via `magsag flow gate` or `make flow-run`
 
 ## Required Interface
@@ -97,65 +97,19 @@ result = invoke_sag(delegation)
 ### Capabilities
 - **Dependency Injection**: Registry, skills, and runner instances injected into agent code
 - **Retry Logic**: SAGs can configure retry policies with exponential backoff
-- **Observability**: Automatic logging and metrics to `.runs/agents/<RUN_ID>/`, with centralized cost persistence in `.runs/costs/` and optional OpenTelemetry spans
+- **Observability**: Run events stream to `.magsag/runs/<RUN_ID>.jsonl` via the TypeScript `RunLogCollector`, and CLI `runs describe` surfaces totals and basic usage metrics.
 - **Plan Awareness**: Honors `magsag.routing.router.Plan` flags for batch, cache, structured outputs, and moderation decisions
 - **Error Handling**: Graceful failure handling with partial result aggregation
 
 ### Observability Artifacts
 
-All agent executions produce structured artifacts in `.runs/agents/<RUN_ID>/`:
+Each MAG or SAG delegation produces a `DelegationEvent` stream captured in `.magsag/runs/<RUN_ID>.jsonl`. The collector records:
 
-#### `logs.jsonl` - Event Log
-JSONL format with one event per line:
-```json
-{"run_id": "mag-abc123", "event": "start", "timestamp": 1234567890.123, "data": {"agent": "OfferOrchestratorMAG"}}
-{"run_id": "mag-abc123", "event": "delegation_start", "timestamp": 1234567891.234, "data": {"task_id": "task-001", "sag_id": "compensation-advisor-sag"}}
-{"run_id": "mag-abc123", "event": "delegation_complete", "timestamp": 1234567892.345, "data": {"task_id": "task-001", "status": "success"}}
-{"run_id": "mag-abc123", "event": "end", "timestamp": 1234567893.456, "data": {"status": "success", "duration_ms": 3333}}
-```
+- **State events** (`queued`, `running`, `completed`, `failed`) for every subtask.
+- **Runner events** mirroring CLI output (`log`, `message`, `diff`, `tool-call`, `done`, `error`).
+- **Result envelopes** with final status, optional `detail`, and any usage metadata emitted alongside `RunnerEvent.type === 'done'`.
 
-**Standard Events:**
-- `start` - Agent execution begins
-- `delegation_start` / `delegation_complete` - SAG invocation lifecycle
-- `error` - Runtime errors with type and message
-- `end` - Agent execution completes
-
-#### `metrics.json` - Performance Metrics
-```json
-{
-  "latency_ms": 3333,
-  "task_count": 2,
-  "success_count": 2,
-  "duration_ms": 3333
-}
-```
-
-**Standard Metrics:**
-- `latency_ms` (required) - Total execution time in milliseconds
-- `task_count` - Number of SAG delegations
-- `success_count` - Number of successful delegations
-- `attempts` - Retry attempts for SAGs
-- `tokens` - Token usage (if available)
-- `cost` - Estimated cost (if available)
-
-Cost ledger entries are written separately to `.runs/costs/costs.jsonl` and `.runs/costs.db` via `magsag.observability.cost_tracker`.
-
-#### `summary.json` - Run Summary
-```json
-{
-  "run_id": "mag-abc123",
-  "agent": "OfferOrchestratorMAG",
-  "status": "success",
-  "start_time": 1234567890.123,
-  "end_time": 1234567893.456,
-  "duration_ms": 3333,
-  "metadata": {
-    "version": "0.1.0",
-    "task_count": 2,
-    "successful_tasks": 2
-  }
-}
-```
+`magsag runs describe <run_id>` replays the JSONL file, reporting start/finish timestamps, duration, per-status totals, and the usage map aggregated by subtask ID.
 
 ### Observability SLO
 
@@ -172,13 +126,7 @@ Agent executions should meet these minimum thresholds:
 
 ### LLM Plan Integration
 
-`AgentRunner` loads execution plans via `magsag.routing.router.get_plan()` and embeds the selected `Plan` snapshot in each run directory. The snapshot includes:
-
-- `use_batch`, `use_cache`, `structured_output`, `moderation` flags
-- Provider/model decisions and metadata
-- Plan overrides applied at invocation time
-
-These values are surfaced in `summary.json` metadata and recorded alongside cost events so downstream governance can audit why a batch or moderation pathway was selected. When plan flags require capabilities (e.g., batch APIs), the runner logs the decision and falls back gracefully if a provider declines support, preserving the flag state for analysis.
+`SimpleManager` generates execution plans via `agent plan` or accepts existing JSON. The CLI saves the snapshot alongside run metadata, allowing downstream governance to audit concurrency limits, provider maps, and SAG assignments.
 
 ### Conformance
 - Agents must provide `run(payload, *, registry, skills, runner, obs)` entrypoint
@@ -190,11 +138,12 @@ These values are surfaced in `summary.json` metadata and recorded alongside cost
 
 - Expand capability coverage as new runners expose richer feature sets.
 - Provide sample adapters or mocks for testing runner orchestration without external dependencies.
-- Add async/parallel SAG invocation for MAGs
-- Implement circuit breaker patterns for failing SAGs
+- Expand run-log summaries with richer usage metadata once storage integration lands.
+- Implement circuit breaker patterns for failing SAGs.
 
 ## Update Log
 
+- 2025-11-05: Updated observability guidance for `.magsag/runs` JSONL logs and TypeScript manager workflow.
 - 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added unified frontmatter and audience guidance.
 - 2025-10-24: Documented runner requirements and capability taxonomy.
