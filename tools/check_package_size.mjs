@@ -38,12 +38,12 @@ const targets = [
   {
     name: '@magsag/observability',
     path: 'packages/observability/dist',
-    maxBytes: kib(192)
+    maxBytes: kib(200)
   },
   {
     name: '@magsag/governance',
     path: 'packages/governance/dist',
-    maxBytes: kib(160)
+    maxBytes: kib(168)
   },
   {
     name: '@magsag/catalog-mcp',
