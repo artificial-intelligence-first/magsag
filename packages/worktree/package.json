@@ -9,7 +9,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm",
+    "build": "tsup --config tsup.config.ts",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"

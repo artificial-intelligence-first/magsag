@@ -1,0 +1,21 @@
+{
+  "name": "@magsag/servers",
+  "version": "2.0.0-alpha.0",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./filesystem": "./filesystem/index.ts",
+    "./fetch": "./fetch/index.ts",
+    "./github": "./github/index.ts",
+    "./memory": "./memory/index.ts",
+    "./notion": "./notion/index.ts",
+    "./obsidian": "./obsidian/index.ts",
+    "./pg-readonly": "./pg-readonly/index.ts",
+    "./supabase": "./supabase/index.ts"
+  },
+  "dependencies": {
+    "@magsag/mcp-client": "workspace:*"
+  }
+}

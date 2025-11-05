@@ -210,7 +210,7 @@ const COMMANDS: CommandRegistration[] = [
   },
   {
     id: 'mcp:search',
-    summary: 'Search MCP tool definitions by keyword.',
+    summary: 'Temporarily disabled placeholder for the retired MCP search command.',
     async parse(argv: string[]) {
       const payload = await parseMcpSearch(argv);
       return { kind: 'mcp:search', payload };
@@ -224,7 +224,7 @@ const COMMANDS: CommandRegistration[] = [
   },
   {
     id: 'mcp:browse',
-    summary: 'Browse files exposed by a filesystem MCP server.',
+    summary: 'Temporarily disabled placeholder for the retired MCP browse command.',
     async parse(argv: string[]) {
       const payload = await parseMcpBrowse(argv);
       return { kind: 'mcp:browse', payload };
@@ -252,8 +252,6 @@ Commands
   flow summarize     Summarize Flow Runner artifacts.
   flow gate          Evaluate governance thresholds for a flow summary.
   mcp ls             Inspect MCP presets and list remote tools.
-  mcp search         Search MCP tool catalog entries.
-  mcp browse         List files via the filesystem MCP preset.
   mcp doctor         Diagnose MCP connectivity with fallback transports.
 
 For detailed help on a command, pass --help after the command.`;
