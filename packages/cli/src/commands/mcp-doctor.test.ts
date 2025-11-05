@@ -5,7 +5,7 @@ vi.mock('../mcp/config.js', () => ({
   loadMcpServerDefinitions: vi.fn(async () => [
     {
       id: 'demo',
-      filePath: 'ops/adk/servers/demo.yaml',
+      filePath: 'tools/adk/servers/demo.yaml',
       transports: [
         {
           type: 'http',

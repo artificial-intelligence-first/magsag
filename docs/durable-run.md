@@ -2,8 +2,8 @@
 title: Durable Run
 slug: durable-run
 status: living
-last_updated: '2025-11-02'
-last_synced: '2025-11-02'
+last_updated: '2025-11-04'
+last_synced: '2025-11-04'
 tags:
 - durability
 - workflow
@@ -531,9 +531,10 @@ Checkpoints accumulate over time:
 
 - [Storage Layer](./storage.md)
 - [Agent Runner](./guides/runner-integration.md)
-- [Observability](./guides/cost-optimization.md)
-- [API Usage](./guides/api-usage.md)
+- [Observability](./architecture/observability.md)
+- [MCP Overview](./mcp.md)
 
 ## Update Log
 
+- 2025-11-04: Updated observability and MCP references to align with the active TypeScript guides.
 - 2025-11-01: Added metadata and audience guidance for the unified documentation standard.

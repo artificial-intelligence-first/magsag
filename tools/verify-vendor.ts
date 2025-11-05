@@ -27,17 +27,13 @@ const VENDORED_FILES: VendoredFile[] = [
   {
     relativePath: 'catalog/policies/flow_governance.yaml',
     digest: 'e1d1db8af41cdc3cf913538551d42af6b07e809b7c814bce40c223fd76a12b06'
-  },
-  {
-    relativePath: 'examples/flowrunner/prompt_flow.yaml',
-    digest: '986c0a672f2d8e259a3857b1b876ae71fd92ea00a6f21e592f8edeea21898fe5'
   }
 ];
 
 const DIRECTORY_RULES: DirectoryRule[] = [
   {
-    relativePath: '.mcp/servers',
-    allowedExtensions: new Set(['.json'])
+    relativePath: 'tools/adk/servers',
+    allowedExtensions: new Set(['.yaml', '.yml'])
   },
   {
     relativePath: 'catalog/tools',

@@ -2,8 +2,8 @@
 title: MCP Migration Guide
 slug: guide-mcp-migration
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-06'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - mcp
 - migration
@@ -16,9 +16,9 @@ sources:
   url: ../../packages/catalog/src/index.ts
   accessed: '2025-11-06'
 - id: R2
-  title: TypeScript Full Migration Plan
-  url: ../development/plans/typescript-full-migration.md
-  accessed: '2025-11-06'
+  title: Repository Cleanup ExecPlan
+  url: ../development/plans/repo-cleanup-execplan.md
+  accessed: '2025-11-04'
 ---
 
 # MCP Migration Guide

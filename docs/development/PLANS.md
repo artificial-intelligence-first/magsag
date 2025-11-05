@@ -2,8 +2,8 @@
 title: ExecPlan Template
 slug: plans-template
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-03'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - magsag
 - plans
@@ -31,8 +31,7 @@ sources: []
 
 ## Active Plans
 
-- [TypeScript Full Migration (Big Bang)](docs/development/plans/typescript-full-migration.md) — Deliver MAGSAG 2.0 with a TS-only monorepo, CLI-default runners, and first-class MCP.
-- [SDK & ADK Unified Runtime Migration](docs/development/plans/sdk-adk-runtime-migration.md) — Complete post-rollout cleanup for the new SDK/ADK workflows.
+- [Repository Cleanup ExecPlan](docs/development/plans/repo-cleanup-execplan.md) — Align MCP presets, retire deprecated docs, and enforce the AI-first TypeScript workflow.
 
 ## Template
 

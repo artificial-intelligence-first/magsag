@@ -2,8 +2,8 @@
 title: MCP Overview
 slug: mcp-overview
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-06'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - mcp
 - architecture
@@ -16,9 +16,9 @@ sources:
   url: ../packages/mcp-client/src/mcp-client.ts
   accessed: '2025-11-06'
 - id: R2
-  title: TypeScript Full Migration Plan
-  url: ./development/plans/typescript-full-migration.md
-  accessed: '2025-11-06'
+  title: Repository Cleanup ExecPlan
+  url: ./development/plans/repo-cleanup-execplan.md
+  accessed: '2025-11-04'
 ---
 
 # MCP Overview
@@ -29,15 +29,16 @@ MCP (Model Context Protocol) integration now relies entirely on TypeScript packa
 
 - `@magsag/mcp-client` — Connects to MCP servers (stdio, HTTP/SSE, WebSocket).
 - `@magsag/mcp-server` — Exposes catalog assets and governance policies (Workstream A).
-- `ops/adk/servers/*.yaml` — Canonical MCP source definitions.
+- `tools/adk/servers/*.yaml` — Canonical MCP source definitions.
 - `@magsag/catalog#skills.*` — Skills that call MCP tools via injected runtimes.
 
 ## Workflow
 
-1. Define or update server configs in `ops/adk/servers/`.
-2. Consume MCP runtimes inside TypeScript skills using the shared interfaces from `packages/catalog/src/shared/types.ts`.
-3. Update registry permissions when adding new servers.
-4. Validate using `pnpm catalog:validate` and note outcomes in delivery docs.
+1. Define or update server configs in `tools/adk/servers/`.
+2. When running the CLI outside the repo root, set `MAGSAG_MCP_DIR` to the directory containing YAML presets.
+3. Consume MCP runtimes inside TypeScript skills using the shared interfaces from `packages/catalog/src/shared/types.ts`.
+4. Update registry permissions when adding new servers.
+5. Validate using `pnpm catalog:validate` and note outcomes in delivery docs.
 
 ## Validation Checklist
 

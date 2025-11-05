@@ -2,8 +2,8 @@
 title: MCP Server Guide
 slug: guide-mcp-server
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-06'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - mcp
 - server
@@ -24,12 +24,12 @@ sources:
 ## Current Status
 
 - `packages/mcp-server` exports placeholders; Workstream A is completing the implementation.
-- Track progress in `docs/development/plans/typescript-full-migration-workstreams.md` (Workstream A).
+- Track progress in `docs/development/plans/repo-cleanup-execplan.md` (Workstream A scope).
 - When released, start the server via `pnpm --filter @magsag/mcp-server build && pnpm --filter @magsag/mcp-server exec node dist/index.js` (command subject to refinement).
 
 ## Configuration
 
-- Store editable YAML definitions under `ops/adk/servers/`.
+- Store editable YAML definitions under `tools/adk/servers/`.
 - Use `pnpm catalog:validate` after updating JSON artefacts.
 
 ## Validation

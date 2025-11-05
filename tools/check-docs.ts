@@ -8,45 +8,38 @@ type ValidationIssue = {
   level: 'error' | 'warning';
 };
 
-const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)), '..');
+const ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 
 const FRONT_MATTER_REQUIRED = ['title:', 'last_synced:', 'description:'];
 
 const FRONT_MATTER_FILES = [
   'docs/guides/agent-development.md',
-  'docs/guides/api-usage.md',
-  'docs/guides/a2a-communication.md',
-  'docs/guides/cost-optimization.md',
-  'docs/guides/github-integration.md',
   'docs/guides/mcp-integration.md',
   'docs/guides/mcp-migration.md',
   'docs/guides/mcp-server.md',
   'docs/guides/migration.md',
-  'docs/guides/moderation.md',
-  'docs/guides/multi-provider.md',
   'docs/guides/runner-integration.md',
-  'docs/guides/semantic-cache.md',
   'docs/architecture/agents.md',
   'docs/architecture/ssot.md',
   'docs/architecture/skills.md',
   'docs/architecture/plans.md',
   'docs/development/changelog.md',
   'docs/development/contributing.md',
-  'docs/development/roadmap.md',
+  'docs/mcp.md',
+  'docs/memory.md',
+  'docs/handoff.md',
   'docs/storage.md',
   'docs/policies/security.md',
   'docs/policies/code-of-conduct.md'
 ];
 
 const MUST_EXIST_FILES = [
-  'docs/guides/agent-development.md',
-  'docs/architecture/ssot.md',
+  'README.md',
   'docs/architecture/agents.md',
   'docs/architecture/skills.md',
   'docs/architecture/plans.md',
-  'docs/development/roadmap.md',
-  'README.md',
-  'docs/development/changelog.md',
+  'docs/architecture/ssot.md',
+  'docs/guides/agent-development.md',
   'docs/guides/runner-integration.md'
 ];
 

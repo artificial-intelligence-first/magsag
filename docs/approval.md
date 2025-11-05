@@ -2,8 +2,8 @@
 title: Approval-as-a-Policy
 slug: approval-policy
 status: living
-last_updated: '2025-11-02'
-last_synced: '2025-11-02'
+last_updated: '2025-11-04'
+last_synced: '2025-11-04'
 tags:
 - governance
 - approvals
@@ -385,10 +385,11 @@ approval_gate = ApprovalGate(
 
 - `catalog/policies/` – YAML policy definitions consumed by the permission evaluator.
 - [Storage Layer](./storage.md)
-- [API Usage](./guides/api-usage.md)
+- [MCP Overview](./mcp.md)
 - [Security Policies](./policies/security.md)
 
 ## Update Log
 
+- 2025-11-04: Updated related documentation links to reflect the TypeScript MCP overview.
 - 2025-11-02: Refreshed metadata and aligned tags with the documentation taxonomy.
 - 2025-11-01: Added frontmatter and audience guidance to align with the unified documentation standard.

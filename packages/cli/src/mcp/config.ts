@@ -72,7 +72,11 @@ export interface McpServerDefinition {
   readonly transports: McpTransportEntry[];
 }
 
-const SERVERS_DIR = join(process.cwd(), 'ops', 'adk', 'servers');
+const DEFAULT_SERVER_DIRECTORIES = [
+  process.env.MAGSAG_MCP_DIR?.trim(),
+  join(process.cwd(), 'tools', 'adk', 'servers'),
+  join(process.cwd(), 'ops', 'adk', 'servers')
+].filter((entry): entry is string => Boolean(entry && entry.length > 0));
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
@@ -284,16 +288,24 @@ const isMissingDirectory = (error: unknown): boolean => {
   return code === 'ENOENT' || code === 'ENOTDIR';
 };
 
-export const loadMcpServerDefinitions = async (
-  directory: string = SERVERS_DIR
-): Promise<McpServerDefinition[]> => {
+const normalizeDirectories = (candidate?: string | string[]): string[] => {
+  if (!candidate) {
+    return DEFAULT_SERVER_DIRECTORIES;
+  }
+  if (Array.isArray(candidate)) {
+    return candidate;
+  }
+  return [candidate];
+};
+
+const loadFromDirectory = async (directory: string): Promise<McpServerDefinition[] | undefined> => {
   const absoluteDir = resolve(directory);
   let entries: Dirent[] = [];
   try {
     entries = await fs.readdir(absoluteDir, { withFileTypes: true });
   } catch (error) {
     if (isMissingDirectory(error)) {
-      return [];
+      return undefined;
     }
     throw error;
   }
@@ -318,10 +330,31 @@ export const loadMcpServerDefinitions = async (
   return definitions;
 };
 
+export const loadMcpServerDefinitions = async (
+  directories?: string | string[]
+): Promise<McpServerDefinition[]> => {
+  const candidates = normalizeDirectories(directories);
+
+  let fallbackResult: McpServerDefinition[] | undefined;
+
+  for (const directory of candidates) {
+    const definitions = await loadFromDirectory(directory);
+    if (definitions === undefined) {
+      continue;
+    }
+    if (definitions.length > 0) {
+      return definitions;
+    }
+    fallbackResult = definitions;
+  }
+
+  return fallbackResult ?? [];
+};
+
 export const findMcpServerDefinition = async (
   serverId: string,
-  directory: string = SERVERS_DIR
+  directories?: string | string[]
 ): Promise<McpServerDefinition | undefined> => {
-  const definitions = await loadMcpServerDefinitions(directory);
+  const definitions = await loadMcpServerDefinitions(directories);
   return definitions.find((definition) => definition.id === serverId);
 };

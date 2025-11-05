@@ -2,8 +2,8 @@
 title: Documentation Tag Taxonomy
 slug: documentation-taxonomy
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-06'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - documentation
 - governance
@@ -39,43 +39,43 @@ sources:
 
 | Tag | Description | Typical Surfaces |
 |-----|-------------|------------------|
-| `agents` | Agent-specific workflows, coordination patterns, and role definitions. | `docs/architecture/agents.md`, `docs/guides/a2a-communication.md` |
-| `api` | API usage, endpoints, and HTTP client guidance. | `docs/guides/api-usage.md` |
+| `agents` | Agent-specific workflows, coordination patterns, and role definitions. | `AGENTS.md`, `docs/architecture/agents.md` |
+| `api` | API usage, endpoints, and HTTP client guidance. | `docs/mcp.md` |
 | `approvals` | Approval workflows, governance gates, and permission policies. | `docs/approval.md` |
 | `architecture` | System design, components, and runtime diagrams. | `docs/architecture/*.md` |
 | `catalog` | Agent, skill, and policy registry references. | `catalog/`, `docs/architecture/skills.md` |
-| `cache` | Caching strategies, semantic cache configuration, and eviction policies. | `docs/guides/semantic-cache.md` |
+| `cache` | Caching strategies, semantic cache configuration, and eviction policies. | Archived; track follow-ups in `docs/development/plans/repo-cleanup-execplan.md` |
 | `changelog` | Release notes, change tracking, and version history. | `CHANGELOG.md`, `docs/workflows/changelog.md` |
 | `community` | Collaboration norms, conduct guidelines, and community policies. | `docs/policies/code-of-conduct.md` |
 | `contributing` | Contributor onboarding, review expectations, and process guides. | `CONTRIBUTING.md`, `docs/development/contributing.md` |
-| `cost` | Cost management, budgeting techniques, and optimisation strategies. | `docs/guides/cost-optimization.md` |
+| `cost` | Cost management, budgeting techniques, and optimisation strategies. | Archived; track follow-ups in `docs/development/plans/repo-cleanup-execplan.md` |
 | `development` | Developer workflows, tooling setup, and local environment practices. | `docs/development/*.md` |
 | `documentation` | Meta-documentation guidance, templates, and style rules. | `docs/governance/*.md`, `docs/_templates/*.md` |
 | `durability` | Durable run management, persistence strategies, and recovery flows. | `docs/durable-run.md` |
 | `governance` | Governance policies, compliance rules, and SSOT guidance. | `AGENTS.md`, `SSOT.md`, `docs/governance/*.md` |
-| `github` | GitHub integration workflows, automation, and webhook usage. | `docs/guides/github-integration.md` |
+| `github` | GitHub integration workflows, automation, and webhook usage. | Archived; track follow-ups in `docs/development/plans/repo-cleanup-execplan.md` |
 | `integration` | Third-party integrations, MCP adapters, and bridge components. | `docs/guides/mcp-integration.md`, `docs/guides/runner-integration.md` |
 | `mcp` | Model Context Protocol configuration, runtime, and server guidance. | `docs/mcp.md`, `docs/guides/mcp-*.md` |
 | `memory` | Memory modules, state management, and retention policies. | `docs/memory.md` |
 | `migration` | Migration plans, upgrade paths, and compatibility notes. | `docs/guides/migration.md`, `docs/guides/mcp-migration.md` |
-| `moderation` | Content moderation workflows and policy enforcement. | `docs/guides/moderation.md` |
+| `moderation` | Content moderation workflows and policy enforcement. | Archived; track follow-ups in `docs/development/plans/repo-cleanup-execplan.md` |
 | `observability` | Logging, tracing, metrics, and monitoring practices. | `docs/architecture/observability.md`, `docs/guides/runner-integration.md` |
-| `orchestration` | Agent orchestration, flow control, and coordination. | `docs/guides/a2a-communication.md`, `docs/architecture/agents.md` |
-| `performance` | Performance tuning, benchmarks, and optimisation tactics. | `docs/guides/semantic-cache.md`, `benchmarks/` docs |
+| `orchestration` | Agent orchestration, flow control, and coordination. | `docs/architecture/agents.md` |
+| `performance` | Performance tuning, benchmarks, and optimisation tactics. | `benchmarks/` docs |
 | `plans` | ExecPlans, multi-session work tracking, and roadmap items. | `docs/workflows/plans.md`, `docs/development/plans/*.md` |
 | `policy` | Security and operational policies covering organisational requirements. | `docs/policies/*.md` |
-| `providers` | External providers, platform adapters, and connector configuration. | `docs/guides/multi-provider.md` |
-| `quality` | Quality assurance, linting, testing, and validation checklists. | `docs/development/issues/mypy-ruff-cleanup.md` |
-| `reference` | Reference material, schemas, and API documentation. | `docs/architecture/ssot.md`, `docs/guides/api-usage.md` |
-| `routing` | Routing strategies, request dispatch, and load management. | `docs/guides/multi-provider.md` |
+| `providers` | External providers, platform adapters, and connector configuration. | Archived; track follow-ups in `docs/development/plans/repo-cleanup-execplan.md` |
+| `quality` | Quality assurance, linting, testing, and validation checklists. | `docs/development/contributing.md`, `docs/workflows/changelog.md` |
+| `reference` | Reference material, schemas, and API documentation. | `SSOT.md`, `docs/architecture/ssot.md` |
+| `routing` | Routing strategies, request dispatch, and load management. | Archived; track follow-ups in `docs/development/plans/repo-cleanup-execplan.md` |
 | `runners` | Runner integrations, lifecycle hooks, and orchestration runners. | `docs/guides/runner-integration.md` |
 | `security` | Security policies, threat models, and hardening steps. | `docs/policies/security.md` |
 | `skills` | Skill authoring guidance, conventions, and templates. | `docs/architecture/skills.md`, `catalog/skills/` |
 | `ssot` | Single Source of Truth definitions and canonical references. | `SSOT.md`, `docs/architecture/ssot.md` |
 | `storage` | Storage backends, retention policies, and data persistence. | `docs/storage.md`, `docs/memory.md` |
 | `template` | Reusable scaffolding and document templates. | `docs/_templates/*.md` |
-| `testing` | Testing strategies, coverage goals, and validation tooling. | `docs/development/contributing.md`, `docs/development/issues/*.md` |
-| `tooling` | Developer tooling, scripts, and automation support. | `docs/development/worktrees.md`, `ops/` docs |
+| `testing` | Testing strategies, coverage goals, and validation tooling. | `docs/development/contributing.md`, `docs/workflows/plans.md` |
+| `tooling` | Developer tooling, scripts, and automation support. | `AGENTS.md`, `tools/` docs |
 | `tracking` | Issue tracking, status reporting, and audit notes. | `docs/development/issues/*.md`, ExecPlans |
 | `upgrades` | Upgrade flows, version compatibility, and rollout planning. | `docs/guides/migration.md` |
 | `workflow` | Operational workflows, delivery pathways, and automation procedures. | `AGENTS.md`, `docs/workflows/*.md` |
@@ -105,4 +105,5 @@ Record command results and any remediation notes in delivery updates when adjust
 ## Update Log
 
 - 2025-11-05: Restored scripted validation using pnpm with Python fallback.
+- 2025-11-04: Pruned archived guide references and updated tag surfaces for the cleanup.
 - 2025-11-02: Expanded the controlled vocabulary to cover all in-repo tags and refreshed metadata.

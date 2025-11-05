@@ -39,7 +39,7 @@ This guide expands on `AGENTS.md` with deeper context about packages, validation
 - TypeScript packages live under `packages/` (CLI, core, governance, observability, runners, MCP, shared logging, worktree utilities).
 - Catalog assets remain under `catalog/`; docs stay under `docs/`.
 - Execute CLI commands with `pnpm --filter @magsag/cli exec magsag <command>`.
-- Manual worktrees: `git worktree add ../wt-<id>-typescript-full-migration main` until the TypeScript worktree utility lands. Document the command in hand-off notes.
+- Manual worktrees: `git worktree add ../wt-<id>-cleanup main` until the TypeScript worktree utility lands. Document the command in hand-off notes.
 - Engine defaults: `ENGINE_MODE=subscription`, `ENGINE_MAG=codex-cli`, `ENGINE_SAG=claude-cli`. Override per run when testing API engines.
 
 ## Architecture Snapshot
@@ -128,10 +128,10 @@ pnpm catalog:validate
 
 - CLI defaults rely on subscription runners; switch to API engines by exporting `ENGINE_MODE=api` and selecting `ENGINE_MAG` / `ENGINE_SAG` accordingly.
 - `packages/runner-claude-agent` and `packages/runner-openai-agents` bridge SDK integrations; ensure credentials are set before executing.
-- MCP presets live in `ops/adk/servers/*.yaml`. Regeneration tooling is pending TypeScript replacement—log any manual JSON generation steps and notify Workstream E.
+- MCP presets live in `tools/adk/servers/*.yaml`. Regeneration tooling is pending TypeScript replacement—log any manual JSON generation steps and notify Workstream E.
 
 ## Update Log
 
-- 2025-11-04: Replaced Python/uv guidance with TypeScript + pnpm instructions and updated package references.
+- 2025-11-04: Replaced Python/uv guidance with TypeScript + pnpm instructions, refreshed MCP preset path to `tools/adk/servers/`, and updated package references.
 - 2025-11-03: Documented external SDK drivers, ADK sync workflow, and governance guardrails.
 - 2025-11-02: Linked workflow and taxonomy references for documentation alignment.

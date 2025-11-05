@@ -2,14 +2,14 @@
 title: ExecPlan Quick Reference
 slug: architecture-plans
 status: living
-last_updated: 2025-11-05
+last_updated: 2025-11-04
 tags:
 - plans
 - workflow
 summary: Lightweight framework for creating, maintaining, and closing ExecPlans.
 authors: []
 sources: []
-last_synced: '2025-11-05'
+last_synced: '2025-11-04'
 description: Lightweight framework for creating, maintaining, and closing ExecPlans.
 ---
 
@@ -72,11 +72,11 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 - Keep language direct; use links instead of lengthy quotes.
 - Prefer multiple small plans over one bloated document.
 - Attach supporting scripts or diagrams next to the plan under the same slug.
-- Reflect key learnings in `docs/architecture/ssot.md` or other canonical surfaces.
+- Reflect key learnings in `SSOT.md` or other canonical surfaces.
 
 ## Active Plans
 
-- [SDK & ADK Unified Runtime Migration](../development/plans/sdk-adk-runtime-migration.md) — Remove legacy workflows, standardise MCP artefacts, and refresh tooling/docs/tests for the new stack.
+- [Repository Cleanup ExecPlan](../development/plans/repo-cleanup-execplan.md) — Align MCP presets, retire deprecated guides, and consolidate tooling for the TypeScript stack.
 
 ## See Also
 
@@ -85,7 +85,7 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 
 ## Update Log
 
-- 2025-11-05: Added SDK & ADK runtime migration plan and retired SDK unification plan.
+- 2025-11-04: Recorded the repository cleanup ExecPlan as active and aligned guidance with the canonical `SSOT.md`.
 - 2025-11-03: Logged SDK unification plan under Active Plans.
 - 2025-11-02: Linked workflow and template references.
 - 2025-11-01: Adopted the unified documentation format and clarified audience guidance.

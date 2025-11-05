@@ -106,7 +106,7 @@ export const mcpDoctorHandler = async (
   }
 
   if (targets.length === 0) {
-    writeLine(streams.stdout, 'No MCP server presets found under ops/adk/servers.');
+    writeLine(streams.stdout, 'No MCP server presets found under tools/adk/servers.');
     return 0;
   }
 

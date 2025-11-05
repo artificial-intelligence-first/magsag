@@ -51,7 +51,7 @@ sources:
 
 #### Added
 - `/api/v1/sessions` and `/openapi.json` endpoints backed by an in-memory session store so runs can be inspected and replayed without the legacy Python API.
-- `docs/development/plans/typescript-full-migration-workstreams.md` to snapshot progress across Workstreams A–F.
+- `docs/development/plans/repo-cleanup-execplan.md` to coordinate TypeScript cleanup, MCP alignment, and Workstreams A–F follow-ups.
 
 #### Changed
 - Replaced legacy Python/FastAPI/uv assets with TypeScript implementations (new `@magsag/catalog` package, updated ops tooling).

@@ -50,7 +50,8 @@ export const buildRunnerMcpEnv = (
     [RUNNER_MCP_ENV.url]: runtime.url,
     [RUNNER_MCP_ENV.host]: runtime.host,
     [RUNNER_MCP_ENV.port]: String(runtime.port),
-    [RUNNER_MCP_ENV.path]: runtime.path
+    [RUNNER_MCP_ENV.path]: runtime.path,
+    MCP_SERVER: runtime.url
   };
 
   const tools = metadata?.tools;
@@ -62,15 +63,28 @@ export const buildRunnerMcpEnv = (
 };
 
 export const applyRunnerMcpEnv = (metadata?: RunnerMcpMetadata): (() => void) => {
-  const envUpdates = buildRunnerMcpEnv(metadata);
-  if (Object.keys(envUpdates).length === 0) {
+  const runtime = metadata?.runtime;
+  if (!runtime) {
     return () => undefined;
   }
 
+  const envUpdates = buildRunnerMcpEnv(metadata);
+  const keysToTrack = new Set<string>([
+    ...Object.keys(envUpdates),
+    RUNNER_MCP_ENV.tools
+  ]);
+
   const previous = new Map<string, string | undefined>();
-  for (const [key, value] of Object.entries(envUpdates)) {
+  for (const key of keysToTrack) {
     previous.set(key, process.env[key]);
+  }
+
+  for (const [key, value] of Object.entries(envUpdates)) {
     process.env[key] = value;
+  }
+
+  if (!metadata?.tools || metadata.tools.length === 0) {
+    delete process.env[RUNNER_MCP_ENV.tools];
   }
 
   return () => {

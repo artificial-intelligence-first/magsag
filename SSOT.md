@@ -2,8 +2,8 @@
 title: MAGSAG Single Source of Truth
 slug: ssot
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-06'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - governance
 - ssot
@@ -83,7 +83,7 @@ Document skipped steps or deferred updates in delivery notes so follow-up action
 
 ## MCP Standard Support
 
-- **Canonical presets** – `ops/adk/servers/*.yaml` store editable MCP definitions. Regenerated artefacts will ship with the TypeScript sync tool; record manual JSON generation steps in delivery notes until available.
+- **Canonical presets** – `tools/adk/servers/*.yaml` store editable MCP definitions. Regenerated artefacts will ship with the TypeScript sync tool; record manual JSON generation steps in delivery notes until available.
 - **Transports** – Streamable HTTP is primary, Server-Sent Events provide backward compatibility, and stdio (`mcp-remote` / `mcp-obsidian`) remains a fallback.
 - **CLI workflow** – `pnpm --filter @magsag/cli exec magsag mcp <command>` bootstraps configs, diagnoses connectivity, and documents authentication flows.
 - **Observability** – MCP calls emit events through the TypeScript observability layer; attach manual context when automated summaries are missing.
@@ -191,7 +191,8 @@ Use this checklist during review to prevent drift and retain SSOT integrity.
 
 - 2025-11-06: Logged TypeScript-only cleanup (Python/FastAPI/uv retired) and updated validation commands (`pnpm docs:lint`, `pnpm catalog:validate`).
 - 2025-11-05: Updated canonical surfaces for the TypeScript monorepo and aligned validation commands with pnpm workflows.
-- 2025-11-03: Migrated MCP workflow to JSON runtime artefacts with YAML sources under `ops/adk/servers/`.
+- 2025-11-04: Synced MCP preset references with `tools/adk/servers/` and clarified regeneration expectations.
+- 2025-11-03: Migrated MCP workflow to JSON runtime artefacts with YAML sources under `tools/adk/servers/`.
 - 2025-11-03: Documented external SDK drivers, ADK sync pipeline, and CLI touchpoints.
 - 2025-11-02: Added documentation workflows to the canonical map.
 - 2025-11-01: Expanded SSOT guidance with glossary, data contracts, policies, and workflows aligned to ssot reference.

@@ -2,8 +2,8 @@
 title: MAGSAG Agent Playbook
 slug: agents
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-06'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - agents
 - workflow
@@ -34,7 +34,8 @@ sources:
 - Install Node.js 18.18+ (22.x LTS recommended) and [pnpm 9](https://pnpm.io/installation); bootstrap each worktree with `pnpm install`.
 - Build packages on demand (for example `pnpm --filter @magsag/cli build`) and execute the CLI via `pnpm --filter @magsag/cli exec node dist/index.js --help`.
 - Place new TypeScript modules under `packages/`; demo surfaces stay in `apps/`; catalog assets remain in `catalog/`; documentation continues under `docs/`.
-- Update MCP YAML in `ops/adk/servers/` and document any manual regeneration steps until the TypeScript sync utility lands; Python fallbacks are retired.
+- Update MCP YAML in `tools/adk/servers/` and document any manual regeneration steps until the TypeScript sync utility lands; Python fallbacks are retired.
+- Export `MAGSAG_MCP_DIR` when invoking the CLI outside the repo root so MCP presets resolve correctly.
 - Start demo services with `pnpm --filter @magsag/demo-cli start` or `pnpm --filter @magsag/demo-api start` after building.
 - Configure secrets through neutral `ENGINE_*` variables or provider-specific keys. Never commit credentials or CLI configuration files.
 
@@ -44,7 +45,7 @@ sources:
 - `ENGINE_MAG` / `ENGINE_SAG` select `codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, or `adk`. Defaults: `codex-cli` (MAG) and `claude-cli` (SAG).
 - Invoke the CLI with `pnpm --filter @magsag/cli exec node dist/index.js agent run --repo . "Investigate flaky CI"`. Pipe prompts via stdin for longer instructions.
 - Switch to API engines by exporting `ENGINE_MODE=api ENGINE_MAG=openai-agents ENGINE_SAG=claude-agent` alongside the necessary API keys.
-- Resume a session with `--resume <id>` once persistence lands in Workstream C; track readiness in `docs/development/plans/typescript-full-migration-workstreams.md`.
+- Resume a session with `--resume <id>` once persistence lands in Workstream C; track readiness in `docs/development/plans/repo-cleanup-execplan.md`.
 
 ## Quality Gates
 
@@ -129,8 +130,9 @@ pnpm catalog:validate
 ## Update Log
 
 - 2025-11-06: Removed Python fallbacks, adopted TypeScript ops tooling, and refreshed validation gates.
+- 2025-11-04: Revised MCP preset guidance to point at `tools/adk/servers/`, documented `MAGSAG_MCP_DIR`, and synced metadata.
 - 2025-11-04: Added MAG/SAG runtime guidance (subscription-first defaults, session storage, metrics endpoint).
-- 2025-11-03: Documented MCP YAML sources under `ops/adk/servers/` and JSON-only runtime artefacts.
+- 2025-11-03: Documented MCP YAML sources under `tools/adk/servers/` and JSON-only runtime artefacts.
 - 2025-11-02: Linked workflow guides, templates, and taxonomy reference.
 - 2025-11-01: Migrated to the unified documentation standard and refreshed metadata.
 - 2025-11-01: Expanded guidance on placement, machine-first writing, and best practices.

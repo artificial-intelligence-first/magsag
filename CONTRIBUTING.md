@@ -2,8 +2,8 @@
 title: Contributing to MAGSAG
 slug: contributing
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-06'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - magsag
 - contributing
@@ -33,11 +33,11 @@ sources:
 
 > **For Humans**: Thank you for improving MAGSAG. This guide explains our expectations, branching model, and validation steps so your work lands smoothly.
 >
-> **For AI Agents**: Follow every checklist exactly. Keep docs/architecture/agents.md and docs/architecture/ssot.md in sync, document changes, and never skip validations unless the user waives them.
+> **For AI Agents**: Follow every checklist exactly. Keep `AGENTS.md` aligned with `SSOT.md`, document changes, and never skip validations unless the user waives them.
 
 ## Project Values
 
-- **Governance-first**: Every change must respect policies defined in `catalog/policies/` and the contracts recorded in [SSOT.md](./docs/architecture/ssot.md).
+- **Governance-first**: Every change must respect policies defined in `catalog/policies/` and the contracts recorded in [SSOT.md](./SSOT.md).
 - **Observable**: Record results in `.runs/`, update `CHANGELOG.md`, and cross-link ExecPlans so work stays traceable.
 - **Safe automation**: Prefer minimal diffs, avoid destructive commands, and halt when requirements conflict with repository policies.
 
@@ -51,7 +51,7 @@ sources:
    pnpm -r typecheck
    pnpm -r lint
    ```
-4. Confirm feature alignment against `docs/development/roadmap.md` and open issues.
+4. Confirm feature alignment against `docs/development/plans/repo-cleanup-execplan.md` and open issues.
 
 ## Issue Workflow
 
@@ -99,7 +99,7 @@ Record pass/fail results for each command in the PR description.
 
 - Keep docs concise and actionable. Avoid rhetorical language.
 - Update diagrams, examples, and CLI excerpts when behaviour changes.
-- Maintain Update Log sections at the bottom of [AGENTS.md](./docs/architecture/agents.md), [SKILL.md](./docs/architecture/skills.md), [SSOT.md](./docs/architecture/ssot.md), [PLANS.md](./docs/development/PLANS.md), and similar files.
+- Maintain Update Log sections at the bottom of [AGENTS.md](./AGENTS.md), [SKILL.md](./docs/architecture/skills.md), [SSOT.md](./SSOT.md), [PLANS.md](./docs/development/PLANS.md), and similar files.
 - Ensure cross-references remain accurate (e.g., README → docs/guides, SSOT definitions → catalog files).
 
 ## Review & Merge
@@ -118,12 +118,13 @@ Record pass/fail results for each command in the PR description.
 ## Support Channels
 
 - **Issues**: https://github.com/artificial-intelligence-first/magsag/issues
-- **Docs**: `docs/guides/` for deep dives (agent dev, API usage, MCP integration, semantic cache, moderation, cost optimisation).
-- **Roadmap**: `docs/development/roadmap.md`
+- **Docs**: `docs/guides/` for deep dives (agent development, MCP integration, MCP server, migrations, runner integration).
+- **Roadmap**: `docs/development/plans/repo-cleanup-execplan.md`
 - **Changelog**: `CHANGELOG.md` and `docs/development/changelog.md`
 
 ## Update Log
 
+- 2025-11-04: Redirected SSOT references to the canonical root document and aligned update checklists.
 - 2025-11-02: Added documentation workflow references and template requirements.
 - 2025-11-01: Updated references to the new SSOT/AGENTS locations and refreshed metadata.
 - 2025-10-30: Rebuilt CONTRIBUTING guide with governance, validation, and documentation requirements aligned to MAGSAG.

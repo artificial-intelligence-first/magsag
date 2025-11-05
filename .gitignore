@@ -1,56 +1,31 @@
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# Build artifacts
-*.egg-info/
-magsag.egg-info/
-dist/
-build/
+# Node build artifacts
 node_modules/
 pnpm-debug.log
+dist/
+build/
 .turbo/
 
-# Testing
-.pytest_cache/
+# Coverage and test reports
 .coverage
+coverage/
 htmlcov/
 
-# Linting & Type checking
-.mypy_cache/
-.ruff_cache/
-
-# Package management cache
-.uv-cache/
-
-# Observability
+# Runtime artefacts
 .runs/
 .observability_cache/
 .magsag/
 /.worktrees/
+.work/
 
-# Development
-.DS_Store
+# Local configuration
+.config/.claude/
+.config/.magsag/
 .mcp/.env.mcp
 
-# Generated scripts (created by ops/scripts/setup-flowrunner.sh)
-ops/scripts/flowrunner-env.sh
-
-# External tools
-flow-runner/
-
-# Flow Runner artifacts
-.flow_runs/
-
-# Benchmark outputs
+# Benchmarks
 benchmarks/*.json
 benchmarks/*.log
 benchmark_report.html
-.work/
+
+# OS artefacts
+.DS_Store

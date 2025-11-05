@@ -14,5 +14,8 @@
     "test": "vitest --run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "yaml": "^2.6.0"
   }
 }

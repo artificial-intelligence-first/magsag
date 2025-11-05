@@ -27,10 +27,11 @@ Version 2.0 is a TypeScript-only monorepo that ships a subscription-first MAG/SA
 ├── apps/                         # Demo surfaces (CLI/API shells)
 ├── catalog/                      # Agents, skills, policies, contracts
 ├── docs/                         # Architecture notes, plans, governance guides
-├── ops/                          # Tooling (MCP sources, scripts)
+├── tools/                        # Tooling (MCP sources, scripts)
 ├── examples/                     # Reference flows and snippets
 ├── eslint.config.js              # Flat ESLint config shared across packages
-├── tsconfig.base.json            # Base TS config with path aliases
+├── tsconfig.json                 # Base TS config with path aliases
+├── vitest.config.ts              # Root test configuration
 ├── turbo.json                    # turborepo pipeline definitions
 ├── package.json                  # Root metadata + devDependencies
 └── pnpm-workspace.yaml           # Workspace definition
@@ -70,7 +71,15 @@ Each package defines standard scripts (`lint`, `typecheck`, `test`, `build`). Us
 - **CLI**: `pnpm --filter @magsag/cli exec magsag agent run --repo . "Investigate flaky CI"`  
   Use `--mode`, `--mag`, `--sag`, and `--resume` to override defaults.
 - **Flow governance**: `@magsag/governance` evaluates flow summaries against YAML policies. Flow Runner tooling is being ported to TypeScript; interim manual review notes must be logged in the ExecPlan.
-- **MCP**: `@magsag/mcp-client` exposes HTTP/SSE/stdio transports. Server scaffolding continues under Workstream A; record schema or contract changes in `docs/development/plans/typescript-full-migration.md`.
+- **MCP**: `@magsag/mcp-client` exposes HTTP/SSE/stdio transports. Server scaffolding continues under Workstream A; record schema or contract changes in `docs/development/plans/repo-cleanup-execplan.md`.
+
+---
+
+## Demo Surfaces
+
+- `pnpm --filter @magsag/demo-cli build && pnpm --filter @magsag/demo-cli start mcp` lists MCP presets sourced from `tools/adk/servers/` and highlights transport coverage.
+- `pnpm --filter @magsag/demo-cli start plan` summarises the active repository cleanup ExecPlan for quick status checks.
+- `pnpm --filter @magsag/demo-api build && pnpm --filter @magsag/demo-api start` starts a lightweight HTTP server exposing `/health`, `/mcp`, and `/plan` endpoints mirroring the same summaries.
 
 ---
 
@@ -110,8 +119,8 @@ pnpm catalog:validate
 
 ## Contributing & Workstreams
 
-- The TypeScript migration is coordinated in `docs/development/plans/typescript-full-migration.md` and the workstream tracker (`docs/development/plans/typescript-full-migration-workstreams.md`).
-- Create dedicated git worktrees manually (e.g. `git worktree add ../wt-ts-migration-f typescript-full-migration`) and capture the command in hand-off notes—the legacy `magsag wt` command no longer exists.
+- The TypeScript cleanup and migration follow-ups are coordinated in `docs/development/plans/repo-cleanup-execplan.md`.
+- Create dedicated git worktrees manually (e.g. `git worktree add ../wt-cleanup feature/repo-cleanup`) and capture the command in hand-off notes—the legacy `magsag wt` command no longer exists.
 - Follow `AGENTS.md` for day-to-day expectations (pnpm workflow, validation gates, delivery notes).
 - Report surprises, missing tooling, or manual steps in the ExecPlan and alert the owning workstream.
 

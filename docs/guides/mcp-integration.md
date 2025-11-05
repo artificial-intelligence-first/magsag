@@ -2,8 +2,8 @@
 title: MCP Integration Guide
 slug: guide-mcp-integration
 status: living
-last_updated: 2025-11-06
-last_synced: '2025-11-06'
+last_updated: 2025-11-04
+last_synced: '2025-11-04'
 tags:
 - mcp
 - integration
@@ -29,11 +29,12 @@ sources:
 
 ## Integration Steps
 
-1. Add or update MCP server definitions in `ops/adk/servers/*.yaml`.
-2. Reference MCP-dependent skills via `@magsag/catalog` (for example `@magsag/catalog#skills.githubIssueTriage`).
-3. Inject `McpRuntime` instances using the shared interfaces from `packages/catalog/src/shared/types.ts`.
-4. Document any new permissions inside `catalog/registry/skills.yaml`.
-5. Validate with `pnpm catalog:validate` and record outcomes.
+1. Add or update MCP server definitions in `tools/adk/servers/*.yaml`.
+2. Set `MAGSAG_MCP_DIR` when invoking the CLI from outside the repo to point at the YAML preset directory.
+3. Reference MCP-dependent skills via `@magsag/catalog` (for example `@magsag/catalog#skills.githubIssueTriage`).
+4. Inject `McpRuntime` instances using the shared interfaces from `packages/catalog/src/shared/types.ts`.
+5. Document any new permissions inside `catalog/registry/skills.yaml`.
+6. Validate with `pnpm catalog:validate` and record outcomes.
 
 ## Validation Commands
 
