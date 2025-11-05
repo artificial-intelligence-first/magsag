@@ -144,6 +144,9 @@ importers:
       '@magsag/specialist':
         specifier: workspace:*
         version: link:../specialist
+      '@magsag/worktree':
+        specifier: workspace:*
+        version: link:../worktree
       '@oclif/core':
         specifier: 3.27.0
         version: 3.27.0
@@ -372,7 +375,11 @@ importers:
 
   packages/worktree: {}
 
-  servers: {}
+  servers:
+    dependencies:
+      '@magsag/mcp-client':
+        specifier: workspace:*
+        version: link:../packages/mcp-client
 
 packages:
 

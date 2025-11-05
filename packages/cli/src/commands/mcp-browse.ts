@@ -6,6 +6,7 @@ export interface ParsedMcpBrowse {
 }
 
 export const parseMcpBrowse = async (_argv: string[]): Promise<ParsedMcpBrowse> => {
+  void _argv;
   return { kind: 'mcp:browse' };
 };
 

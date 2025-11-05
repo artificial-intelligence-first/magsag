@@ -6,6 +6,7 @@ export interface ParsedMcpSearch {
 }
 
 export const parseMcpSearch = async (_argv: string[]): Promise<ParsedMcpSearch> => {
+  void _argv;
   return { kind: 'mcp:search' };
 };
 

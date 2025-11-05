@@ -25,6 +25,10 @@ import { mcpSearchHandler, parseMcpSearch } from './commands/mcp-search.js';
 import type { ParsedMcpSearch } from './commands/mcp-search.js';
 import { mcpBrowseHandler, parseMcpBrowse } from './commands/mcp-browse.js';
 import type { ParsedMcpBrowse } from './commands/mcp-browse.js';
+import { worktreesLsHandler, parseWorktreesLs } from './commands/worktrees-ls.js';
+import type { ParsedWorktreesLs } from './commands/worktrees-ls.js';
+import { worktreesGcHandler, parseWorktreesGc } from './commands/worktrees-gc.js';
+import type { ParsedWorktreesGc } from './commands/worktrees-gc.js';
 import type { CliStreams } from './utils/streams.js';
 
 interface CommandRegistration {
@@ -48,7 +52,9 @@ type ParsedCommand =
   | { kind: 'mcp:ls'; payload: ParsedMcpLs }
   | { kind: 'mcp:doctor'; payload: ParsedMcpDoctor }
   | { kind: 'mcp:search'; payload: ParsedMcpSearch }
-  | { kind: 'mcp:browse'; payload: ParsedMcpBrowse };
+  | { kind: 'mcp:browse'; payload: ParsedMcpBrowse }
+  | { kind: 'worktrees:ls'; payload: ParsedWorktreesLs }
+  | { kind: 'worktrees:gc'; payload: ParsedWorktreesGc };
 
 const COMMANDS: CommandRegistration[] = [
   {
@@ -235,6 +241,34 @@ const COMMANDS: CommandRegistration[] = [
       }
       return mcpBrowseHandler(parsed.payload, streams);
     }
+  },
+  {
+    id: 'worktrees:ls',
+    summary: 'List worktrees managed by the framework.',
+    async parse(argv: string[]) {
+      const payload = await parseWorktreesLs(argv);
+      return { kind: 'worktrees:ls', payload };
+    },
+    execute(parsed, streams) {
+      if (parsed.kind !== 'worktrees:ls') {
+        throw new Error(`Unexpected command kind: ${parsed.kind}`);
+      }
+      return worktreesLsHandler(parsed.payload, streams);
+    }
+  },
+  {
+    id: 'worktrees:gc',
+    summary: 'Run garbage collection on worktrees.',
+    async parse(argv: string[]) {
+      const payload = await parseWorktreesGc(argv);
+      return { kind: 'worktrees:gc', payload };
+    },
+    execute(parsed, streams) {
+      if (parsed.kind !== 'worktrees:gc') {
+        throw new Error(`Unexpected command kind: ${parsed.kind}`);
+      }
+      return worktreesGcHandler(parsed.payload, streams);
+    }
   }
 ];
 
@@ -253,6 +287,8 @@ Commands
   flow gate          Evaluate governance thresholds for a flow summary.
   mcp ls             Inspect MCP presets and list remote tools.
   mcp doctor         Diagnose MCP connectivity with fallback transports.
+  worktrees ls       List worktrees managed by the framework.
+  worktrees gc       Run garbage collection on worktrees.
 
 For detailed help on a command, pass --help after the command.`;
 

@@ -17,13 +17,15 @@ Version 2.0 is a TypeScript-only monorepo that ships a subscription-first MAG/SA
 │   ├── cli/                      # oclif-based CLI (`magsag`)
 │   ├── core/                     # Engine contracts, selection helpers
 │   ├── governance/               # Flow gates, policy evaluation
+│   ├── manager/                  # Enhanced planner, auto-tune, providers
 │   ├── observability/            # Metrics + summaries
 │   ├── runner-*/                 # MAG/SAG runners (codex, claude, api, adk)
 │   ├── mcp-client/               # MCP transport + helpers
 │   ├── mcp-server/               # MCP server façade (WIP)
 │   ├── schema/                   # Shared Zod schemas
 │   ├── server/                   # HTTP entrypoint (experimental)
-│   └── shared-logging/           # Lightweight logger fallbacks
+│   ├── shared-logging/           # Lightweight logger fallbacks
+│   └── worktree/                 # Git worktree management
 ├── apps/                         # Demo surfaces (CLI/API shells)
 ├── catalog/                      # Agents, skills, policies, contracts
 ├── docs/                         # Architecture notes, plans, governance guides
