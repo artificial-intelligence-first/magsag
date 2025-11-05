@@ -148,6 +148,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.17.5
+        version: 1.17.5
       vite-tsconfig-paths:
         specifier: ^4.3.2
         version: 4.3.2(typescript@5.9.3)(vite@5.4.21(@types/node@20.19.24))

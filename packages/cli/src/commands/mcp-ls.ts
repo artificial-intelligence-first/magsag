@@ -1,4 +1,5 @@
 import { Args, Flags, Parser } from '@oclif/core';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { loadMcpServerDefinitions } from '../mcp/config.js';
 import { listToolsWithFallback } from '../mcp/client.js';
 import type { CliStreams } from '../utils/streams.js';
@@ -132,7 +133,7 @@ export const mcpLsHandler = async (
       {
         serverId: server.id,
         transportLabel: result.transport.label,
-        tools: result.tools.tools.map((tool) => ({
+        tools: result.tools.tools.map((tool: Tool) => ({
           name: tool.name,
           description: tool.description ?? undefined
         }))
