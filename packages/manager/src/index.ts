@@ -477,6 +477,30 @@ export class SimpleManager implements ManagerAgent {
       return result;
     }
 
+    if (!agent) {
+      const detail = 'Failed to acquire specialist agent';
+      result = {
+        subtaskId,
+        status: 'failed',
+        detail
+      };
+      events.push({
+        type: 'state',
+        subtaskId,
+        state: 'failed',
+        detail
+      });
+      events.push({ type: 'result', result });
+      if (finalize) {
+        try {
+          await finalize(step, context, result);
+        } catch (error) {
+          this.options.onError?.(error);
+        }
+      }
+      return result;
+    }
+
     events.push({
       type: 'state',
       subtaskId,
