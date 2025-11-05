@@ -13,3 +13,30 @@ permissions:
     - "db:select"
     - "db:describe"
 notes: "Use browser OAuth by default. Reserve PAT + project_ref for CI or headless environments."
+tools:
+  - name: sql_select
+    summary: "Execute a read-only SQL statement."
+    description: "Runs parameterised SELECT queries against the Supabase Postgres database."
+    input:
+      type: object
+      required:
+        - sql
+      properties:
+        sql:
+          type: string
+          description: "Read-only SQL query."
+        params:
+          type: array
+          description: "Positional query parameters."
+          items:
+            description: "Parameter value."
+    output:
+      type: object
+      description: "Supabase rows payload."
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true

@@ -1,4 +1,5 @@
-import { SkillContext, McpRuntime, McpToolResult } from '../shared/types.js';
+import { appendNote, type AppendNoteArgs, type AppendNoteResult } from '@magsag/servers/obsidian';
+import { SkillContext, McpRuntime } from '../shared/types.js';
 
 const ensureRuntime = (context: SkillContext): McpRuntime => {
   if (!context.mcp) {
@@ -22,13 +23,6 @@ const validatePayload = (payload: Record<string, unknown>): void => {
   }
 };
 
-const ensureSuccess = (result: McpToolResult | undefined): McpToolResult => {
-  if (!result || !result.success) {
-    throw new Error(result?.error ?? 'Obsidian append_note failed');
-  }
-  return result;
-};
-
 export const run = async (
   payload: Record<string, unknown>,
   context: SkillContext = {}
@@ -36,22 +30,20 @@ export const run = async (
   validatePayload(payload);
   const runtime = ensureRuntime(context);
 
-  const argumentsPayload: Record<string, unknown> = {
-    path: payload.path,
-    content: payload.content
+  const path = payload.path as string;
+  const content = payload.content as string;
+  const createIfMissing = payload.create_if_missing as boolean | undefined;
+
+  const argumentsPayload: AppendNoteArgs = {
+    path,
+    content
   };
-  if (payload.create_if_missing !== undefined) {
-    argumentsPayload.create_if_missing = payload.create_if_missing;
+  if (createIfMissing !== undefined) {
+    argumentsPayload.create_if_missing = createIfMissing;
   }
 
-  const result = await runtime.executeTool?.({
-    serverId: 'obsidian',
-    toolName: 'append_note',
-    arguments: argumentsPayload
-  });
-
-  const success = ensureSuccess(result);
+  const success: AppendNoteResult = await appendNote(runtime, argumentsPayload);
   return {
-    result: success.output
+    result: success
   };
 };

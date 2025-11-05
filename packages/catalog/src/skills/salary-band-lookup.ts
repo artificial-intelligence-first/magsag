@@ -1,4 +1,5 @@
-import { SkillContext, McpRuntime, McpToolResult } from '../shared/types.js';
+import { query, type QueryArgs, type QueryResult } from '@magsag/servers/pg-readonly';
+import { SkillContext, McpRuntime } from '../shared/types.js';
 
 const SALARY_QUERY = `
 SELECT currency, min_salary, max_salary
@@ -43,12 +44,8 @@ const toFiniteNumber = (value: unknown, field: string): number => {
   throw new Error(`${field} must be numeric`);
 };
 
-const ensureResult = (result: McpToolResult | undefined): Record<string, unknown> => {
-  if (!result || !result.success) {
-    throw new Error(`PostgreSQL query failed: ${result?.error ?? 'unknown error'}`);
-  }
-  const payload = asRecord(result.output);
-  const rows = Array.isArray(payload?.rows) ? payload?.rows : [];
+const ensureResult = (result: QueryResult): Record<string, unknown> => {
+  const rows = Array.isArray(result.rows) ? result.rows : [];
   const firstRow = asRecord(rows?.[0]);
   if (!firstRow) {
     throw new Error(
@@ -67,11 +64,10 @@ export const run = async (
   const location = String(payload.location ?? '');
 
   const runtime = ensureRuntime(context);
-  const result = await runtime.queryPostgres?.({
-    serverId: 'pg-readonly',
+  const result = await query(runtime, {
     sql: SALARY_QUERY,
     params: [role, level, location]
-  });
+  } satisfies QueryArgs);
 
   const row = ensureResult(result);
   const currency = typeof row.currency === 'string' ? row.currency : 'USD';

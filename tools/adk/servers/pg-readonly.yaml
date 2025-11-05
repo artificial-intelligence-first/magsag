@@ -10,3 +10,30 @@ conn:
 limits:
   rate_per_min: 120
   timeout_s: 20
+tools:
+  - name: query
+    mode: postgres
+    summary: "Execute a parameterised read-only SQL query."
+    description: "Provides a safe wrapper for SELECT-style statements against the readonly replica."
+    input:
+      type: object
+      required:
+        - sql
+      properties:
+        sql:
+          type: string
+          description: "Read-only SQL statement."
+        params:
+          type: array
+          description: "PostgreSQL positional parameters."
+          items: {}
+    output:
+      type: object
+      description: "PostgreSQL rows payload."
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true

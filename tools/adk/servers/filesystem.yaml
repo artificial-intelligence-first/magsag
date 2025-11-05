@@ -16,3 +16,62 @@ permissions:
 limits:
   rate_per_min: 60
   timeout_s: 30
+tools:
+  - name: read_text
+    summary: "Read a UTF-8 text file."
+    description: "Reads contents from disk and returns UTF-8 text."
+    input:
+      type: object
+      required:
+        - path
+      properties:
+        path:
+          type: string
+          description: "Relative path to read."
+    output:
+      type: object
+      properties:
+        content:
+          type: string
+          description: "File contents."
+      additionalProperties: true
+  - name: write_text
+    summary: "Write UTF-8 text to a file."
+    description: "Writes text content, creating parent directories when necessary."
+    input:
+      type: object
+      required:
+        - path
+        - content
+      properties:
+        path:
+          type: string
+        content:
+          type: string
+        overwrite:
+          type: boolean
+          description: "Overwrite existing file when true."
+    output:
+      type: object
+      properties:
+        bytes_written:
+          type: integer
+      additionalProperties: true
+  - name: list_entries
+    summary: "List directory entries."
+    description: "Enumerate files and folders at the provided path."
+    input:
+      type: object
+      properties:
+        path:
+          type: string
+          description: "Directory to list (relative)."
+    output:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true

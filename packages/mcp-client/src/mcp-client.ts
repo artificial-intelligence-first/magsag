@@ -64,6 +64,7 @@ export class McpClient {
   private toolsResult: ListToolsResult | null = null;
   private initializing: Promise<void> | null = null;
   private closed = false;
+  private readonly responseCache = new Map<string, { expiresAt?: number; result: CallToolResult }>();
 
   constructor(options: McpClientOptions, dependencies: McpClientDependencies = {}) {
     this.options = options;
@@ -119,6 +120,7 @@ export class McpClient {
       } finally {
         this.client = null;
         this.toolsResult = null;
+        this.responseCache.clear();
       }
     }
   }
@@ -156,13 +158,25 @@ export class McpClient {
   async invokeTool(
     tool: string,
     args: Record<string, unknown>,
-    options: InvokeOptions = {}
+    options: InvokeOptions & { cacheKey?: string; disableCache?: boolean; ttlMs?: number } = {}
   ): Promise<CallToolResult> {
     const now = this.dependencies.now();
     if (!this.circuitBreaker.canAttempt(now)) {
       throw new McpCircuitOpenError(
         `Circuit breaker open for MCP server '${this.options.serverId}'`
       );
+    }
+
+    const cacheOptions = options.cache ?? {};
+    const disableCache = options.disableCache ?? cacheOptions.disable ?? false;
+    const cacheKey = disableCache ? undefined : options.cacheKey ?? cacheOptions.key;
+    const cacheTtlMs = options.ttlMs ?? cacheOptions.ttlMs;
+
+    if (cacheKey) {
+      const cached = this.getCachedResponse(cacheKey, now);
+      if (cached) {
+        return cached;
+      }
     }
 
     const timeoutMs = options.timeoutMs ?? this.requestTimeoutMs;
@@ -181,6 +195,9 @@ export class McpClient {
           }
         )) as CallToolResult;
         this.circuitBreaker.recordSuccess();
+        if (cacheKey) {
+          this.setCachedResponse(cacheKey, result, cacheTtlMs, now);
+        }
         return result;
       } catch (error) {
         const failureTime = this.dependencies.now();
@@ -279,6 +296,39 @@ export class McpClient {
     }
 
     return Math.max(0, delay);
+  }
+
+  clearCache(key?: string): void {
+    if (!key) {
+      this.responseCache.clear();
+      return;
+    }
+    this.responseCache.delete(key);
+  }
+
+  private getCachedResponse(key: string, now: number): CallToolResult | null {
+    const cached = this.responseCache.get(key);
+    if (!cached) {
+      return null;
+    }
+    if (cached.expiresAt !== undefined && cached.expiresAt < now) {
+      this.responseCache.delete(key);
+      return null;
+    }
+    return cached.result;
+  }
+
+  private setCachedResponse(
+    key: string,
+    result: CallToolResult,
+    ttlMs: number | undefined,
+    now: number
+  ): void {
+    const entry = {
+      result,
+      expiresAt: ttlMs && ttlMs > 0 ? now + ttlMs : undefined
+    };
+    this.responseCache.set(key, entry);
   }
 }
 

@@ -1,4 +1,5 @@
-import { SkillContext, McpRuntime, McpToolResult } from '../shared/types.js';
+import { retrievePage, type RetrievePageArgs, type RetrievePageResult } from '@magsag/servers/notion';
+import { SkillContext, McpRuntime } from '../shared/types.js';
 
 const ensureRuntime = (context: SkillContext): McpRuntime => {
   if (!context.mcp) {
@@ -19,13 +20,6 @@ const validatePayload = (payload: Record<string, unknown>): void => {
   }
 };
 
-const ensureSuccess = (result: McpToolResult | undefined): McpToolResult => {
-  if (!result || !result.success) {
-    throw new Error(result?.error ?? 'Notion retrieve_page failed');
-  }
-  return result;
-};
-
 export const run = async (
   payload: Record<string, unknown>,
   context: SkillContext = {}
@@ -33,21 +27,18 @@ export const run = async (
   validatePayload(payload);
   const runtime = ensureRuntime(context);
 
-  const argumentsPayload: Record<string, unknown> = {
-    page_id: payload.page_id
+  const pageId = payload.page_id as string;
+  const includeChildren = payload.include_children as boolean | undefined;
+
+  const argumentsPayload: RetrievePageArgs = {
+    page_id: pageId
   };
-  if (payload.include_children !== undefined) {
-    argumentsPayload.include_children = payload.include_children;
+  if (includeChildren !== undefined) {
+    argumentsPayload.include_children = includeChildren;
   }
 
-  const result = await runtime.executeTool?.({
-    serverId: 'notion',
-    toolName: 'retrieve_page',
-    arguments: argumentsPayload
-  });
-
-  const success = ensureSuccess(result);
+  const success: RetrievePageResult = await retrievePage(runtime, argumentsPayload);
   return {
-    page: success.output
+    page: success
   };
 };

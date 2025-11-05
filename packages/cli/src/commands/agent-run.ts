@@ -8,12 +8,48 @@ import {
 import { buildRunSpec } from '../run-spec.js';
 import { getDefaultRunnerRegistry } from '../registry.js';
 import { type CliStreams, writeLine } from '../utils/streams.js';
+import {
+  resolveWorkspaceConfig,
+  workspaceFlags,
+  type WorkspaceFlagValues
+} from '../workspace/options.js';
 
 export interface ParsedAgentRun {
   spec: RunSpec;
 }
 
+const WORKSPACE_FLAG_ALIASES: Record<string, string> = {
+  '--workspace-base': '--workspaceBase',
+  '--workspace-name': '--workspaceName',
+  '--workspace-keep': '--workspaceKeep',
+  '--workspace-memory': '--workspaceMemory',
+  '--workspace-cpu': '--workspaceCpu',
+  '--workspace-timeout': '--workspaceTimeout',
+  '--workspace-channels': '--workspaceChannels',
+  '--no-workspace-keep': '--no-workspaceKeep'
+} as const;
+
+const normalizeArgv = (argv: string[]): string[] =>
+  argv.map((token) => {
+    if (!token.startsWith('--')) {
+      return token;
+    }
+
+    const separatorIndex = token.indexOf('=');
+    const flag = separatorIndex >= 0 ? token.slice(0, separatorIndex) : token;
+    const normalized = WORKSPACE_FLAG_ALIASES[flag.toLowerCase()];
+    if (!normalized) {
+      return token;
+    }
+
+    if (separatorIndex >= 0) {
+      return `${normalized}${token.slice(separatorIndex)}`;
+    }
+    return normalized;
+  });
+
 const agentRunFlags = {
+  ...workspaceFlags,
   repo: Flags.string({
     char: 'r',
     summary: 'Repository passed to the engine',
@@ -97,7 +133,8 @@ export const resolveRepo = (candidate?: string): string => {
 };
 
 export const parseAgentRun = async (argv: string[]): Promise<ParsedAgentRun> => {
-  const parsed = await Parser.parse(argv, {
+  const normalizedArgv = normalizeArgv(argv);
+  const parsed = await Parser.parse(normalizedArgv, {
     flags: agentRunFlags,
     args: agentRunArgs,
     strict: true
@@ -108,12 +145,14 @@ export const parseAgentRun = async (argv: string[]): Promise<ParsedAgentRun> => 
   const repo = resolveRepo(parsed.flags.repo);
   const resumeId = parsed.flags.resume;
   const trimmedResumeId = resumeId?.trim();
+  const workspace = resolveWorkspaceConfig(parsed.flags as WorkspaceFlagValues);
 
   return {
     spec: buildRunSpec(prompt, {
       engine,
       repo,
-      resumeId: trimmedResumeId && trimmedResumeId.length > 0 ? trimmedResumeId : undefined
+      resumeId: trimmedResumeId && trimmedResumeId.length > 0 ? trimmedResumeId : undefined,
+      workspace
     })
   };
 };
@@ -129,6 +168,14 @@ export const renderRunnerEvent = (
 
   switch (event.type) {
     case 'log':
+      if (event.channel === 'stdout') {
+        writeStdout(event.data);
+        break;
+      }
+      if (event.channel && event.channel !== 'stderr') {
+        writeStderr(`[${event.channel}] ${event.data}`);
+        break;
+      }
       writeStderr(event.data);
       break;
     case 'message': {

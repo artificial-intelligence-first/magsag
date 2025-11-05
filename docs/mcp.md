@@ -2,8 +2,8 @@
 title: MCP Overview
 slug: mcp-overview
 status: living
-last_updated: 2025-11-04
-last_synced: '2025-11-04'
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - mcp
 - architecture
@@ -16,9 +16,9 @@ sources:
   url: ../packages/mcp-client/src/mcp-client.ts
   accessed: '2025-11-06'
 - id: R2
-  title: Repository Cleanup ExecPlan
-  url: ./development/plans/repo-cleanup-execplan.md
-  accessed: '2025-11-04'
+  title: MCP Code Execution Migration ExecPlan
+  url: ./development/plans/mcp-code-execution-migration.md
+  accessed: '2025-11-06'
 ---
 
 # MCP Overview
@@ -36,7 +36,7 @@ MCP (Model Context Protocol) integration now relies entirely on TypeScript packa
 
 1. Define or update server configs in `tools/adk/servers/`.
 2. When running the CLI outside the repo root, set `MAGSAG_MCP_DIR` to the directory containing YAML presets.
-3. Consume MCP runtimes inside TypeScript skills using the shared interfaces from `packages/catalog/src/shared/types.ts`.
+3. Consume MCP runtimes inside TypeScript skills using the shared interfaces from `packages/catalog/src/shared/types.ts`, importing generated wrappers via `@magsag/servers/<serverId>`.
 4. Update registry permissions when adding new servers.
 5. Validate using `pnpm catalog:validate` and note outcomes in delivery docs.
 

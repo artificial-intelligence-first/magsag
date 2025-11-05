@@ -52,6 +52,10 @@ sources:
 #### Added
 - `/api/v1/sessions` and `/openapi.json` endpoints backed by an in-memory session store so runs can be inspected and replayed without the legacy Python API.
 - `docs/development/plans/repo-cleanup-execplan.md` to coordinate TypeScript cleanup, MCP alignment, and Workstreams A–F follow-ups.
+- Workspace sandbox for MAG/SAG runners with CPU/memory/wall-clock limits, audit log capture, and masked log channels surfaced via new workspace CLI flags.
+- `@magsag/mcp-codegen` pipeline (`pnpm mcp:codegen`) generating typed MCP wrappers, skill metadata, and SKILL docs under `skills/<name>/SKILL.md`.
+- CLI commands `mcp search` and `mcp browse` to locate MCP tools and browse filesystem presets without streaming full tool catalogs.
+- PII tokenisation middleware shared across workspaces to mask sensitive payloads before they reach model-visible logs.
 
 #### Changed
 - Replaced legacy Python/FastAPI/uv assets with TypeScript implementations (new `@magsag/catalog` package, updated ops tooling).
@@ -59,6 +63,7 @@ sources:
 - `pnpm test:e2e` / `ci:e2e` invoke the shared Vitest configuration to cover both CLI/server end-to-end suites.
 - CI helper scripts (`ci:lint`, `ci:typecheck`, `ci:build`, `ci:test`) now execute across the entire workspace.
 - Archived legacy Python documentation for handoff and memory flows while TypeScript replacements are prepared.
+- Catalog skills now consume generated MCP modules via `callMcpTool`/`createPostgresQuery`, eliminating direct `executeTool` usage and enabling lazy MCP client caching.
 
 #### Removed
 - Retired Python doc tooling and scripts in favour of `pnpm docs:lint` and `pnpm catalog:validate` ahead of the v2.0.0 tag.

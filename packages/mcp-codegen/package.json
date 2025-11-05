@@ -1,0 +1,16 @@
+{
+  "name": "@magsag/mcp-codegen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsup --config tsup.config.ts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "vitest --run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.6.0"
+  }
+}

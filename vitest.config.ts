@@ -5,10 +5,15 @@ import { defineConfig, defineProject } from 'vitest/config';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const packagesRoot = join(__dirname, 'packages').replace(/\\/g, '/');
+const serversRoot = join(__dirname, 'servers').replace(/\\/g, '/');
 
 export default defineConfig({
   resolve: {
     alias: [
+      {
+        find: /^@magsag\/servers\/(.+)$/,
+        replacement: `${serversRoot}/$1/index.ts`
+      },
       {
         find: /^@magsag\/(.+)$/,
         replacement: `${packagesRoot}/$1/src/index.ts`

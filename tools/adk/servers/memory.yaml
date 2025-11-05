@@ -15,3 +15,65 @@ permissions:
 limits:
   rate_per_min: 120
   timeout_s: 20
+tools:
+  - name: store
+    summary: "Store a memory record."
+    description: "Persists a memory node with optional metadata tags."
+    input:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        expires_at:
+          type: string
+          description: "ISO timestamp for automatic expiration."
+    output:
+      type: object
+      properties:
+        id:
+          type: string
+      additionalProperties: true
+  - name: retrieve
+    summary: "Retrieve a memory record by id."
+    input:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+    output:
+      type: object
+      properties:
+        record:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+  - name: search
+    summary: "Search memories by text or tags."
+    input:
+      type: object
+      properties:
+        query:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        limit:
+          type: integer
+    output:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      additionalProperties: true

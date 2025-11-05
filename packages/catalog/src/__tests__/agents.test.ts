@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { agents, skills } from '../index.js';
-import type { AgentContext, McpRuntime, RunnerGateway } from '../shared/types.js';
+import type { AgentContext, McpRuntime, McpToolResult, RunnerGateway } from '../shared/types.js';
 
 describe('agents.offerOrchestratorMag', () => {
   it('returns aggregated output when SAG succeeds', async () => {
@@ -94,6 +94,7 @@ describe('template agents placeholders', () => {
 describe('skills.salaryBandLookup', () => {
   it('coerces numeric strings from Postgres', async () => {
     const runtime: McpRuntime = {
+      invokeTool: vi.fn(async () => ({ success: true } as McpToolResult)),
       queryPostgres: vi.fn(async () => ({
         success: true,
         output: {
@@ -123,6 +124,7 @@ describe('skills.salaryBandLookup', () => {
 
   it('rejects non-numeric salary values', async () => {
     const runtime: McpRuntime = {
+      invokeTool: vi.fn(async () => ({ success: true } as McpToolResult)),
       queryPostgres: async () => ({
         success: true,
         output: {
@@ -165,6 +167,7 @@ describe('skills.docGen', () => {
 
   it('returns a schema-compliant offer', async () => {
     const runtime: McpRuntime = {
+      invokeTool: vi.fn(async () => ({ success: true } as McpToolResult)),
       queryPostgres: async () => templateResult
     };
 
@@ -187,6 +190,7 @@ describe('skills.docGen', () => {
 
   it('falls back to populated title/seniority when role/level are blank', async () => {
     const runtime: McpRuntime = {
+      invokeTool: vi.fn(async () => ({ success: true } as McpToolResult)),
       queryPostgres: async () => templateResult
     };
 
@@ -209,6 +213,7 @@ describe('skills.docGen', () => {
 
   it('emits warning when salary band payload is empty', async () => {
     const runtime: McpRuntime = {
+      invokeTool: vi.fn(async () => ({ success: true } as McpToolResult)),
       queryPostgres: async () => templateResult
     };
 
@@ -230,7 +235,7 @@ describe('skills.docGen', () => {
 describe('skills.supabaseSqlReadonly', () => {
   it('accepts read-only queries with leading comments and CTEs', async () => {
     const runtime: McpRuntime = {
-      executeTool: vi.fn(async () => ({ success: true, output: [{ id: 1 }] }))
+      invokeTool: vi.fn(async () => ({ success: true, output: { rows: [{ id: 1 }] } }))
     };
 
     const sql = `
@@ -243,13 +248,13 @@ describe('skills.supabaseSqlReadonly', () => {
     `;
 
     const result = await skills.supabaseSqlReadonly({ sql }, { mcp: runtime });
-    expect(runtime.executeTool).toHaveBeenCalledTimes(1);
+    expect(runtime.invokeTool).toHaveBeenCalledTimes(1);
     expect(result).toHaveProperty('rows');
   });
 
   it('rejects mutating queries even when comments are present', async () => {
     const runtime: McpRuntime = {
-      executeTool: vi.fn(async () => ({ success: true, output: [] }))
+      invokeTool: vi.fn(async () => ({ success: true, output: { rows: [] } }))
     };
 
     await expect(
@@ -263,12 +268,12 @@ describe('skills.supabaseSqlReadonly', () => {
         { mcp: runtime }
       )
     ).rejects.toThrow(/Only read-only SELECT statements/);
-    expect(runtime.executeTool).not.toHaveBeenCalled();
+    expect(runtime.invokeTool).not.toHaveBeenCalled();
   });
 
   it('allows literals containing mutating keywords', async () => {
     const runtime: McpRuntime = {
-      executeTool: vi.fn(async () => ({ success: true, output: [] }))
+      invokeTool: vi.fn(async () => ({ success: true, output: { rows: [] } }))
     };
 
     const sql = `
@@ -284,7 +289,7 @@ describe('skills.supabaseSqlReadonly', () => {
 
   it('allows double-quoted identifiers containing reserved words', async () => {
     const runtime: McpRuntime = {
-      executeTool: vi.fn(async () => ({ success: true, output: [] }))
+      invokeTool: vi.fn(async () => ({ success: true, output: { rows: [] } }))
     };
 
     const sql = `
@@ -298,7 +303,7 @@ describe('skills.supabaseSqlReadonly', () => {
 
   it('allows dollar-quoted strings containing reserved words', async () => {
     const runtime: McpRuntime = {
-      executeTool: vi.fn(async () => ({ success: true, output: [] }))
+      invokeTool: vi.fn(async () => ({ success: true, output: [] }))
     };
 
     const sql = `

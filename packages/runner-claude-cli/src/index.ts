@@ -1,6 +1,12 @@
 import { execa } from 'execa';
 import split2 from 'split2';
-import { buildRunnerMcpEnv, type Runner, type RunnerEvent, type RunSpec } from '@magsag/core';
+import {
+  ExecutionWorkspace,
+  buildRunnerMcpEnv,
+  type Runner,
+  type RunnerEvent,
+  type RunSpec
+} from '@magsag/core';
 import { runSpecSchema } from '@magsag/schema';
 
 const DEFAULT_BINARY = 'claude';
@@ -122,12 +128,25 @@ export class ClaudeCliRunner implements Runner {
 
   async *run(spec: RunSpec): AsyncIterable<RunnerEvent> {
     const validated = runSpecSchema.parse(spec);
+    const workspaceEvents: RunnerEvent[] = [];
+    const flushWorkspace = function* (): Generator<RunnerEvent> {
+      while (workspaceEvents.length > 0) {
+        yield workspaceEvents.shift()!;
+      }
+    };
+
+    const workspace = validated.extra?.workspace
+      ? await ExecutionWorkspace.create(validated.extra.workspace, ({ channel, message }) => {
+          workspaceEvents.push({ type: 'log', data: message, channel });
+        })
+      : null;
 
     const mcp = validated.extra?.mcp;
     const env = {
       ...process.env,
       ...(validated.extra?.env ?? {}),
-      ...buildRunnerMcpEnv(mcp)
+      ...buildRunnerMcpEnv(mcp),
+      ...(workspace ? workspace.environment() : {})
     };
 
     // Claude CLI mirrors codex CLI subcommands for `exec` and `resume`.
@@ -146,12 +165,14 @@ export class ClaudeCliRunner implements Runner {
       type: 'log',
       data: `Running ${this.binary()} ${args.join(' ')} in ${validated.repo}`
     };
+    yield* flushWorkspace();
 
     const child = execa(this.binary(), args, {
       cwd: validated.repo,
       all: true,
       env
     });
+    workspace?.attach(child);
 
     const stream = child.all;
     if (!stream) {
@@ -160,41 +181,48 @@ export class ClaudeCliRunner implements Runner {
 
     let sawDone = false;
 
-    const lineStream = stream.pipe(split2());
-    for await (const chunk of lineStream as AsyncIterable<string | Buffer>) {
-      const text = typeof chunk === 'string' ? chunk : chunk.toString();
-      if (!text.trim()) {
-        continue;
-      }
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(text) as unknown;
-      } catch {
-        parsed = undefined;
-      }
-      const events: RunnerEvent[] = isClaudeStreamEvent(parsed)
-        ? mapClaudeEvent(parsed, text)
-        : [{ type: 'log', data: text }];
-      for (const event of events) {
-        if (event.type === 'done') {
-          sawDone = true;
-        }
-        yield event;
-      }
-    }
-
     try {
-      await child;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'claude CLI failed';
-      yield {
-        type: 'error',
-        error: { message }
-      };
-    }
+      const lineStream = stream.pipe(split2());
+      for await (const chunk of lineStream as AsyncIterable<string | Buffer>) {
+        const text = typeof chunk === 'string' ? chunk : chunk.toString();
+        if (!text.trim()) {
+          continue;
+        }
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text) as unknown;
+        } catch {
+          parsed = undefined;
+        }
+        const events: RunnerEvent[] = isClaudeStreamEvent(parsed)
+          ? mapClaudeEvent(parsed, text)
+          : [{ type: 'log', data: text }];
+        for (const event of events) {
+          if (event.type === 'done') {
+            sawDone = true;
+          }
+          yield event;
+        }
+        yield* flushWorkspace();
+      }
 
-    if (!sawDone) {
-      yield { type: 'done' };
+      try {
+        await child;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'claude CLI failed';
+        yield {
+          type: 'error',
+          error: { message }
+        };
+      }
+
+      if (!sawDone) {
+        yield { type: 'done' };
+      }
+      yield* flushWorkspace();
+    } finally {
+      await workspace?.finalize();
+      yield* flushWorkspace();
     }
   }
 

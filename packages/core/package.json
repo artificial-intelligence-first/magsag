@@ -14,6 +14,13 @@
   "files": [
     "dist"
   ],
+  "dependencies": {
+    "@magsag/shared-logging": "workspace:*",
+    "pidusage": "^3.0.2"
+  },
+  "devDependencies": {
+    "@types/pidusage": "^2.0.5"
+  },
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm",
     "lint": "eslint \"src/**/*.ts\"",

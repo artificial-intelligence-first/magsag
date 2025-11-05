@@ -72,6 +72,34 @@ export const listToolsWithFallback = async (
   throw new Error(`Failed to connect to MCP server '${server.id}' via all transports:\n${messages}`);
 };
 
+export const connectClientWithFallback = async (
+  server: McpServerDefinition
+): Promise<{ client: McpClient; transport: McpTransportEntry }> => {
+  const errors: { transport: McpTransportEntry; error: string }[] = [];
+
+  for (const transport of server.transports) {
+    const client = new McpClient({
+      serverId: server.id,
+      transport: transport.config
+    });
+
+    try {
+      await client.listTools();
+      return { client, transport };
+    } catch (error) {
+      const detail =
+        error instanceof Error ? error.message : typeof error === 'string' ? error : 'Unknown error';
+      errors.push({ transport, error: detail });
+      await closeQuietly(client);
+    }
+  }
+
+  const messages = errors
+    .map((entry) => `- ${entry.transport.label}: ${entry.error}`)
+    .join('\n');
+  throw new Error(`Failed to connect to MCP server '${server.id}' via all transports:\n${messages}`);
+};
+
 export const probeServer = async (server: McpServerDefinition): Promise<ProbeResult[]> => {
   const results: ProbeResult[] = [];
 

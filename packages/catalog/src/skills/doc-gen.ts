@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import type { ValidateFunction } from 'ajv';
-import { SkillContext, McpRuntime, McpToolResult } from '../shared/types.js';
+import { query, type QueryResult } from '@magsag/servers/pg-readonly';
+import { SkillContext, McpRuntime } from '../shared/types.js';
 import candidateProfileSchemaJson from '../../../../catalog/contracts/candidate_profile.schema.json' with { type: 'json' };
 import offerPacketSchemaJson from '../../../../catalog/contracts/offer_packet.schema.json' with { type: 'json' };
 
@@ -204,13 +205,8 @@ const renderTemplate = (template: string, context: Record<string, unknown>): str
   });
 };
 
-const ensureToolResult = (result: McpToolResult | undefined, slug: string): OfferTemplate => {
-  if (!result || !result.success) {
-    const errorMessage = result?.error ?? 'unknown error';
-    throw new Error(`Failed to load offer template via MCP: ${errorMessage}`);
-  }
-  const payload = asRecord(result.output);
-  const rows = Array.isArray(payload?.rows) ? payload?.rows : [];
+const ensureToolResult = (result: QueryResult, slug: string): OfferTemplate => {
+  const rows = Array.isArray(result.rows) ? result.rows : [];
   const firstRow = asRecord(rows?.[0]);
   if (!firstRow) {
     throw new Error(`No offer template found for slug '${slug}' (including default).`);
@@ -262,8 +258,7 @@ const loadOfferTemplate = async (
   slug: string,
   runtime: McpRuntime
 ): Promise<OfferTemplate> => {
-  const result = await runtime.queryPostgres?.({
-    serverId: 'pg-readonly',
+  const result = await query(runtime, {
     sql: TEMPLATE_QUERY,
     params: [slug]
   });

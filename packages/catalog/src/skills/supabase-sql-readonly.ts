@@ -1,4 +1,5 @@
-import { SkillContext, McpRuntime, McpToolResult } from '../shared/types.js';
+import { sqlSelect, type SqlSelectArgs, type SqlSelectResult } from '@magsag/servers/supabase';
+import { SkillContext, McpRuntime } from '../shared/types.js';
 
 const READ_ONLY_PREFIX = /^(select|with)\b/i;
 const MUTATING_KEYWORDS = /\b(insert|update|delete|drop|alter|truncate|create|grant|revoke)\b/i;
@@ -132,13 +133,6 @@ const validateSql = (sql: string): void => {
   }
 };
 
-const ensureSuccess = (result: McpToolResult | undefined): McpToolResult => {
-  if (!result || !result.success) {
-    throw new Error(result?.error ?? 'Supabase sql_select failed');
-  }
-  return result;
-};
-
 export const run = async (
   payload: Record<string, unknown>,
   context: SkillContext = {}
@@ -153,17 +147,12 @@ export const run = async (
   validateSql(sql);
 
   const runtime = ensureRuntime(context);
-  const result = await runtime.executeTool?.({
-    serverId: 'supabase',
-    toolName: 'sql_select',
-    arguments: {
-      sql,
-      ...(payload.params !== undefined ? { params: payload.params } : {})
-    }
-  });
-
-  const success = ensureSuccess(result);
+  const args: SqlSelectArgs = {
+    sql,
+    ...(payload.params !== undefined ? { params: payload.params as unknown[] } : {})
+  };
+  const success: SqlSelectResult = await sqlSelect(runtime, args);
   return {
-    rows: success.output
+    rows: success.rows ?? []
   };
 };
