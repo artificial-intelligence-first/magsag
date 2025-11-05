@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 
-const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)), '..');
+const ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 const CATALOG_ROOT = path.join(ROOT, 'catalog');
 
 const errors: string[] = [];

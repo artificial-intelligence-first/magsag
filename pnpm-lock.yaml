@@ -142,7 +142,11 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
 
-  packages/mcp-client: {}
+  packages/mcp-client:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.17.5
+        version: 1.17.5
 
   packages/mcp-server:
     dependencies:

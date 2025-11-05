@@ -13,7 +13,7 @@ type DirectoryRule = {
   allowedExtensions: Set<string>;
 };
 
-const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)), '..');
+const ROOT = path.resolve(fileURLToPath(import.meta.url), '..', '..');
 
 const VENDORED_FILES: VendoredFile[] = [
   {
