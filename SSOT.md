@@ -2,8 +2,8 @@
 title: MAGSAG Single Source of Truth
 slug: ssot
 status: living
-last_updated: 2025-11-04
-last_synced: '2025-11-04'
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - governance
 - ssot
@@ -40,6 +40,8 @@ sources:
 | Documentation workflows | `docs/workflows/` | Changelog, ExecPlan, and operational runbooks |
 | Architecture overview | `docs/architecture/` | System design, workflows, skill conventions |
 | TypeScript packages | `packages/` | CLI, governance, runners, observability, MCP utilities |
+| Generated MCP wrappers | `servers/` | Typed tool invokers produced by `pnpm mcp:codegen` |
+| Skill metadata | `skills/` | Generated SKILL documentation aligned with catalog entries |
 | Demo surfaces | `apps/` | CLI / API shells demonstrating package usage |
 | Development process | `docs/development/` | Roadmap, plans, contributing guides |
 | Catalog assets | `catalog/` | Agent, skill, and policy definitions |
@@ -60,7 +62,7 @@ sources:
 1. **Identify** the SSOT location for the domain you are changing.
 2. **Draft** changes in the canonical file, applying the style and frontmatter rules.
 3. **Propagate** updates to dependent documents (e.g., README excerpts, guides).
-4. **Validate** with current tooling (run `pnpm -r lint`, `pnpm -r typecheck`, `pnpm docs:lint`, `pnpm catalog:validate`) and log outputs in delivery notes.
+4. **Validate** with current tooling (run `pnpm -r lint`, `pnpm -r typecheck`, `pnpm docs:lint`, `pnpm catalog:validate`, `pnpm mcp:codegen --check`) and log outputs in delivery notes.
 5. **Record** outcomes in the change log or plan update log.
 
 Document skipped steps or deferred updates in delivery notes so follow-up actions remain visible.
@@ -83,9 +85,9 @@ Document skipped steps or deferred updates in delivery notes so follow-up action
 
 ## MCP Standard Support
 
-- **Canonical presets** – `tools/adk/servers/*.yaml` store editable MCP definitions. Regenerated artefacts will ship with the TypeScript sync tool; record manual JSON generation steps in delivery notes until available.
+- **Canonical presets** – `tools/adk/servers/*.yaml` store editable MCP definitions. Regenerate the TypeScript wrappers and SKILL metadata with `pnpm mcp:codegen` (use `--check` in CI) so skills, docs, and generated modules stay aligned.
 - **Transports** – Streamable HTTP is primary, Server-Sent Events provide backward compatibility, and stdio (`mcp-remote` / `mcp-obsidian`) remains a fallback.
-- **CLI workflow** – `pnpm --filter @magsag/cli exec magsag mcp <command>` bootstraps configs, diagnoses connectivity, and documents authentication flows.
+- **CLI workflow** – `pnpm --filter @magsag/cli exec magsag mcp <command>` bootstraps configs, diagnoses connectivity (`mcp doctor`), searches tool catalogs (`mcp search`), and browses filesystem presets (`mcp browse`).
 - **Observability** – MCP calls emit events through the TypeScript observability layer; attach manual context when automated summaries are missing.
 - **Policies** – Agent YAML files may declare `policies.tools` overrides (`allow`, `require-approval`, `deny`) which are enforced before MCP execution.
 
@@ -189,6 +191,7 @@ Use this checklist during review to prevent drift and retain SSOT integrity.
 
 ## Update Log
 
+- 2025-11-06: Added generated MCP artefacts (`servers/`, `skills/`), documented `pnpm mcp:codegen --check`, and refreshed MCP CLI workflows (`mcp search`, `mcp browse`).
 - 2025-11-06: Logged TypeScript-only cleanup (Python/FastAPI/uv retired) and updated validation commands (`pnpm docs:lint`, `pnpm catalog:validate`).
 - 2025-11-05: Updated canonical surfaces for the TypeScript monorepo and aligned validation commands with pnpm workflows.
 - 2025-11-04: Synced MCP preset references with `tools/adk/servers/` and clarified regeneration expectations.

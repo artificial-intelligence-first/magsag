@@ -100,3 +100,5 @@ export const createConsoleLogger = (options?: LoggerOptions): Logger => {
 };
 
 export const createLogger = createConsoleLogger;
+
+export { maskSensitiveText, containsPii } from './pii.js';

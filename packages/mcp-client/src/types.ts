@@ -77,7 +77,14 @@ export interface McpClientOptions {
   requestTimeoutMs?: number;
 }
 
+export interface CacheOptions {
+  key?: string;
+  ttlMs?: number;
+  disable?: boolean;
+}
+
 export interface InvokeOptions {
   timeoutMs?: number;
   signal?: AbortSignal;
+  cache?: CacheOptions;
 }

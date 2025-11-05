@@ -1,4 +1,8 @@
 import type { FlowSummary } from '@magsag/schema';
+import type { WorkspaceConfig, WorkspaceLogChannel } from './workspace.js';
+
+export type { WorkspaceLimits, WorkspaceLogChannel, WorkspaceConfig } from './workspace.js';
+export { ExecutionWorkspace } from './workspace.js';
 
 export const ENGINE_IDS = [
   'codex-cli',
@@ -199,6 +203,7 @@ export const applyRunnerMcpEnv = (metadata?: RunnerMcpMetadata): (() => void) =>
 export interface RunSpecExtra extends Record<string, unknown> {
   mcp?: RunnerMcpMetadata;
   env?: Record<string, string>;
+  workspace?: WorkspaceConfig;
 }
 
 export interface RunSpec {
@@ -221,7 +226,7 @@ export interface RunnerErrorPayload {
 }
 
 export type RunnerEvent =
-  | { type: 'log'; data: string }
+  | { type: 'log'; data: string; channel?: WorkspaceLogChannel | 'system' }
   | { type: 'message'; role: 'assistant' | 'tool' | 'system'; content: string }
   | { type: 'diff'; files: { path: string; patch: string }[] }
   | { type: 'tool-call'; call: ToolCallPayload }

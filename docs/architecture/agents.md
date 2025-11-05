@@ -2,8 +2,8 @@
 title: MAGSAG Agent Guidelines
 slug: architecture-agents
 status: living
-last_updated: 2025-11-05
-last_synced: '2025-11-04'
+last_updated: 2025-11-06
+last_synced: '2025-11-06'
 tags:
 - agents
 - workflow
@@ -39,6 +39,7 @@ This guide expands on `AGENTS.md` with deeper context about packages, validation
 - TypeScript packages live under `packages/` (CLI, core, governance, observability, runners, MCP, shared logging, worktree utilities).
 - Catalog assets remain under `catalog/`; docs stay under `docs/`.
 - Execute CLI commands with `pnpm --filter @magsag/cli exec magsag <command>`.
+- Regenerate MCP wrappers and SKILL metadata with `pnpm mcp:codegen`; verify no drift with `pnpm mcp:codegen --check` during reviews.
 - Manual worktrees: `git worktree add ../wt-<id>-cleanup main` until the TypeScript worktree utility lands. Document the command in hand-off notes.
 - Engine defaults: `ENGINE_MODE=subscription`, `ENGINE_MAG=codex-cli`, `ENGINE_SAG=claude-cli`. Override per run when testing API engines.
 
@@ -75,6 +76,8 @@ docs/                 → Architecture notes, workflows, governance guides
 ops/adk/              → MCP server definitions (YAML)
 apps/                 → Demo entry points (placeholder CLI/API)
 examples/             → Reference flows and snippets
+servers/              → Generated MCP tool wrappers (`pnpm mcp:codegen`)
+skills/               → Generated SKILL metadata (one `SKILL.md` per catalog skill)
 ```
 
 ## Required Checks Before Any PR
@@ -95,8 +98,17 @@ pnpm catalog:validate
 1. Create an isolated worktree (`git worktree add ...`) and note it in hand-off docs.
 2. Implement changes with strict typing and focused tests.
 3. Update documentation, SSOT entries, or catalog artefacts affected by behaviour changes.
+   - When MCP presets change, run `pnpm mcp:codegen` and commit regenerated `servers/**` and `skills/**` artefacts alongside code updates.
+   - Import generated wrappers through `@magsag/servers/<serverId>` instead of deep relative paths so code stays stable when directory depth shifts.
 4. Record executed commands and their results (lint, typecheck, test, manual doc review).
 5. Stage related files only (`git add -u`), avoiding drive-by edits.
+
+## Workspace Sandbox Controls
+
+- MAG/SAG runners create an `ExecutionWorkspace` per run. Configure behaviour with CLI flags (`--workspace-base`, `--workspace-keep`, `--workspace-memory`, `--workspace-cpu`, `--workspace-timeout`) or the matching `MAGSAG_WORKSPACE_*` environment variables.
+- Resource ceilings enforce CPU time, resident memory, and wall-clock budgets; breaches terminate the child process and surface a masked `workspace` log event.
+- The sandbox writes masked audit entries (`audit.log`) using the shared PII tokenizer so sensitive values never reach model-visible channels.
+- Runner events now include an optional `channel` field (`workspace`, `stdout`, `stderr`) allowing downstream consumers to route logs or redact them as needed.
 
 ## MAG/SAG Delegation Lifecycle
 
@@ -136,10 +148,11 @@ pnpm catalog:validate
 
 - CLI defaults rely on subscription runners; switch to API engines by exporting `ENGINE_MODE=api` and selecting `ENGINE_MAG` / `ENGINE_SAG` accordingly.
 - `packages/runner-claude-agent` and `packages/runner-openai-agents` bridge SDK integrations; ensure credentials are set before executing.
-- MCP presets live in `tools/adk/servers/*.yaml`. Regeneration tooling is pending TypeScript replacement—log any manual JSON generation steps and notify Workstream E.
+- MCP presets live in `tools/adk/servers/*.yaml`. Regenerate typed wrappers with `pnpm mcp:codegen` (add `--check` in CI) so skills and SKILL docs stay in sync.
 
 ## Update Log
 
+- 2025-11-06: Documented workspace sandbox controls, MCP code generation workflow, channel-aware runner logs, and SKILL metadata requirements.
 - 2025-11-05: Documented MAG/SAG delegation lifecycle, RunnerEvent handling, and cancellation semantics.
 - 2025-11-04: Replaced Python/uv guidance with TypeScript + pnpm instructions, refreshed MCP preset path to `tools/adk/servers/`, and updated package references.
 - 2025-11-03: Documented external SDK drivers, ADK sync workflow, and governance guardrails.

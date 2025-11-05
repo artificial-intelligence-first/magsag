@@ -1,4 +1,10 @@
-import { applyRunnerMcpEnv, type Runner, type RunnerEvent, type RunSpec } from '@magsag/core';
+import {
+  ExecutionWorkspace,
+  applyRunnerMcpEnv,
+  type Runner,
+  type RunnerEvent,
+  type RunSpec
+} from '@magsag/core';
 import { runSpecSchema } from '@magsag/schema';
 
 export interface OpenAiAgentsRunnerOptions {
@@ -38,6 +44,22 @@ const extractFinalOutput = (result: unknown): string | undefined => {
   return undefined;
 };
 
+const normalizeEnvRecord = (value: unknown): Record<string, string> => {
+  if (!value || typeof value !== 'object') {
+    return {};
+  }
+
+  const entries = value as Record<string, unknown>;
+  return Object.entries(entries).reduce<Record<string, string>>((acc, [key, entry]) => {
+    if (typeof entry === 'string') {
+      acc[key] = entry;
+    } else if (typeof entry === 'number' || typeof entry === 'boolean') {
+      acc[key] = String(entry);
+    }
+    return acc;
+  }, {});
+};
+
 export class OpenAiAgentsRunner implements Runner {
   constructor(private readonly options: OpenAiAgentsRunnerOptions = {}) {}
 
@@ -57,7 +79,23 @@ export class OpenAiAgentsRunner implements Runner {
     const previous = process.env.OPENAI_API_KEY;
     process.env.OPENAI_API_KEY = apiKey;
 
-    const extraEnv = validated.extra?.env ?? {};
+    const workspaceEvents: RunnerEvent[] = [];
+    const flushWorkspace = function* (): Generator<RunnerEvent> {
+      while (workspaceEvents.length > 0) {
+        yield workspaceEvents.shift()!;
+      }
+    };
+
+    const workspace = validated.extra?.workspace
+      ? await ExecutionWorkspace.create(validated.extra.workspace, ({ channel, message }) => {
+          workspaceEvents.push({ type: 'log', data: message, channel });
+        })
+      : null;
+
+    const extraEnv = {
+      ...normalizeEnvRecord(validated.extra?.env),
+      ...(workspace ? workspace.environment() : {})
+    };
     const previousEnvEntries = new Map<string, string | undefined>();
     for (const [key, value] of Object.entries(extraEnv)) {
       previousEnvEntries.set(key, process.env[key]);
@@ -65,6 +103,7 @@ export class OpenAiAgentsRunner implements Runner {
     }
 
     const restoreMcpEnvironment = applyRunnerMcpEnv(validated.extra?.mcp);
+    yield* flushWorkspace();
 
     try {
       const { Agent, run } = await loadAgentsModule();
@@ -77,6 +116,7 @@ export class OpenAiAgentsRunner implements Runner {
         type: 'log',
         data: 'Starting OpenAI Agents SDK run'
       };
+      yield* flushWorkspace();
 
       const result = await run(agent, validated.prompt);
       const output = extractFinalOutput(result);
@@ -93,6 +133,7 @@ export class OpenAiAgentsRunner implements Runner {
           data: 'OpenAI Agents SDK completed without final output payload'
         };
       }
+      yield* flushWorkspace();
 
       yield {
         type: 'done',
@@ -105,6 +146,7 @@ export class OpenAiAgentsRunner implements Runner {
         error: { message }
       };
       yield { type: 'done' };
+      yield* flushWorkspace();
     } finally {
       if (previous !== undefined) {
         process.env.OPENAI_API_KEY = previous;
@@ -119,6 +161,8 @@ export class OpenAiAgentsRunner implements Runner {
         }
       }
       restoreMcpEnvironment();
+      await workspace?.finalize();
+      yield* flushWorkspace();
     }
   }
 }

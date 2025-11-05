@@ -5,11 +5,22 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./src/index.ts"
+    },
+    "./manager": {
+      "import": "./dist/manager.js",
+      "types": "./src/manager.ts"
+    }
+  },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm",
+    "build": "tsup --config tsup.config.ts",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"

@@ -37,30 +37,10 @@ export interface Observability {
   metric?(name: string, value: number, tags?: Record<string, unknown>): void;
 }
 
-export interface McpToolResult {
-  success: boolean;
-  output?: unknown;
-  error?: string;
-  metadata?: Record<string, unknown>;
-}
+import type { McpExecutionContext, McpToolResult } from '@magsag/mcp-client';
 
-export interface McpRuntime {
-  executeTool?(
-    options: {
-      serverId: string;
-      toolName: string;
-      arguments?: Record<string, unknown>;
-      args?: Record<string, unknown>;
-    }
-  ): Promise<McpToolResult>;
-  queryPostgres?(
-    options: {
-      serverId: string;
-      sql: string;
-      params?: unknown[];
-    }
-  ): Promise<McpToolResult>;
-}
+export type McpRuntime = McpExecutionContext;
+export type { McpToolResult };
 
 export interface SkillContext {
   mcp?: McpRuntime;

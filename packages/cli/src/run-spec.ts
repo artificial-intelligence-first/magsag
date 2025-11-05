@@ -1,4 +1,4 @@
-import type { EngineId, RunSpec } from '@magsag/core';
+import type { EngineId, RunSpec, WorkspaceConfig } from '@magsag/core';
 import { runSpecSchema } from '@magsag/schema';
 
 export interface BuildRunSpecOptions {
@@ -6,6 +6,7 @@ export interface BuildRunSpecOptions {
   repo?: string;
   resumeId?: string;
   extra?: Record<string, unknown>;
+  workspace?: WorkspaceConfig;
 }
 
 export const buildRunSpec = (
@@ -22,8 +23,11 @@ export const buildRunSpec = (
     spec.resumeId = options.resumeId;
   }
 
-  if (options.extra) {
-    spec.extra = options.extra;
+  if (options.extra || options.workspace) {
+    spec.extra = {
+      ...(options.extra ?? {}),
+      ...(options.workspace ? { workspace: options.workspace } : {})
+    };
   }
 
   return runSpecSchema.parse(spec);

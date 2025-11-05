@@ -570,3 +570,33 @@ export class SimpleManager implements ManagerAgent {
     return result;
   }
 }
+
+
+// Export enhanced planner and related types
+export {
+  HeuristicPlanner,
+  type Planner,
+  type PlannerConfig,
+  type WorkspaceGraphProvider,
+  type TsDiagProvider,
+  type MetricsStore,
+  type RepoInfoProvider
+} from "./planner.js";
+
+// Export auto-tune functionality
+export {
+  AutoTune,
+  getGlobalAutoTune,
+  resetGlobalAutoTune,
+  type ExecutionMetrics,
+  type AutoTuneConfig
+} from "./auto-tune.js";
+
+// Export default providers
+export {
+  PnpmWorkspaceGraphProvider,
+  TscDiagProvider,
+  InMemoryMetricsStore,
+  GitRepoInfoProvider,
+  createDefaultProviders
+} from "./providers.js";

@@ -1,4 +1,5 @@
-import { SkillContext, McpRuntime, McpToolResult } from '../shared/types.js';
+import { listIssues, type ListIssuesArgs, type ListIssuesResult } from '@magsag/servers/github';
+import { SkillContext, McpRuntime } from '../shared/types.js';
 
 const STATES = new Set(['open', 'closed', 'all']);
 
@@ -30,13 +31,6 @@ const validatePayload = (payload: Record<string, unknown>): void => {
   }
 };
 
-const ensureSuccess = (result: McpToolResult | undefined): McpToolResult => {
-  if (!result || !result.success) {
-    throw new Error(result?.error ?? 'GitHub list_issues failed');
-  }
-  return result;
-};
-
 export const run = async (
   payload: Record<string, unknown>,
   context: SkillContext = {}
@@ -44,25 +38,24 @@ export const run = async (
   validatePayload(payload);
   const runtime = ensureRuntime(context);
 
-  const argumentsPayload: Record<string, unknown> = {
-    owner: payload.owner,
-    repo: payload.repo
+  const owner = payload.owner as string;
+  const repo = payload.repo as string;
+  const state = (payload.state as ListIssuesArgs['state'] | undefined) ?? undefined;
+  const labels = payload.labels as string[] | undefined;
+
+  const argumentsPayload: ListIssuesArgs = {
+    owner,
+    repo
   };
-  if (payload.state !== undefined) {
-    argumentsPayload.state = payload.state;
+  if (state !== undefined) {
+    argumentsPayload.state = state;
   }
-  if (payload.labels !== undefined) {
-    argumentsPayload.labels = payload.labels;
+  if (labels !== undefined) {
+    argumentsPayload.labels = labels;
   }
 
-  const result = await runtime.executeTool?.({
-    serverId: 'github',
-    toolName: 'list_issues',
-    arguments: argumentsPayload
-  });
-
-  const success = ensureSuccess(result);
+  const success: ListIssuesResult = await listIssues(runtime, argumentsPayload);
   return {
-    issues: success.output
+    issues: success
   };
 };

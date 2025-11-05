@@ -65,7 +65,7 @@ Store plans under `docs/development/plans/<slug>.md` using this outline:
 
 1. **Draft** the plan file and add it to `docs/architecture/plans.md` under “Active Plans.”
 2. **Trace** progress by appending timestamped status entries in UTC as work evolves.
-3. **Validate** each deliverable with the current command set (`pnpm docs:lint`, `pnpm catalog:validate`, `pnpm -r lint`) and record outcomes in the `Validation` section.
+3. **Validate** each deliverable with the current command set (`pnpm docs:lint`, `pnpm catalog:validate`, `pnpm -r lint`, `pnpm mcp:codegen --check`) and record outcomes in the `Validation` section.
 4. **Decide**: document approvals, blockers, or scope changes in the decision log.
 5. **Close** after completion: finalise validation evidence, move the plan to “Completed Plans” in the index, and link related changelog entries.
 
@@ -87,13 +87,14 @@ Store plans under `docs/development/plans/<slug>.md` using this outline:
 pnpm docs:lint
 pnpm catalog:validate
 pnpm -r lint
+pnpm mcp:codegen --check
 ```
 
 Record pass/fail status and remediation notes in delivery updates or the plan’s `Validation` section.
 
 ## Update Log
 
-- 2025-11-06: Replaced the Python fallback with TypeScript validation commands (`pnpm docs:lint`, `pnpm catalog:validate`) and refreshed guidance.
+- 2025-11-06: Replaced the Python fallback with TypeScript validation commands (`pnpm docs:lint`, `pnpm catalog:validate`, `pnpm mcp:codegen --check`) and refreshed guidance.
 - 2025-11-05: Restored scripted validation using pnpm with the Python fallback during the TypeScript migration (historical; superseded on 2025-11-06).
 - 2025-11-03: Added MCP sync dry-run to validation checklist.
 - 2025-11-02: Established workflow outlining plan triggers, canonical structure, review cadence, and validation commands.

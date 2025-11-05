@@ -9,3 +9,33 @@ transport:
 permissions:
   write_requires_approval: true
 notes: "Some tools require a GitHub Copilot license. Use the least-privileged PAT when OAuth is unavailable."
+tools:
+  - name: list_issues
+    summary: "List repository issues."
+    description: "Enumerate issues for a repository with optional state and label filtering."
+    input:
+      type: object
+      required:
+        - owner
+        - repo
+      properties:
+        owner:
+          type: string
+          description: "Repository owner."
+        repo:
+          type: string
+          description: "Repository name."
+        state:
+          type: string
+          description: "Filter by issue state (open|closed|all)."
+        labels:
+          type: array
+          description: "Optional label filters."
+          items:
+            type: string
+    output:
+      type: array
+      description: "Array of issues matching the query."
+      items:
+        type: object
+        additionalProperties: true

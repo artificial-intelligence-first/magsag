@@ -14,3 +14,38 @@ permissions:
 limits:
   rate_per_min: 30
   timeout_s: 45
+tools:
+  - name: request
+    summary: "Perform an HTTP request."
+    description: "Fetches web content with optional method, headers, and payload overrides."
+    input:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          description: "Target URL."
+        method:
+          type: string
+          description: "HTTP method (defaults to GET)."
+        headers:
+          type: object
+          description: "Optional HTTP headers."
+          additionalProperties:
+            type: string
+        body:
+          description: "Optional request body."
+    output:
+      type: object
+      description: "HTTP response payload."
+      properties:
+        status:
+          type: integer
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        body:
+          description: "Response body (decoded when possible)."
+      additionalProperties: true

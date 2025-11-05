@@ -42,6 +42,20 @@ describe('parseAgentRun', () => {
       /Expected --engine=invalid/
     );
   });
+
+  it('applies workspace flags to the run spec', async () => {
+    const parsed = await parseAgentRun([
+      '--workspace-base', '/tmp/magsag-workspaces',
+      '--workspace-memory', '256',
+      '--workspace-keep',
+      'Workspace prompt'
+    ]);
+    const workspace = parsed.spec.extra?.workspace;
+    expect(workspace).toBeDefined();
+    expect(workspace?.baseDir).toBe('/tmp/magsag-workspaces');
+    expect(workspace?.keep).toBe(true);
+    expect(workspace?.limits?.memoryMb).toBe(256);
+  });
 });
 
 describe('agentRunHandler', () => {

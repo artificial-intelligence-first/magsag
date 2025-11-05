@@ -17,13 +17,15 @@ Version 2.0 is a TypeScript-only monorepo that ships a subscription-first MAG/SA
 │   ├── cli/                      # oclif-based CLI (`magsag`)
 │   ├── core/                     # Engine contracts, selection helpers
 │   ├── governance/               # Flow gates, policy evaluation
+│   ├── manager/                  # Enhanced planner, auto-tune, providers
 │   ├── observability/            # Metrics + summaries
 │   ├── runner-*/                 # MAG/SAG runners (codex, claude, api, adk)
 │   ├── mcp-client/               # MCP transport + helpers
 │   ├── mcp-server/               # MCP server façade (WIP)
 │   ├── schema/                   # Shared Zod schemas
 │   ├── server/                   # HTTP entrypoint (experimental)
-│   └── shared-logging/           # Lightweight logger fallbacks
+│   ├── shared-logging/           # Lightweight logger fallbacks
+│   └── worktree/                 # Git worktree management
 ├── apps/                         # Demo surfaces (CLI/API shells)
 ├── catalog/                      # Agents, skills, policies, contracts
 ├── docs/                         # Architecture notes, plans, governance guides
@@ -70,8 +72,31 @@ Each package defines standard scripts (`lint`, `typecheck`, `test`, `build`). Us
 - **Engine resolution**: `ENGINE_MODE` (`auto|subscription|api|oss`) controls subscription vs API engines. `ENGINE_MAG` / `ENGINE_SAG` choose runners (`codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, `adk`). Defaults resolve to `codex-cli` (MAG) + `claude-cli` (SAG).
 - **CLI**: `pnpm --filter @magsag/cli exec magsag agent plan --repo . "Investigate flaky CI"` generates a JSON plan. Execute it via `agent exec` with concurrency and provider controls, e.g. `pnpm --filter @magsag/cli exec magsag agent exec --plan plan.json --concurrency 4 --provider-map "claude-cli:2,codex-cli"`. Runs stream subtask state and write JSONL logs to `.magsag/runs/<id>.jsonl`, which you can replay with `magsag runs describe <id>`.
   Override engine defaults with `--mode`, `--mag`, `--sag`, or pass `--worktree-root` / `--base` when provisioning SAG worktrees.
+  New worktree commands: `magsag worktrees:ls` lists active worktrees, `magsag worktrees:gc` performs garbage collection.
 - **Flow governance**: `@magsag/governance` evaluates flow summaries against YAML policies. Flow Runner tooling is being ported to TypeScript; interim manual review notes must be logged in the ExecPlan.
 - **MCP**: `@magsag/mcp-client` exposes HTTP/SSE/stdio transports. Server scaffolding continues under Workstream A; record schema or contract changes in `docs/development/plans/repo-cleanup-execplan.md`.
+
+---
+
+## Enhanced Features
+
+### Parallel Execution Framework
+
+The manager package provides advanced parallel execution capabilities:
+
+- **HeuristicPlanner**: Intelligent task planning with dependency analysis and exclusiveKeys support for file-level locking
+- **AutoTune**: Dynamic adjustment of parallel execution based on failure rates and system metrics
+- **Provider Interfaces**: Pluggable providers for workspace graph, TypeScript diagnostics, metrics, and repository information
+- **WorktreeManager**: Manages Git worktrees with JSON-based state persistence and automatic cleanup
+
+Example usage:
+```bash
+# List active worktrees
+pnpm --filter @magsag/cli exec magsag worktrees:ls
+
+# Garbage collect expired worktrees
+pnpm --filter @magsag/cli exec magsag worktrees:gc --ttl 3600
+```
 
 ---
 
@@ -130,10 +155,12 @@ pnpm catalog:validate
 
 | Package | Summary |
 | --- | --- |
-| `@magsag/cli` | oclif CLI exposing `agent`, flow governance, and upcoming worktree utilities |
+| `@magsag/cli` | oclif CLI exposing `agent`, flow governance, and worktree utilities |
 | `@magsag/core` | Engine contracts, runner interfaces, selection helpers |
 | `@magsag/schema` | Zod schemas (`RunSpec`, `RunnerEvent`, policy definitions) |
 | `@magsag/governance` | Flow gate evaluation + policy parsing |
+| `@magsag/manager` | Enhanced parallel execution planner with auto-tune and provider interfaces |
+| `@magsag/worktree` | Git worktree management with JSON store and lifecycle tracking |
 | `@magsag/observability` | Flow summaries, metrics orchestration |
 | `@magsag/runner-*` | MAG/SAG runners: Codex CLI, Claude CLI, OpenAI Agents, Claude Agent, ADK |
 | `@magsag/mcp-client` | MCP transport, circuit breaker, tests |

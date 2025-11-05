@@ -202,4 +202,42 @@ describe('McpClient', () => {
       McpCircuitOpenError
     );
   });
+
+  test('reuses cached responses when a cache key is provided', async () => {
+    const connect: MockedFunction<Client['connect']> = vi.fn().mockResolvedValue(undefined);
+    const listTools: MockedFunction<Client['listTools']> = vi
+      .fn()
+      .mockResolvedValue({ tools: [TOOL_FIXTURE] });
+    const callTool: MockedFunction<Client['callTool']> = vi
+      .fn()
+      .mockResolvedValue({ content: [], isError: false } satisfies Awaited<ReturnType<Client['callTool']>>);
+    const close: MockedFunction<Client['close']> = vi.fn().mockResolvedValue(undefined);
+    const now = vi.fn(() => Date.now());
+
+    const client = new McpClient(
+      {
+        serverId: 'demo-server',
+        transport: { type: 'http', url: 'https://example.com' }
+      },
+      {
+        createClient: () =>
+          ({
+            connect,
+            listTools,
+            callTool,
+            close
+          }) as unknown as Client,
+        createTransport: () => noopTransport,
+        now
+      }
+    );
+
+    await client.invokeTool('echo', { text: 'cached' }, { cacheKey: 'cache::echo' });
+    await client.invokeTool('echo', { text: 'cached' }, { cacheKey: 'cache::echo' });
+    expect(callTool).toHaveBeenCalledTimes(1);
+
+    client.clearCache('cache::echo');
+    await client.invokeTool('echo', { text: 'cached' }, { cacheKey: 'cache::echo' });
+    expect(callTool).toHaveBeenCalledTimes(2);
+  });
 });

@@ -15,3 +15,26 @@ permissions:
     - "vault:read"
     - "vault:write"
 notes: "Requires the Obsidian Local REST API plugin. Delete-style operations are denied or require approval via policy."
+tools:
+  - name: append_note
+    summary: "Append Markdown content to a note."
+    description: "Appends Markdown to the target file, optionally creating the note when it does not exist."
+    input:
+      type: object
+      required:
+        - path
+        - content
+      properties:
+        path:
+          type: string
+          description: "Path to the Obsidian note relative to the vault root."
+        content:
+          type: string
+          description: "Markdown payload to append."
+        create_if_missing:
+          type: boolean
+          description: "Create the note if it is missing."
+    output:
+      type: object
+      description: "Operation metadata supplied by the Obsidian MCP server."
+      additionalProperties: true

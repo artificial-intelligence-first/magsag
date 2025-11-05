@@ -15,6 +15,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@magsag/mcp-client": "workspace:*",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1"
   }

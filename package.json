@@ -15,6 +15,8 @@
     "docs:lint": "tsx tools/check-docs.ts",
     "catalog:validate": "tsx tools/validate-catalog.ts",
     "verify:vendor": "tsx tools/verify-vendor.ts",
+    "mcp:codegen": "tsx packages/mcp-codegen/src/index.ts",
+    "bench:mcp": "tsx tools/benchmarks/mcp-token-benchmark.ts",
     "test:watch": "vitest",
     "test:unit": "vitest --run --project unit",
     "test:integration": "vitest --run --project integration",

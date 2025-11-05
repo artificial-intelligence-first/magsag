@@ -644,3 +644,13 @@ export class WorktreeManager {
     return this.rootRealPath;
   }
 }
+
+// Export enhanced manager
+export { 
+  WorktreeManager as EnhancedWorktreeManager, 
+  JsonWorktreeStore, 
+  type WorktreeRecord, 
+  type WorktreeState as WorktreeRecordState, 
+  type WorktreeManagerConfig, 
+  type WorktreeStore 
+} from "./manager.js";

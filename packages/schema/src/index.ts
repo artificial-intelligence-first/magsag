@@ -20,9 +20,28 @@ const mcpMetadataSchema = z.object({
   tools: z.array(z.string().min(1)).optional()
 });
 
+const workspaceLimitsSchema = z
+  .object({
+    cpuMs: z.number().int().positive().optional(),
+    memoryMb: z.number().positive().optional(),
+    wallClockMs: z.number().positive().optional()
+  })
+  .partial();
+
+const workspaceChannelSchema = z.enum(['workspace', 'stdout', 'stderr']);
+
+const workspaceSchema = z.object({
+  baseDir: z.string().min(1).optional(),
+  keep: z.boolean().optional(),
+  name: z.string().min(1).optional(),
+  limits: workspaceLimitsSchema.optional(),
+  logChannels: z.array(workspaceChannelSchema).optional()
+});
+
 const runSpecExtraSchema = z
   .object({
-    mcp: mcpMetadataSchema.optional()
+    mcp: mcpMetadataSchema.optional(),
+    workspace: workspaceSchema.optional()
   })
   .catchall(z.unknown());
 
@@ -198,8 +217,14 @@ export type FlowSummary = z.infer<typeof flowSummarySchema>;
 export type FlowSummaryStep = z.infer<typeof flowSummaryStepSchema>;
 export type FlowSummaryModel = z.infer<typeof flowSummaryModelSchema>;
 
+const logChannelSchema = z.enum(['workspace', 'stdout', 'stderr', 'system']).optional();
+
 export const runnerEventSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('log'), data: z.string() }),
+  z.object({
+    type: z.literal('log'),
+    data: z.string(),
+    channel: logChannelSchema
+  }),
   z.object({
     type: z.literal('message'),
     role: z.enum(['assistant', 'tool', 'system']),

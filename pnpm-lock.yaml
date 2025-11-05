@@ -59,6 +59,9 @@ importers:
 
   packages/catalog:
     dependencies:
+      '@magsag/mcp-client':
+        specifier: workspace:*
+        version: link:../mcp-client
       ajv:
         specifier: ^8.17.1
         version: 8.17.1
@@ -141,6 +144,9 @@ importers:
       '@magsag/specialist':
         specifier: workspace:*
         version: link:../specialist
+      '@magsag/worktree':
+        specifier: workspace:*
+        version: link:../worktree
       '@oclif/core':
         specifier: 3.27.0
         version: 3.27.0
@@ -161,7 +167,18 @@ importers:
         specifier: ^4.3.2
         version: 4.3.2(typescript@5.9.3)(vite@5.4.21(@types/node@20.19.24))
 
-  packages/core: {}
+  packages/core:
+    dependencies:
+      '@magsag/shared-logging':
+        specifier: workspace:*
+        version: link:../shared-logging
+      pidusage:
+        specifier: ^3.0.2
+        version: 3.0.2
+    devDependencies:
+      '@types/pidusage':
+        specifier: ^2.0.5
+        version: 2.0.5
 
   packages/demo-shared:
     dependencies:
@@ -186,6 +203,12 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.5
         version: 1.17.5
+
+  packages/mcp-codegen:
+    dependencies:
+      yaml:
+        specifier: ^2.6.0
+        version: 2.8.1
 
   packages/mcp-server:
     dependencies:
@@ -351,6 +374,12 @@ importers:
         version: link:../worktree
 
   packages/worktree: {}
+
+  servers:
+    dependencies:
+      '@magsag/mcp-client':
+        specifier: workspace:*
+        version: link:../packages/mcp-client
 
 packages:
 
@@ -962,6 +991,9 @@ packages:
 
   '@types/node@20.19.24':
     resolution: {integrity: sha512-FE5u0ezmi6y9OZEzlJfg37mqqf6ZDSF2V/NLjUyGrR9uTZ7Sb9F7bLNZ03S4XVUNRWGA7Ck4c1kK+YnuWjl+DA==}
+
+  '@types/pidusage@2.0.5':
+    resolution: {integrity: sha512-MIiyZI4/MK9UGUXWt0jJcCZhVw7YdhBuTOuqP/BjuLDLZ2PmmViMIQgZiWxtaMicQfAz/kMrZ5T7PKxFSkTeUA==}
 
   '@types/split2@4.2.3':
     resolution: {integrity: sha512-59OXIlfUsi2k++H6CHgUQKEb2HKRokUA39HY1i1dS8/AIcqVjtAAFdf8u+HxTWK/4FUHMJQlKSZ4I6irCBJ1Zw==}
@@ -1988,6 +2020,10 @@ packages:
     resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
     engines: {node: '>=12'}
 
+  pidusage@3.0.2:
+    resolution: {integrity: sha512-g0VU+y08pKw5M8EZ2rIGiEBaB8wrQMjYGFfW2QVIfyT8V+fq8YFLkvlz4bz5ljvFDJYNFCWT3PWqcRr2FKO81w==}
+    engines: {node: '>=10'}
+
   pirates@4.0.7:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
@@ -3008,6 +3044,8 @@ snapshots:
   '@types/node@20.19.24':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/pidusage@2.0.5': {}
 
   '@types/split2@4.2.3':
     dependencies:
@@ -4113,6 +4151,10 @@ snapshots:
   picomatch@2.3.1: {}
 
   picomatch@4.0.3: {}
+
+  pidusage@3.0.2:
+    dependencies:
+      safe-buffer: 5.2.1
 
   pirates@4.0.7: {}
 

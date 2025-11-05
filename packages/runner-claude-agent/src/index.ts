@@ -1,4 +1,10 @@
-import { applyRunnerMcpEnv, type Runner, type RunnerEvent, type RunSpec } from '@magsag/core';
+import {
+  ExecutionWorkspace,
+  applyRunnerMcpEnv,
+  type Runner,
+  type RunnerEvent,
+  type RunSpec
+} from '@magsag/core';
 import { runSpecSchema } from '@magsag/schema';
 
 export interface ClaudeAgentRunnerOptions {
@@ -196,14 +202,36 @@ export class ClaudeAgentRunner implements Runner {
     const prev = process.env.ANTHROPIC_API_KEY;
     process.env.ANTHROPIC_API_KEY = apiKey;
 
-    const extraEnv = validated.extra?.env ?? {};
+    const workspaceEvents: RunnerEvent[] = [];
+    const flushWorkspace = function* (): Generator<RunnerEvent> {
+      while (workspaceEvents.length > 0) {
+        yield workspaceEvents.shift()!;
+      }
+    };
+
+    const workspace = validated.extra?.workspace
+      ? await ExecutionWorkspace.create(validated.extra.workspace, ({ channel, message }) => {
+          workspaceEvents.push({ type: 'log', data: message, channel });
+        })
+      : null;
+
+    const extraEnv = {
+      ...(validated.extra?.env ?? {}),
+      ...(workspace ? workspace.environment() : {})
+    };
+
     const previousEnvEntries = new Map<string, string | undefined>();
     for (const [key, value] of Object.entries(extraEnv)) {
       previousEnvEntries.set(key, process.env[key]);
-      process.env[key] = value;
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value as string;
+      }
     }
 
     const restoreMcpEnvironment = applyRunnerMcpEnv(validated.extra?.mcp);
+    yield* flushWorkspace();
 
     try {
       const { query } = await loadClaudeAgentSdk();
@@ -230,6 +258,7 @@ export class ClaudeAgentRunner implements Runner {
           }
           yield event;
         }
+        yield* flushWorkspace();
       }
 
       if (!sawDone) {
@@ -242,6 +271,7 @@ export class ClaudeAgentRunner implements Runner {
         error: { message }
       };
       yield { type: 'done' };
+      yield* flushWorkspace();
     } finally {
       if (prev !== undefined) {
         process.env.ANTHROPIC_API_KEY = prev;
@@ -256,6 +286,8 @@ export class ClaudeAgentRunner implements Runner {
         }
       }
       restoreMcpEnvironment();
+      await workspace?.finalize();
+      yield* flushWorkspace();
     }
   }
 }

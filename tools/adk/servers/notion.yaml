@@ -15,3 +15,22 @@ permissions:
     - "read:pages"
     - "read:databases"
 notes: "Streamable HTTP is primary. SSE/STDIO are compatibility and rescue fallbacks."
+tools:
+  - name: retrieve_page
+    summary: "Retrieve a Notion page by id."
+    description: "Fetches metadata and block content for the requested Notion page."
+    input:
+      type: object
+      required:
+        - page_id
+      properties:
+        page_id:
+          type: string
+          description: "Notion page identifier."
+        include_children:
+          type: boolean
+          description: "When true, include child blocks recursively."
+    output:
+      type: object
+      description: "Raw Notion response payload."
+      additionalProperties: true

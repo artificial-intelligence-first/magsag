@@ -8,6 +8,7 @@ export {
 export { CircuitBreaker } from './circuit-breaker.js';
 export { createTransport } from './transports.js';
 export type {
+  CacheOptions,
   CircuitBreakerConfig,
   CircuitState,
   HttpTransportConfig,
@@ -20,3 +21,16 @@ export type {
   TransportType,
   WebSocketTransportConfig
 } from './types.js';
+export {
+  callMcpTool,
+  createPostgresQuery,
+  createClientExecutionContext
+} from './execution.js';
+export type {
+  McpExecutionContext,
+  McpInvokeRequest,
+  McpPostgresQueryConfig,
+  McpPostgresRequest,
+  McpToolCallConfig,
+  McpToolResult
+} from './execution.js';

@@ -19,6 +19,9 @@
     "paths": {
       "@magsag/*": [
         "packages/*/src/index.ts"
+      ],
+      "@magsag/servers/*": [
+        "servers/*/index.ts"
       ]
     }
   }
