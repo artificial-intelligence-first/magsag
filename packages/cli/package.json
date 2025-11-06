@@ -1,10 +1,9 @@
 {
   "name": "@magsag/cli",
   "version": "2.0.0-alpha.0",
-  "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "types": "src/index.ts",
+  "types": "dist/index.d.ts",
   "bin": {
     "magsag": "dist/index.js"
   },
@@ -18,21 +17,21 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/core": "workspace:*",
-    "@magsag/schema": "workspace:*",
-    "@magsag/governance": "workspace:*",
-    "@magsag/observability": "workspace:*",
-    "@magsag/mcp-client": "workspace:*",
-    "@magsag/catalog-mcp": "workspace:*",
-    "@magsag/mcp-server": "workspace:*",
-    "@magsag/runner-adk": "workspace:*",
-    "@magsag/runner-claude-agent": "workspace:*",
-    "@magsag/runner-claude-cli": "workspace:*",
-    "@magsag/runner-codex-cli": "workspace:*",
-    "@magsag/runner-openai-agents": "workspace:*",
-    "@magsag/manager": "workspace:*",
-    "@magsag/specialist": "workspace:*",
-    "@magsag/worktree": "workspace:*",
+    "@magsag/core": "workspace:^",
+    "@magsag/schema": "workspace:^",
+    "@magsag/governance": "workspace:^",
+    "@magsag/observability": "workspace:^",
+    "@magsag/mcp-client": "workspace:^",
+    "@magsag/catalog-mcp": "workspace:^",
+    "@magsag/mcp-server": "workspace:^",
+    "@magsag/runner-adk": "workspace:^",
+    "@magsag/runner-claude-agent": "workspace:^",
+    "@magsag/runner-claude-cli": "workspace:^",
+    "@magsag/runner-codex-cli": "workspace:^",
+    "@magsag/runner-openai-agents": "workspace:^",
+    "@magsag/manager": "workspace:^",
+    "@magsag/specialist": "workspace:^",
+    "@magsag/worktree": "workspace:^",
     "@oclif/core": "3.27.0",
     "execa": "^8.0.1",
     "yaml": "^2.5.1",
@@ -41,5 +40,21 @@
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5",
     "vite-tsconfig-paths": "^4.3.2"
-  }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artificial-intelligence-first/magsag.git",
+    "directory": "packages/cli"
+  },
+  "bugs": {
+    "url": "https://github.com/artificial-intelligence-first/magsag/issues"
+  },
+  "homepage": "https://github.com/artificial-intelligence-first/magsag#readme",
+  "license": "MIT"
 }

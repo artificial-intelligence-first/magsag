@@ -53,3 +53,8 @@ jobs:
 
       - name: Bundle size guard
         run: pnpm ci:size
+
+      - name: Package integrity check
+        run: |
+          pnpm -r exec pnpm pack
+          find . -name "*.tgz" -type f -delete

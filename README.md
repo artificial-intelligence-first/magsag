@@ -67,6 +67,162 @@ Each package defines standard scripts (`lint`, `typecheck`, `test`, `build`). Us
 
 ---
 
+## Using MAGSAG as a Dependency
+
+MAGSAG packages are published to npm under the `@magsag` scope and can be installed in external projects.
+
+### Quick Start
+
+Install the CLI package to get started:
+
+```bash
+# Using pnpm (recommended)
+pnpm add @magsag/cli
+
+# Using npm
+npm install @magsag/cli
+
+# Using yarn
+yarn add @magsag/cli
+```
+
+### Basic Usage
+
+```typescript
+import { AgentWorkflow } from '@magsag/cli';
+
+// Create and execute an agent workflow
+const workflow = new AgentWorkflow({
+  mode: 'subscription',
+  mag: 'codex-cli',
+  sag: 'claude-cli'
+});
+
+await workflow.plan({
+  repo: '.',
+  objective: 'Investigate flaky CI tests'
+});
+```
+
+### Available Packages
+
+You can install individual packages based on your needs:
+
+```bash
+# Core packages
+pnpm add @magsag/core @magsag/schema @magsag/governance
+
+# Runners (choose based on your agent framework)
+pnpm add @magsag/runner-claude-agent  # For Claude Agent SDK
+pnpm add @magsag/runner-codex-cli     # For Codex CLI
+pnpm add @magsag/runner-openai-agents # For OpenAI Agents
+
+# MCP integration
+pnpm add @magsag/mcp-client @magsag/mcp-server
+
+# Utilities
+pnpm add @magsag/worktree @magsag/observability
+```
+
+### Engine Requirements
+
+**Subscription Mode (Default):**
+- Requires Claude CLI or Codex CLI installed and authenticated
+- No API keys needed
+- Works with local agent execution
+
+**API Mode:**
+- Requires API keys: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GOOGLE_API_KEY`
+- Set via environment variables or configuration
+
+### Environment Variables
+
+```bash
+# Engine configuration
+ENGINE_MODE=auto|subscription|api|oss
+ENGINE_MAG=codex-cli|claude-cli|openai-agents|claude-agent|adk
+ENGINE_SAG=codex-cli|claude-cli|openai-agents|claude-agent|adk
+
+# API keys (for API mode)
+ANTHROPIC_API_KEY=your_anthropic_key
+OPENAI_API_KEY=your_openai_key
+GOOGLE_API_KEY=your_google_key
+
+# MCP configuration
+MCP_TRANSPORT=http|sse|stdio
+MCP_ENDPOINT=http://localhost:3000
+```
+
+### Sample Project Setup
+
+Create a new project using MAGSAG:
+
+```bash
+# Initialize new project
+mkdir my-agent-project && cd my-agent-project
+pnpm init
+
+# Install MAGSAG
+pnpm add @magsag/cli @magsag/core @magsag/schema
+
+# Create configuration
+cat > magsag.config.yaml <<EOF
+mode: subscription
+mag: codex-cli
+sag: claude-cli
+concurrency: 4
+worktree:
+  enabled: true
+  ttl: 3600
+EOF
+
+# Run agent
+pnpm exec magsag agent plan --repo . "Your objective here"
+```
+
+### TypeScript Configuration
+
+Add these settings to your `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",
+    "esModuleInterop": true,
+    "strict": true
+  }
+}
+```
+
+### Package Requirements
+
+- **Node.js:** 18.18 or higher
+- **Package Manager:** pnpm 9.x (recommended), npm 9.x, or yarn 4.x
+- **Module System:** ESM (all MAGSAG packages are ESM-only)
+
+### Troubleshooting
+
+**Module not found errors:**
+- Ensure you're using Node.js 18.18+
+- Verify your `package.json` has `"type": "module"`
+- Check that `moduleResolution` is set to `NodeNext` in tsconfig.json
+
+**Workspace dependencies errors:**
+- This typically happens during development
+- Published packages have all dependencies resolved
+- If installing from Git, build packages first: `pnpm build`
+
+**Runner not found:**
+- Ensure the CLI tool is installed (claude, codex, etc.)
+- Verify authentication: `claude --version` or `codex --version`
+- Check `ENGINE_MAG` and `ENGINE_SAG` environment variables
+
+For more details, see [PUBLISHING.md](./PUBLISHING.md).
+
+---
+
 ## Runtime Overview
 
 - **Engine resolution**: `ENGINE_MODE` (`auto|subscription|api|oss`) controls subscription vs API engines. `ENGINE_MAG` / `ENGINE_SAG` choose runners (`codex-cli`, `claude-cli`, `openai-agents`, `claude-agent`, `adk`). Defaults resolve to `codex-cli` (MAG) + `claude-cli` (SAG).

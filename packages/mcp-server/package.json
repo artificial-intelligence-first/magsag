@@ -31,7 +31,7 @@
   ],
   "author": "",
   "dependencies": {
-    "@magsag/shared-logging": "workspace:*",
+    "@magsag/shared-logging": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.17.5",
     "zod": "^3.23.8"
   },
@@ -45,5 +45,15 @@
   },
   "engines": {
     "node": ">=18.18"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artificial-intelligence-first/magsag.git",
+    "directory": "packages/mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/artificial-intelligence-first/magsag/issues"
+  },
+  "homepage": "https://github.com/artificial-intelligence-first/magsag#readme",
+  "license": "MIT"
 }

@@ -1,7 +1,6 @@
 {
   "name": "@magsag/core",
   "version": "2.0.0-alpha.0",
-  "private": true,
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,7 +14,7 @@
     "dist"
   ],
   "dependencies": {
-    "@magsag/shared-logging": "workspace:*",
+    "@magsag/shared-logging": "workspace:^",
     "pidusage": "^3.0.2"
   },
   "devDependencies": {
@@ -26,5 +25,15 @@
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artificial-intelligence-first/magsag.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/artificial-intelligence-first/magsag/issues"
+  },
+  "homepage": "https://github.com/artificial-intelligence-first/magsag#readme",
+  "license": "MIT"
 }

@@ -26,9 +26,14 @@
     "ci:build": "pnpm -r build",
     "ci:test": "vitest --run --config vitest.config.ts",
     "ci:e2e": "vitest --run --config vitest.config.ts tests/vitest/e2e/*.test.ts",
-    "ci:size": "node tools/check_package_size.mjs"
+    "ci:size": "node tools/check_package_size.mjs",
+    "changeset": "changeset",
+    "version-packages": "changeset version && pnpm install --lockfile-only",
+    "release": "pnpm build && pnpm changeset publish",
+    "prepare:publish": "node tools/prepare-for-publish.mjs"
   },
   "devDependencies": {
+    "@changesets/cli": "^2.29.7",
     "@types/node": "^20.16.5",
     "@types/split2": "^4.2.3",
     "@types/ws": "^8.18.1",
