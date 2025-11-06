@@ -19,7 +19,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/mcp-client": "^2.0.0-alpha.0",
+    "@magsag/mcp-client": "workspace:*",
     "yaml": "^2.6.0"
   },
   "files": [

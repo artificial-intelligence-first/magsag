@@ -33,12 +33,12 @@
   ],
   "author": "",
   "dependencies": {
-    "@magsag/shared-logging": "^0.1.0",
+    "@magsag/shared-logging": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.17.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@magsag/mcp-client": "^2.0.0-alpha.0",
+    "@magsag/mcp-client": "workspace:*",
     "eslint": "^8.57.0",
     "eslint-plugin-vitest": "^0.5.4",
     "rimraf": "^5.0.5",

@@ -16,8 +16,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/core": "^2.0.0-alpha.0",
-    "@magsag/schema": "^2.0.0-alpha.0",
+    "@magsag/core": "workspace:*",
+    "@magsag/schema": "workspace:*",
     "split2": "^4.2.0"
   },
   "exports": {

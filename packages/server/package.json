@@ -17,9 +17,9 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.7.0",
-    "@magsag/core": "^2.0.0-alpha.0",
-    "@magsag/observability": "^2.0.0-alpha.0",
-    "@magsag/schema": "^2.0.0-alpha.0",
+    "@magsag/core": "workspace:*",
+    "@magsag/observability": "workspace:*",
+    "@magsag/schema": "workspace:*",
     "hono": "^4.5.0",
     "ws": "^8.18.0",
     "zod-to-json-schema": "^3.24.6"

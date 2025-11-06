@@ -22,7 +22,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/schema": "^2.0.0-alpha.0",
+    "@magsag/schema": "workspace:*",
     "yaml": "^2.8.1"
   },
   "repository": {

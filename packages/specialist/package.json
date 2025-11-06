@@ -16,9 +16,9 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/core": "^2.0.0-alpha.0",
-    "@magsag/worktree": "^2.0.0-alpha.0",
-    "@magsag/shared-logging": "^0.1.0"
+    "@magsag/core": "workspace:*",
+    "@magsag/worktree": "workspace:*",
+    "@magsag/shared-logging": "workspace:*"
   },
   "exports": {
     ".": {
