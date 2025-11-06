@@ -55,4 +55,6 @@ jobs:
         run: pnpm ci:size
 
       - name: Package integrity check
-        run: pnpm -r exec pnpm pack --dry-run
+        run: |
+          pnpm -r exec pnpm pack
+          find . -name "*.tgz" -type f -delete
