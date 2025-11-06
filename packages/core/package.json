@@ -28,7 +28,8 @@
     "build": "tsup src/index.ts --dts --format esm --external pidusage --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepack": "pnpm run build"
   },
   "repository": {
     "type": "git",
