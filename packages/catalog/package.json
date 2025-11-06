@@ -10,12 +10,13 @@
   "scripts": {
     "build": "tsup --config tsup.config.ts",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepack": "pnpm run build",
+    "prepare": "npm run build",
     "test": "vitest --run --passWithNoTests",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepack": "pnpm run build"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/mcp-client": "workspace:^",
+    "@magsag/mcp-client": "^2.0.0-alpha.0",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1"
   },

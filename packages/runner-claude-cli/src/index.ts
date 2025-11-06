@@ -15,6 +15,9 @@ const MESSAGE_ROLES = ['assistant', 'tool', 'system'] as const;
 
 type RunnerMessageRole = (typeof MESSAGE_ROLES)[number];
 
+const ensureTrailingNewline = (value: string): string =>
+  value.endsWith('\n') ? value : `${value}\n`;
+
 interface ClaudeStreamMessage {
   role?: RunnerMessageRole;
   content?: string;
@@ -52,19 +55,34 @@ const resolveRole = (role?: RunnerMessageRole): RunnerMessageRole => {
   return 'assistant';
 };
 
+const normalizeContent = (value: unknown): string | undefined => {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
 const mapClaudeEvent = (evt: ClaudeStreamEvent, raw: string): RunnerEvent[] => {
   const payload: ClaudeStreamMessage | ClaudeStreamEvent = evt.message ?? evt;
   const role = resolveRole(payload.role);
+  const content = normalizeContent(payload.content ?? evt.content);
 
   switch (evt.type) {
     case 'message':
     case 'content':
-      if (payload.content) {
+      if (content) {
         return [
           {
             type: 'message',
             role,
-            content: payload.content
+            content
           }
         ];
       }
@@ -103,12 +121,12 @@ const mapClaudeEvent = (evt: ClaudeStreamEvent, raw: string): RunnerEvent[] => {
         }
       ];
     default:
-      if (payload.content) {
+      if (content) {
         return [
           {
             type: 'message',
             role,
-            content: payload.content
+            content
           }
         ];
       }
@@ -150,16 +168,19 @@ export class ClaudeCliRunner implements Runner {
     };
 
     // Claude CLI mirrors codex CLI subcommands for `exec` and `resume`.
-    const baseArgs = validated.resumeId
-      ? ['resume', validated.resumeId]
-      : ['exec', '--prompt', validated.prompt];
+    const baseArgs = validated.resumeId ? ['resume', validated.resumeId] : ['exec'];
 
     const args = [
       ...baseArgs,
+      '--print',
+      '--verbose',
       '--output-format',
       'stream-json',
       ...(this.options.extraArgs ?? [])
     ];
+
+    const promptInput =
+      !validated.resumeId && validated.prompt ? ensureTrailingNewline(validated.prompt) : undefined;
 
     yield {
       type: 'log',
@@ -170,7 +191,8 @@ export class ClaudeCliRunner implements Runner {
     const child = execa(this.binary(), args, {
       cwd: validated.repo,
       all: true,
-      env
+      env,
+      input: promptInput
     });
     workspace?.attach(child);
 

@@ -7,6 +7,7 @@ import type { AgentContext, Plan, TaskSpec } from '@magsag/core';
 import { resolvePrompt, resolveRepo } from './agent-run.js';
 import type { CliStreams } from '../utils/streams.js';
 import { writeLine } from '../utils/streams.js';
+import { normalizeCamelCaseFlags } from '../utils/argv.js';
 
 export interface ParsedAgentPlan {
   prompt: string;
@@ -41,7 +42,8 @@ const planArgs = {
 } as const;
 
 export const parseAgentPlan = async (argv: string[]): Promise<ParsedAgentPlan> => {
-  const parsed = await Parser.parse(argv, {
+  const normalizedArgv = normalizeCamelCaseFlags(argv, Object.keys(planFlags));
+  const parsed = await Parser.parse(normalizedArgv, {
     flags: planFlags,
     args: planArgs,
     strict: true

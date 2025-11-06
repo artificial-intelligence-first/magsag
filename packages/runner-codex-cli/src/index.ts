@@ -15,6 +15,9 @@ const CODEX_ROLES = ['assistant', 'tool', 'system'] as const;
 
 type CodexRunnerRole = (typeof CODEX_ROLES)[number];
 
+const ensureTrailingNewline = (value: string): string =>
+  value.endsWith('\n') ? value : `${value}\n`;
+
 interface CodexNdjsonFile {
   path: string;
   patch: string;
@@ -47,16 +50,31 @@ const resolveCodexRole = (role?: CodexRunnerRole): CodexRunnerRole => {
   return 'assistant';
 };
 
+const normalizeCodexContent = (value: unknown): string | undefined => {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+};
+
 const mapCodexEvent = (evt: CodexNdjsonEvent, raw: string): RunnerEvent[] => {
 
   switch (evt.type) {
     case 'message':
-      if (evt.content) {
+      const messageContent = normalizeCodexContent(evt.content);
+      if (messageContent) {
         return [
           {
             type: 'message',
             role: resolveCodexRole(evt.role),
-            content: evt.content
+            content: messageContent
           }
         ];
       }
@@ -77,11 +95,12 @@ const mapCodexEvent = (evt: CodexNdjsonEvent, raw: string): RunnerEvent[] => {
     case 'final_message':
     case 'done': {
       const events: RunnerEvent[] = [];
-      if (evt.content) {
+      const doneContent = normalizeCodexContent(evt.content);
+      if (doneContent) {
         events.push({
           type: 'message',
           role: resolveCodexRole(evt.role),
-          content: evt.content
+          content: doneContent
         });
       }
       events.push({
@@ -108,12 +127,13 @@ const mapCodexEvent = (evt: CodexNdjsonEvent, raw: string): RunnerEvent[] => {
         }
       ];
     default:
-      if (evt.content) {
+      const defaultContent = normalizeCodexContent(evt.content);
+      if (defaultContent) {
         return [
           {
             type: 'message',
             role: resolveCodexRole(evt.role),
-            content: evt.content
+            content: defaultContent
           }
         ];
       }
@@ -124,6 +144,8 @@ const mapCodexEvent = (evt: CodexNdjsonEvent, raw: string): RunnerEvent[] => {
 export interface CodexCliRunnerOptions {
   /** Overrides the codex CLI binary name. */
   binary?: string;
+  /** Additional arguments appended to every invocation. */
+  extraArgs?: string[];
 }
 
 export class CodexCliRunner implements Runner {
@@ -152,9 +174,13 @@ export class CodexCliRunner implements Runner {
       ...(workspace ? workspace.environment() : {})
     };
 
-    const args = validated.resumeId
+    const baseArgs = validated.resumeId
       ? ['resume', validated.resumeId, '--json']
-      : ['exec', '--json', validated.prompt];
+      : ['exec', '--json'];
+    const args = [...baseArgs, ...(this.options.extraArgs ?? [])];
+
+    const promptInput =
+      !validated.resumeId && validated.prompt ? ensureTrailingNewline(validated.prompt) : undefined;
 
     yield {
       type: 'log',
@@ -165,7 +191,8 @@ export class CodexCliRunner implements Runner {
     const child = execa(this.binary(), args, {
       cwd: validated.repo,
       all: true,
-      env
+      env,
+      input: promptInput
     });
     workspace?.attach(child);
 

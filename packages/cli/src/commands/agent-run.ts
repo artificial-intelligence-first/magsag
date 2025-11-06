@@ -8,6 +8,7 @@ import {
 import { buildRunSpec } from '../run-spec.js';
 import { getDefaultRunnerRegistry } from '../registry.js';
 import { type CliStreams, writeLine } from '../utils/streams.js';
+import { normalizeCamelCaseFlags } from '../utils/argv.js';
 import {
   resolveWorkspaceConfig,
   workspaceFlags,
@@ -17,36 +18,6 @@ import {
 export interface ParsedAgentRun {
   spec: RunSpec;
 }
-
-const WORKSPACE_FLAG_ALIASES: Record<string, string> = {
-  '--workspace-base': '--workspaceBase',
-  '--workspace-name': '--workspaceName',
-  '--workspace-keep': '--workspaceKeep',
-  '--workspace-memory': '--workspaceMemory',
-  '--workspace-cpu': '--workspaceCpu',
-  '--workspace-timeout': '--workspaceTimeout',
-  '--workspace-channels': '--workspaceChannels',
-  '--no-workspace-keep': '--no-workspaceKeep'
-} as const;
-
-const normalizeArgv = (argv: string[]): string[] =>
-  argv.map((token) => {
-    if (!token.startsWith('--')) {
-      return token;
-    }
-
-    const separatorIndex = token.indexOf('=');
-    const flag = separatorIndex >= 0 ? token.slice(0, separatorIndex) : token;
-    const normalized = WORKSPACE_FLAG_ALIASES[flag.toLowerCase()];
-    if (!normalized) {
-      return token;
-    }
-
-    if (separatorIndex >= 0) {
-      return `${normalized}${token.slice(separatorIndex)}`;
-    }
-    return normalized;
-  });
 
 const agentRunFlags = {
   ...workspaceFlags,
@@ -133,7 +104,7 @@ export const resolveRepo = (candidate?: string): string => {
 };
 
 export const parseAgentRun = async (argv: string[]): Promise<ParsedAgentRun> => {
-  const normalizedArgv = normalizeArgv(argv);
+  const normalizedArgv = normalizeCamelCaseFlags(argv, Object.keys(agentRunFlags));
   const parsed = await Parser.parse(normalizedArgv, {
     flags: agentRunFlags,
     args: agentRunArgs,
@@ -165,18 +136,20 @@ export const renderRunnerEvent = (
   const prefix = options.prefix ? `[${options.prefix}] ` : '';
   const writeStdout = (message: string) => writeLine(streams.stdout, `${prefix}${message}`);
   const writeStderr = (message: string) => writeLine(streams.stderr, `${prefix}${message}`);
+  const formatLog = (value: unknown): string =>
+    typeof value === 'string' ? value : JSON.stringify(value);
 
   switch (event.type) {
     case 'log':
       if (event.channel === 'stdout') {
-        writeStdout(event.data);
+        writeStdout(formatLog(event.data));
         break;
       }
       if (event.channel && event.channel !== 'stderr') {
-        writeStderr(`[${event.channel}] ${event.data}`);
+        writeStderr(`[${event.channel}] ${formatLog(event.data)}`);
         break;
       }
-      writeStderr(event.data);
+      writeStderr(formatLog(event.data));
       break;
     case 'message': {
       const prefix =
@@ -228,7 +201,7 @@ export const renderRunnerEvent = (
       break;
     }
     default:
-      writeStderr(`Unhandled event: ${JSON.stringify(event)}`);
+      writeStderr(formatLog(event));
       break;
   }
 };

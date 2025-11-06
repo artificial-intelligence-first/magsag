@@ -9,14 +9,15 @@
   ],
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm --external @magsag/*",
+    "prepare": "npm run build",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@magsag/core": "workspace:^",
-    "@magsag/schema": "workspace:^",
+    "@magsag/core": "^2.0.0-alpha.0",
+    "@magsag/schema": "^2.0.0-alpha.0",
     "execa": "^8.0.1",
     "split2": "^4.2.0"
   },

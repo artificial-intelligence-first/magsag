@@ -69,10 +69,12 @@ function updateDependencies(deps, versionMap) {
   const updated = { ...deps };
 
   for (const [name, version] of Object.entries(updated)) {
-    if (version === 'workspace:*' && versionMap.has(name)) {
-      // Use workspace:^ protocol - it keeps workspace deps during development
-      // and gets replaced with actual versions during pnpm publish
-      updated[name] = 'workspace:^';
+    if (version?.startsWith('workspace:') && versionMap.has(name)) {
+      const pinned = versionMap.get(name);
+      if (!pinned) {
+        continue;
+      }
+      updated[name] = version.startsWith('workspace:^') ? `^${pinned}` : pinned;
     }
   }
 
@@ -110,6 +112,15 @@ function updatePackageJson(filePath, versionMap) {
     pkg.devDependencies = updateDependencies(pkg.devDependencies, versionMap);
     if (JSON.stringify(pkg.devDependencies) !== oldDevDeps) {
       console.log(`  ✓ Updated devDependencies`);
+      modified = true;
+    }
+  }
+
+  if (pkg.peerDependencies) {
+    const oldPeerDeps = JSON.stringify(pkg.peerDependencies);
+    pkg.peerDependencies = updateDependencies(pkg.peerDependencies, versionMap);
+    if (JSON.stringify(pkg.peerDependencies) !== oldPeerDeps) {
+      console.log(`  ✓ Updated peerDependencies`);
       modified = true;
     }
   }

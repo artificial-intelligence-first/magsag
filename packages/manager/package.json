@@ -29,12 +29,13 @@
   "scripts": {
     "build": "tsup src/index.ts src/planner.ts src/auto-tune.ts src/providers.ts --dts --format esm --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepack": "pnpm run build",
+    "prepare": "npm run build",
     "test": "vitest --run --passWithNoTests",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepack": "pnpm run build"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/core": "workspace:^"
+    "@magsag/core": "^2.0.0-alpha.0"
   },
   "repository": {
     "type": "git",

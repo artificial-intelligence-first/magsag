@@ -16,7 +16,7 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@magsag/demo-shared": "workspace:^"
+    "@magsag/demo-shared": "^2.0.0-alpha.0"
   },
   "exports": {
     ".": {

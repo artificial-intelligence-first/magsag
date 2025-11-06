@@ -19,10 +19,11 @@
     "build": "tsup --config tsup.config.ts --external @magsag/*",
     "clean": "rimraf dist",
     "lint": "eslint \"src/**/*.ts\"",
-    "typecheck": "tsc --noEmit",
+    "prepack": "pnpm run build",
+    "prepare": "npm run build",
     "test": "vitest --run --passWithNoTests",
     "test:watch": "vitest",
-    "prepack": "pnpm run build"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "mcp",
@@ -32,12 +33,12 @@
   ],
   "author": "",
   "dependencies": {
-    "@magsag/shared-logging": "workspace:^",
+    "@magsag/shared-logging": "^0.1.0",
     "@modelcontextprotocol/sdk": "^1.17.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@magsag/mcp-client": "workspace:^",
+    "@magsag/mcp-client": "^2.0.0-alpha.0",
     "eslint": "^8.57.0",
     "eslint-plugin-vitest": "^0.5.4",
     "rimraf": "^5.0.5",

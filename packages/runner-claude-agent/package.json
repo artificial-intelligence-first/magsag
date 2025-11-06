@@ -10,13 +10,14 @@
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepack": "pnpm run build",
+    "prepare": "npm run build",
     "test": "vitest --run --passWithNoTests",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepack": "pnpm run build"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/core": "workspace:^",
-    "@magsag/schema": "workspace:^",
+    "@magsag/core": "^2.0.0-alpha.0",
+    "@magsag/schema": "^2.0.0-alpha.0",
     "@anthropic-ai/claude-agent-sdk": "^0.1.30"
   },
   "exports": {

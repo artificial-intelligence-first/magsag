@@ -18,6 +18,7 @@ import {
 import { RunLogCollector } from '@magsag/observability';
 import { resolvePrompt, resolveRepo, renderRunnerEvent } from './agent-run.js';
 import { getDefaultRunnerRegistry } from '../registry.js';
+import { normalizeCamelCaseFlags } from '../utils/argv.js';
 import type { CliStreams } from '../utils/streams.js';
 import { writeLine } from '../utils/streams.js';
 
@@ -82,7 +83,8 @@ const execArgs = {
 } as const;
 
 export const parseAgentExec = async (argv: string[]): Promise<ParsedAgentExec> => {
-  const parsed = await Parser.parse(argv, {
+  const normalizedArgv = normalizeCamelCaseFlags(argv, Object.keys(execFlags));
+  const parsed = await Parser.parse(normalizedArgv, {
     flags: execFlags,
     args: execArgs,
     strict: true

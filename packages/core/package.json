@@ -14,22 +14,23 @@
     "dist"
   ],
   "dependencies": {
-    "@magsag/shared-logging": "workspace:^",
+    "@magsag/shared-logging": "^0.1.0",
     "pidusage": "^3.0.2"
   },
   "devDependencies": {
-    "@magsag/schema": "workspace:^",
+    "@magsag/schema": "^2.0.0-alpha.0",
     "@types/pidusage": "^2.0.5"
   },
   "peerDependencies": {
-    "@magsag/schema": "workspace:^"
+    "@magsag/schema": "^2.0.0-alpha.0"
   },
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm --external pidusage --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepack": "pnpm run build",
+    "prepare": "npm run build",
     "test": "vitest --run --passWithNoTests",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepack": "pnpm run build"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "repository": {
     "type": "git",

@@ -21,12 +21,13 @@
   "scripts": {
     "build": "tsup --config tsup.config.ts --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
+    "prepack": "pnpm run build",
+    "prepare": "npm run build",
     "test": "vitest --run --config vitest.config.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prepack": "pnpm run build"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/schema": "workspace:^"
+    "@magsag/schema": "^2.0.0-alpha.0"
   },
   "repository": {
     "type": "git",
