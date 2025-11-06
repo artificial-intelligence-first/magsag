@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup --config tsup.config.ts",
+    "build": "tsup --config tsup.config.ts --external @magsag/*",
     "clean": "rimraf dist",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
@@ -36,6 +36,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@magsag/mcp-client": "workspace:^",
     "eslint": "^8.57.0",
     "eslint-plugin-vitest": "^0.5.4",
     "rimraf": "^5.0.5",

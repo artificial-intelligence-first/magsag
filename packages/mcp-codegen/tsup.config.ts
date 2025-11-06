@@ -6,5 +6,6 @@ export default defineConfig({
   dts: true,
   clean: true,
   sourcemap: true,
-  target: 'node20'
+  target: 'node20',
+  external: [/^@magsag\//]
 });

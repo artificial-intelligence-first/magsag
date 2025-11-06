@@ -8,7 +8,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup --config tsup.config.ts",
+    "build": "tsup --config tsup.config.ts --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"

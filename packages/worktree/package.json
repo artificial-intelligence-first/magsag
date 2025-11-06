@@ -19,10 +19,13 @@
     "src"
   ],
   "scripts": {
-    "build": "tsup --config tsup.config.ts",
+    "build": "tsup --config tsup.config.ts --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@magsag/schema": "workspace:^"
   },
   "repository": {
     "type": "git",

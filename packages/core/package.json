@@ -18,10 +18,14 @@
     "pidusage": "^3.0.2"
   },
   "devDependencies": {
+    "@magsag/schema": "workspace:^",
     "@types/pidusage": "^2.0.5"
   },
+  "peerDependencies": {
+    "@magsag/schema": "workspace:^"
+  },
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm --external pidusage",
+    "build": "tsup src/index.ts --dts --format esm --external pidusage --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"

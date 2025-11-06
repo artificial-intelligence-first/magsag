@@ -14,12 +14,13 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm",
+    "build": "tsup src/index.ts --dts --format esm --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@magsag/schema": "workspace:^",
     "yaml": "^2.8.1"
   },
   "repository": {

@@ -41,7 +41,8 @@ jobs:
         run: pnpm build
 
       - name: Create Release Pull Request or Publish
-        id: changesets
+        if: ${{ secrets.NPM_TOKEN != '' }}
+        id: changesets-publish
         uses: changesets/action@v1
         with:
           version: pnpm version-packages
@@ -52,3 +53,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
+
+      - name: Create Release Pull Request
+        if: ${{ secrets.NPM_TOKEN == '' }}
+        id: changesets-version
+        uses: changesets/action@v1
+        with:
+          version: pnpm version-packages
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

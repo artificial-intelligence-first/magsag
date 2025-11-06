@@ -8,12 +8,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup --config tsup.config.ts",
+    "build": "tsup --config tsup.config.ts --external @magsag/*",
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@magsag/core": "workspace:^",
+    "@magsag/schema": "workspace:^",
     "split2": "^4.2.0"
   },
   "exports": {

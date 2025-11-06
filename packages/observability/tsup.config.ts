@@ -7,6 +7,7 @@ export default defineConfig({
   platform: 'node',
   clean: true,
   dts: true,
+  external: [/^@magsag\//],
   banner: {
     js: "import { createRequire as __createRequire } from 'module'; const require = __createRequire(import.meta.url);"
   }

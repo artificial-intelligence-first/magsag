@@ -16,7 +16,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm",
+    "build": "tsup src/index.ts --dts --format esm --external @magsag/*",
     "clean": "rimraf dist",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
