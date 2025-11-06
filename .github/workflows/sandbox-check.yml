@@ -23,4 +23,4 @@ jobs:
         run: pnpm -r typecheck
 
       - name: Check policy configuration
-        run: node -e "const fs=require('fs');const y=fs.readFileSync('policy/default.policy.yaml','utf8');if(!/mode:\\s*none/.test(y)){console.error('network must start as none');process.exit(1)}"
+        run: node -e "const fs=require('fs');const y=fs.readFileSync('tools/security/policy/default.policy.yaml','utf8');if(!/mode:\\s*none/.test(y)){console.error('network must start as none');process.exit(1)}"
