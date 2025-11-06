@@ -2,7 +2,14 @@
   "name": "@magsag/mcp-codegen",
   "version": "0.1.0",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsup --config tsup.config.ts",
     "lint": "eslint \"src/**/*.ts\"",

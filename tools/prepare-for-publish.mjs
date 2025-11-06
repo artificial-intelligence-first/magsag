@@ -5,7 +5,7 @@
  *
  * This script:
  * 1. Removes "private": true from publishable packages
- * 2. Replaces workspace:* dependencies with proper semver versions
+ * 2. Converts workspace:* dependencies to workspace:^ so pnpm can resolve versions during publish
  * 3. Fixes types field to point to dist/ instead of src/
  * 4. Ensures proper exports configuration
  */
@@ -204,5 +204,5 @@ console.log('\n✅ All packages updated successfully!');
 console.log('\n📋 Next steps:');
 console.log('  1. Review the changes: git diff');
 console.log('  2. Run build: pnpm build');
-console.log('  3. Test packaging: pnpm -r exec pnpm pack --dry-run');
+console.log('  3. Test packaging: pnpm -r exec pnpm pack');
 console.log('  4. Set up changesets: pnpm add -Dw @changesets/cli && pnpm changeset init');
