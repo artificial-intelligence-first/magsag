@@ -276,7 +276,7 @@ export class WorktreeManager {
   async list(): Promise<WorktreeState[]> {
     const infos = await this.managedGitWorktrees();
     const states = await Promise.all(infos.map((info) => this.toWorktreeState(info)));
-    return states.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return states.sort((a: WorktreeState, b: WorktreeState) => b.createdAt.localeCompare(a.createdAt));
   }
 
   async get(identifier: string): Promise<WorktreeState | undefined> {

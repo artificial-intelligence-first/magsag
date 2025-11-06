@@ -5,9 +5,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
-        with: { node-version: 20 }
-      - run: npm ci || npm i
-      - run: npx tsc -p .
-      - run: npm run preflight
-      - run: node -e "const fs=require('fs');const y=fs.readFileSync('policy/default.policy.yaml','utf8');if(!/mode:\\s*none/.test(y)){console.error('network must start as none');process.exit(1)}"
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Workspace typecheck
+        run: pnpm -r typecheck
+
+      - name: Check policy configuration
+        run: node -e "const fs=require('fs');const y=fs.readFileSync('tools/security/policy/default.policy.yaml','utf8');if(!/mode:\\s*none/.test(y)){console.error('network must start as none');process.exit(1)}"
