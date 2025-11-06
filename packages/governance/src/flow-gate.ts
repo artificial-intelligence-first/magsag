@@ -189,7 +189,7 @@ export const evaluateFlowSummary = async (
 
   const requiredSteps = stringArray(policy['required_steps']);
   if (requiredSteps.length > 0) {
-    const presentSteps = new Set(steps.map((step) => String(step.name ?? '')));
+    const presentSteps = new Set(steps.map((step: FlowSummaryStep) => String(step.name ?? '')));
     const missing = requiredSteps.filter((stepName) => !presentSteps.has(stepName));
     if (missing.length > 0) {
       errors.push(`missing required steps: ${missing.join(', ')}`);
@@ -213,13 +213,13 @@ export const evaluateFlowSummary = async (
     let totalErrors = numbers(mcpSummary.errors);
     if (totalCalls === undefined) {
       totalCalls = steps.reduce(
-        (acc, step) => acc + (numbers(toRecord(step.mcp)?.calls) ?? 0),
+        (acc: number, step: FlowSummaryStep) => acc + (numbers(toRecord(step.mcp)?.calls) ?? 0),
         0
       );
     }
     if (totalErrors === undefined) {
       totalErrors = steps.reduce(
-        (acc, step) => acc + (numbers(toRecord(step.mcp)?.errors) ?? 0),
+        (acc: number, step: FlowSummaryStep) => acc + (numbers(toRecord(step.mcp)?.errors) ?? 0),
         0
       );
     }

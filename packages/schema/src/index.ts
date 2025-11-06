@@ -68,7 +68,7 @@ const nonEmptyString = (message: string) => z.string().min(1, message);
 const isoTimestampSchema = z
   .string()
   .min(1)
-  .refine((value) => !Number.isNaN(Date.parse(value)), {
+  .refine((value: string) => !Number.isNaN(Date.parse(value)), {
     message: 'Expected ISO 8601 timestamp'
   });
 
@@ -139,7 +139,7 @@ const flowSummaryStepMcpSchema = z
     errors: z.number().nonnegative().default(0)
   })
   .partial()
-  .transform((value) => ({
+  .transform((value: { calls?: number; errors?: number }) => ({
     calls: value.calls ?? 0,
     errors: value.errors ?? 0
   }));
