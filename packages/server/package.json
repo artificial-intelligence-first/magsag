@@ -1,10 +1,9 @@
 {
   "name": "@magsag/server",
   "version": "2.0.0-alpha.0",
-  "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "types": "src/index.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -16,14 +15,30 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.7.0",
-    "@magsag/core": "workspace:*",
-    "@magsag/observability": "workspace:*",
-    "@magsag/schema": "workspace:*",
+    "@magsag/core": "workspace:^",
+    "@magsag/observability": "workspace:^",
+    "@magsag/schema": "workspace:^",
     "hono": "^4.5.0",
     "ws": "^8.18.0",
     "zod-to-json-schema": "^3.24.6"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1"
-  }
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artificial-intelligence-first/magsag.git",
+    "directory": "packages/server"
+  },
+  "bugs": {
+    "url": "https://github.com/artificial-intelligence-first/magsag/issues"
+  },
+  "homepage": "https://github.com/artificial-intelligence-first/magsag#readme",
+  "license": "MIT"
 }

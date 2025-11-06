@@ -1,10 +1,9 @@
 {
   "name": "@magsag/specialist",
   "version": "2.0.0-alpha.0",
-  "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "types": "src/index.ts",
+  "types": "dist/index.d.ts",
   "files": [
     "dist"
   ],
@@ -15,8 +14,24 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@magsag/core": "workspace:*",
-    "@magsag/worktree": "workspace:*",
-    "@magsag/shared-logging": "workspace:*"
-  }
+    "@magsag/core": "workspace:^",
+    "@magsag/worktree": "workspace:^",
+    "@magsag/shared-logging": "workspace:^"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artificial-intelligence-first/magsag.git",
+    "directory": "packages/specialist"
+  },
+  "bugs": {
+    "url": "https://github.com/artificial-intelligence-first/magsag/issues"
+  },
+  "homepage": "https://github.com/artificial-intelligence-first/magsag#readme",
+  "license": "MIT"
 }

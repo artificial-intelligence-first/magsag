@@ -1,7 +1,6 @@
 {
   "name": "@magsag/mcp-codegen",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
@@ -12,5 +11,18 @@
   },
   "dependencies": {
     "yaml": "^2.6.0"
-  }
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artificial-intelligence-first/magsag.git",
+    "directory": "packages/mcp-codegen"
+  },
+  "bugs": {
+    "url": "https://github.com/artificial-intelligence-first/magsag/issues"
+  },
+  "homepage": "https://github.com/artificial-intelligence-first/magsag#readme",
+  "license": "MIT"
 }

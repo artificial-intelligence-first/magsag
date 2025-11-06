@@ -1,10 +1,9 @@
 {
   "name": "@magsag/worktree",
   "version": "2.0.0-alpha.0",
-  "private": true,
   "type": "module",
   "main": "dist/index.js",
-  "types": "src/index.ts",
+  "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -24,5 +23,15 @@
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/artificial-intelligence-first/magsag.git",
+    "directory": "packages/worktree"
+  },
+  "bugs": {
+    "url": "https://github.com/artificial-intelligence-first/magsag/issues"
+  },
+  "homepage": "https://github.com/artificial-intelligence-first/magsag#readme",
+  "license": "MIT"
 }
