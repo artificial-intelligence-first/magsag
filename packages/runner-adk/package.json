@@ -21,5 +21,6 @@
     "@google/genai": "1.14.0",
     "@modelcontextprotocol/sdk": "1.17.5",
     "@opentelemetry/api": "^1.9.0"
-  }
+  },
+  "license": "Apache-2.0"
 }

@@ -24,5 +24,6 @@
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --config vitest.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  }
+  },
+  "license": "Apache-2.0"
 }

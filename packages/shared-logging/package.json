@@ -13,5 +13,6 @@
     "lint": "eslint \"src/**/*.ts\"",
     "test": "vitest --run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json --noEmit"
-  }
+  },
+  "license": "Apache-2.0"
 }

@@ -35,5 +35,6 @@
   },
   "dependencies": {
     "@magsag/core": "workspace:*"
-  }
+  },
+  "license": "Apache-2.0"
 }

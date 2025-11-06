@@ -18,5 +18,6 @@
     "@magsag/core": "workspace:*",
     "@magsag/schema": "workspace:*",
     "@anthropic-ai/claude-agent-sdk": "^0.1.30"
-  }
+  },
+  "license": "Apache-2.0"
 }
