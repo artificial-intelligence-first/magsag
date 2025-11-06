@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
+import { dirname } from 'node:path';
 import { Args, Flags, Parser } from '@oclif/core';
 import { SimpleManager } from '@magsag/manager';
 import type { AgentContext, Plan, TaskSpec } from '@magsag/core';
@@ -82,6 +83,7 @@ export const agentPlanHandler = async (
   const serialized = `${JSON.stringify(plan, null, 2)}\n`;
 
   if (parsed.outputPath) {
+    await fs.mkdir(dirname(parsed.outputPath), { recursive: true });
     await fs.writeFile(parsed.outputPath, serialized, 'utf8');
     writeLine(streams.stderr, `Plan written to ${parsed.outputPath}`);
   } else {

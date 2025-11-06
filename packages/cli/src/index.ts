@@ -1,4 +1,5 @@
-import { pathToFileURL } from 'node:url';
+import { realpathSync } from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { agentRunHandler, parseAgentRun } from './commands/agent-run.js';
 import type { ParsedAgentRun } from './commands/agent-run.js';
 import { agentPlanHandler, parseAgentPlan } from './commands/agent-plan.js';
@@ -385,12 +386,27 @@ const isDirectExecution = (): boolean => {
     return false;
   }
   try {
-    return pathToFileURL(executedScript).href === import.meta.url;
+    const resolvedExecuted = realpathSync(executedScript);
+    const resolvedModule = realpathSync(fileURLToPath(import.meta.url));
+    return resolvedExecuted === resolvedModule;
   } catch {
-    return false;
+    try {
+      return pathToFileURL(executedScript).href === import.meta.url;
+    } catch {
+      return false;
+    }
   }
 };
 
 if (isDirectExecution()) {
-  void runCli();
+  void runCli()
+    .then((code) => {
+      process.exitCode = code;
+    })
+    .catch((error) => {
+      const message =
+        error instanceof Error ? error.message : typeof error === 'string' ? error : 'Unknown error';
+      process.stderr.write(`${message}\n`);
+      process.exitCode = 1;
+    });
 }
