@@ -1,6 +1,38 @@
-# Publishing Guide for MAGSAG
+---
+title: NPM Publishing Guide for MAGSAG
+slug: publishing-guide
+status: living
+last_updated: 2025-11-06
+last_synced: 2025-11-06
+tags:
+  - magsag
+  - publishing
+  - npm
+  - release
+  - workflow
+summary: Complete guide for publishing MAGSAG packages to npm registry with changesets and GitHub Actions automation.
+description: Comprehensive guide covering package configuration, version management with changesets, automated and manual release workflows, testing procedures, and troubleshooting for publishing MAGSAG packages to npm.
+authors: []
+sources:
+  - id: R1
+    title: Changesets Documentation
+    url: https://github.com/changesets/changesets
+    accessed: 2025-11-06
+  - id: R2
+    title: pnpm Workspaces
+    url: https://pnpm.io/workspaces
+    accessed: 2025-11-06
+  - id: R3
+    title: npm Publishing Guide
+    url: https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry
+    accessed: 2025-11-06
+---
 
-This guide explains how to publish MAGSAG packages to npm.
+# NPM Publishing Guide for MAGSAG
+
+> **For Humans**: Use this guide to publish MAGSAG packages to npm, manage versions, and coordinate releases across the monorepo.
+>
+> **For AI Agents**: Follow these procedures when assisting with package publishing. Always create changesets for version bumps and validate package integrity before releasing.
 
 ## Overview
 
@@ -45,7 +77,7 @@ The following packages are published to npm under the `@magsag` scope:
 - `@magsag/shared-logging` - Shared logging utilities
 - `@magsag/server` - Hono-based HTTP server
 
-### Private Packages (Not Published)
+### Private Packages
 
 The following packages remain private and are not published:
 - `@magsag/demo-api` - Demo API application
@@ -55,14 +87,14 @@ The following packages remain private and are not published:
 
 ## Prerequisites
 
-### 1. NPM Access
+### NPM Access
 
 Ensure you have:
 1. An npm account with access to the `@magsag` scope
 2. NPM_TOKEN configured in GitHub repository secrets
 3. Two-factor authentication enabled on your npm account
 
-### 2. Repository Setup
+### Repository Setup
 
 The repository should have:
 - `NPM_TOKEN` secret configured in GitHub settings
@@ -179,7 +211,7 @@ To publish pre-release versions (alpha, beta, rc):
 
 ## Testing Before Publishing
 
-### 1. Local Pack Test
+### Local Pack Test
 
 Test packaging without publishing:
 
@@ -187,14 +219,11 @@ Test packaging without publishing:
 # Build all packages
 pnpm build
 
-# Dry run pack for all packages
-pnpm -r exec pnpm pack --dry-run
-
-# Actually create tarballs for inspection
+# Create tarballs for inspection
 pnpm -r exec pnpm pack
 ```
 
-### 2. Local Install Test
+### Local Install Test
 
 Test installing from local tarballs:
 
@@ -211,7 +240,7 @@ npm install /path/to/magsag/packages/cli/magsag-cli-*.tgz
 npx magsag --help
 ```
 
-### 3. Verdaccio Local Registry
+### Verdaccio Local Registry
 
 For comprehensive testing, use a local npm registry:
 
@@ -291,7 +320,7 @@ On every PR and push to main:
 - Type check all packages
 - Run all tests
 - Build all packages
-- Verify package integrity (`pnpm pack --dry-run`)
+- Verify package integrity
 - Check bundle sizes
 
 ### Release Process
@@ -331,14 +360,17 @@ pnpm release
 
 # Prepare packages for publishing (run our custom script)
 pnpm prepare:publish
-
-# Test packaging without publishing
-pnpm -r exec pnpm pack --dry-run
 ```
 
-## Links
+## See Also
 
 - [Changesets Documentation](https://github.com/changesets/changesets)
 - [pnpm Workspaces](https://pnpm.io/workspaces)
 - [npm Publishing](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry)
 - [Semantic Versioning](https://semver.org/)
+- `README.md` - Using MAGSAG as a dependency
+- `AGENTS.md` - Development workflows and validation gates
+
+## Update Log
+
+- 2025-11-06: Initial publishing guide with changesets workflow, package structure, and automated release procedures.
