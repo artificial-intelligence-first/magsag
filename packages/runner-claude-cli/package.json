@@ -19,6 +19,5 @@
     "@magsag/schema": "workspace:*",
     "execa": "^8.0.1",
     "split2": "^4.2.0"
-  },
-  "license": "Apache-2.0"
+  }
 }

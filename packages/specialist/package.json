@@ -18,6 +18,5 @@
     "@magsag/core": "workspace:*",
     "@magsag/worktree": "workspace:*",
     "@magsag/shared-logging": "workspace:*"
-  },
-  "license": "Apache-2.0"
+  }
 }

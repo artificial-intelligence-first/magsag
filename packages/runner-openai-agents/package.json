@@ -18,6 +18,5 @@
     "@magsag/core": "workspace:*",
     "@magsag/schema": "workspace:*",
     "@openai/agents": "^0.2.1"
-  },
-  "license": "Apache-2.0"
+  }
 }

@@ -16,6 +16,5 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5"
-  },
-  "license": "Apache-2.0"
+  }
 }
