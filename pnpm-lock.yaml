@@ -54,19 +54,19 @@ importers:
   apps/demo-api:
     dependencies:
       '@magsag/demo-shared':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/demo-shared
 
   apps/demo-cli:
     dependencies:
       '@magsag/demo-shared':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/demo-shared
 
   packages/catalog:
     dependencies:
       '@magsag/mcp-client':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../mcp-client
       ajv:
         specifier: ^8.17.1
@@ -78,7 +78,7 @@ importers:
   packages/catalog-mcp:
     dependencies:
       '@magsag/mcp-server':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../mcp-server
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.5
@@ -109,49 +109,49 @@ importers:
   packages/cli:
     dependencies:
       '@magsag/catalog-mcp':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../catalog-mcp
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/governance':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../governance
       '@magsag/manager':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../manager
       '@magsag/mcp-client':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../mcp-client
       '@magsag/mcp-server':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../mcp-server
       '@magsag/observability':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../observability
       '@magsag/runner-adk':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runner-adk
       '@magsag/runner-claude-agent':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runner-claude-agent
       '@magsag/runner-claude-cli':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runner-claude-cli
       '@magsag/runner-codex-cli':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runner-codex-cli
       '@magsag/runner-openai-agents':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../runner-openai-agents
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       '@magsag/specialist':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../specialist
       '@magsag/worktree':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../worktree
       '@oclif/core':
         specifier: 3.27.0
@@ -176,14 +176,14 @@ importers:
   packages/core:
     dependencies:
       '@magsag/shared-logging':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../shared-logging
       pidusage:
         specifier: ^3.0.2
         version: 3.0.2
     devDependencies:
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       '@types/pidusage':
         specifier: ^2.0.5
@@ -198,7 +198,7 @@ importers:
   packages/governance:
     dependencies:
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       yaml:
         specifier: ^2.8.1
@@ -207,7 +207,7 @@ importers:
   packages/manager:
     dependencies:
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
 
   packages/mcp-client:
@@ -219,7 +219,7 @@ importers:
   packages/mcp-codegen:
     dependencies:
       '@magsag/mcp-client':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../mcp-client
       yaml:
         specifier: ^2.6.0
@@ -228,7 +228,7 @@ importers:
   packages/mcp-server:
     dependencies:
       '@magsag/shared-logging':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../shared-logging
       '@modelcontextprotocol/sdk':
         specifier: ^1.17.5
@@ -238,7 +238,7 @@ importers:
         version: 3.25.76
     devDependencies:
       '@magsag/mcp-client':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../mcp-client
       eslint:
         specifier: ^8.57.0
@@ -262,10 +262,10 @@ importers:
   packages/observability:
     dependencies:
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       split2:
         specifier: ^4.2.0
@@ -280,10 +280,10 @@ importers:
         specifier: 1.14.0
         version: 1.14.0(@modelcontextprotocol/sdk@1.17.5)
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       '@modelcontextprotocol/sdk':
         specifier: 1.17.5
@@ -298,19 +298,19 @@ importers:
         specifier: ^0.1.30
         version: 0.1.30(zod@3.25.76)
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
 
   packages/runner-claude-cli:
     dependencies:
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       execa:
         specifier: ^8.0.1
@@ -322,10 +322,10 @@ importers:
   packages/runner-codex-cli:
     dependencies:
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       execa:
         specifier: ^8.0.1
@@ -337,10 +337,10 @@ importers:
   packages/runner-openai-agents:
     dependencies:
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       '@openai/agents':
         specifier: ^0.2.1
@@ -349,7 +349,7 @@ importers:
   packages/schema:
     dependencies:
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       zod:
         specifier: ^3.23.8
@@ -361,13 +361,13 @@ importers:
         specifier: ^1.7.0
         version: 1.19.6(hono@4.10.4)
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/observability':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../observability
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
       hono:
         specifier: ^4.5.0
@@ -388,19 +388,19 @@ importers:
   packages/specialist:
     dependencies:
       '@magsag/core':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../core
       '@magsag/shared-logging':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../shared-logging
       '@magsag/worktree':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../worktree
 
   packages/worktree:
     dependencies:
       '@magsag/schema':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../schema
 
   servers:
