@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ToolDefinition } from '@magsag/mcp-server';
 
-const resultsSchema = z.array(z.record(z.unknown())).optional();
+const resultsSchema = z.array(z.record(z.string(), z.unknown())).optional();
 
 export const createResultAggregationTool = (): ToolDefinition => ({
   name: 'skill.result-aggregation',

@@ -7,7 +7,7 @@ export const createTaskDecompositionTool = (): ToolDefinition => ({
   title: 'Task Decomposition',
   description: 'Decompose a high-level request into sub-agent tasks.',
   inputSchema: {
-    candidate_profile: z.record(z.unknown()).optional()
+    candidate_profile: z.record(z.string(), z.unknown()).optional()
   },
   outputSchema: undefined,
   handler: async (args): Promise<CallToolResult> => {

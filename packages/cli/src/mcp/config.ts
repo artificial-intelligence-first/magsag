@@ -16,7 +16,7 @@ const transportSchema = z.discriminatedUnion('type', [
       .object({
         type: z.literal('http'),
         url: z.string(),
-        headers: z.record(z.string()).optional(),
+        headers: z.record(z.string(), z.string()).optional(),
         timeoutSeconds: z.number().nonnegative().optional()
       })
       .passthrough(),
@@ -24,14 +24,14 @@ const transportSchema = z.discriminatedUnion('type', [
       .object({
         type: z.literal('sse'),
         url: z.string(),
-        headers: z.record(z.string()).optional()
+        headers: z.record(z.string(), z.string()).optional()
       })
       .passthrough(),
     z
       .object({
         type: z.literal('websocket'),
         url: z.string(),
-        headers: z.record(z.string()).optional()
+        headers: z.record(z.string(), z.string()).optional()
       })
       .passthrough(),
     z
@@ -39,7 +39,7 @@ const transportSchema = z.discriminatedUnion('type', [
         type: z.literal('stdio'),
         command: z.string(),
         args: z.array(z.string()).optional(),
-        env: z.record(z.string()).optional(),
+        env: z.record(z.string(), z.string()).optional(),
         cwd: z.string().optional(),
         stderr: z.enum(['inherit', 'pipe', 'ignore']).optional()
       })

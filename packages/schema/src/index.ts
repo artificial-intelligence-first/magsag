@@ -94,7 +94,7 @@ export const policySchema = z.object({
       })
     )
     .default([]),
-  metadata: z.record(z.unknown()).optional()
+  metadata: z.record(z.string(), z.unknown()).optional()
 });
 
 export type PolicyInput = z.infer<typeof policySchema>;
@@ -102,7 +102,7 @@ export type PolicyInput = z.infer<typeof policySchema>;
 export const storageBackendSchema = z.object({
   id: z.string().min(1),
   driver: z.string().min(1),
-  config: z.record(z.unknown()).default({})
+  config: z.record(z.string(), z.unknown()).default({})
 });
 
 export type StorageBackendInput = z.infer<typeof storageBackendSchema>;
@@ -154,7 +154,7 @@ const flowSummaryStepSchemaInternal = z
     avg_latency_ms: z.number().nonnegative().default(0),
     mcp: flowSummaryStepMcpSchema.optional(),
     models: z.array(z.string()).optional(),
-    error_types: z.record(z.number().nonnegative()).optional()
+    error_types: z.record(z.string(), z.number().nonnegative()).optional()
   })
   .passthrough();
 
@@ -186,7 +186,7 @@ export const flowSummarySchema = z
     errors: z
       .object({
         total: z.number().nonnegative().default(0),
-        by_type: z.record(z.number().nonnegative()).default({})
+        by_type: z.record(z.string(), z.number().nonnegative()).default({})
       })
       .default({ total: 0, by_type: {} }),
     mcp: z
@@ -245,7 +245,7 @@ export const runnerEventSchema = z.discriminatedUnion('type', [
     type: z.literal('tool-call'),
     call: z.object({
       name: z.string().min(1),
-      arguments: z.record(z.unknown()).default({})
+      arguments: z.record(z.string(), z.unknown()).default({})
     })
   }),
   z.object({
@@ -255,14 +255,14 @@ export const runnerEventSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('done'),
     sessionId: z.string().optional(),
-    stats: z.record(z.unknown()).optional()
+    stats: z.record(z.string(), z.unknown()).optional()
   }),
   z.object({
     type: z.literal('error'),
     error: z.object({
       message: z.string(),
       code: z.string().optional(),
-      details: z.record(z.unknown()).optional()
+      details: z.record(z.string(), z.unknown()).optional()
     })
   })
 ]);

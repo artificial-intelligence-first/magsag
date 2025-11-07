@@ -1,5 +1,4 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { ZodRawShape } from 'zod';
 import type { ToolDefinition } from './types.js';
 
 export class ToolRegistry {
@@ -27,7 +26,10 @@ export class ToolRegistry {
   }
 
   applyTool(server: McpServer, tool: ToolDefinition): void {
-    const inputSchema = (tool.inputSchema ?? {}) as ZodRawShape;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const inputSchema = (tool.inputSchema ?? {}) as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const outputSchema = tool.outputSchema as any;
 
     server.registerTool(
       tool.name,
@@ -35,7 +37,7 @@ export class ToolRegistry {
         title: tool.title,
         description: tool.description,
         inputSchema,
-        outputSchema: tool.outputSchema,
+        outputSchema,
         annotations: tool.annotations
       },
       (args, extra) => tool.handler(args ?? {}, extra)
