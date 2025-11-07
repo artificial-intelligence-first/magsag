@@ -15,7 +15,7 @@
   ],
   "dependencies": {
     "@magsag/shared-logging": "workspace:*",
-    "pidusage": "^3.0.2"
+    "pidusage": "^4.0.1"
   },
   "devDependencies": {
     "@magsag/schema": "workspace:*",
