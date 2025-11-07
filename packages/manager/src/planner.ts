@@ -176,7 +176,7 @@ export class HeuristicPlanner implements Planner {
           });
         }
       }
-    } catch (error) {
+    } catch {
       // Fallback to simple analysis
       packages.push({
         name: 'root',
