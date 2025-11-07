@@ -41,7 +41,7 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.21.1",
-    "vite-tsconfig-paths": "^4.3.2"
+    "vite-tsconfig-paths": "^5.1.4"
   },
   "exports": {
     ".": {
