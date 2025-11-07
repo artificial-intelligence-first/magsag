@@ -53,7 +53,7 @@ export class ToolRegistry {
         title: tool.title,
         description: tool.description,
         inputSchema: inputSchema as any,
-        outputSchema: tool.outputSchema as any,
+        outputSchema: outputSchema as any,
         annotations: tool.annotations
       },
       (args, extra) => tool.handler(args ?? {}, extra)
