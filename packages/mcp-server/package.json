@@ -41,7 +41,7 @@
     "@magsag/mcp-client": "workspace:*",
     "eslint": "^8.57.0",
     "eslint-plugin-vitest": "^0.5.4",
-    "rimraf": "^5.0.5",
+    "rimraf": "^6.1.0",
     "typescript": "^5.4.5",
     "typescript-eslint": "^7.18.0",
     "vitest": "^2.1.4"
