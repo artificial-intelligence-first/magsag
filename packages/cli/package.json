@@ -34,7 +34,7 @@
     "@magsag/manager": "workspace:*",
     "@magsag/specialist": "workspace:*",
     "@magsag/worktree": "workspace:*",
-    "@oclif/core": "3.27.0",
+    "@oclif/core": "4.8.0",
     "execa": "^8.0.1",
     "yaml": "^2.5.1",
     "zod": "^4.1.12"
