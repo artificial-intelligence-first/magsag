@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { ToolDefinition } from './types.js';
 
@@ -26,18 +27,33 @@ export class ToolRegistry {
   }
 
   applyTool(server: McpServer, tool: ToolDefinition): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const inputSchema = (tool.inputSchema ?? {}) as any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const outputSchema = tool.outputSchema as any;
+    // If inputSchema is a ZodRawShape, wrap it in z.object()
+    // If it's already a ZodObject, use it as-is
+    let inputSchema: z.ZodObject<any> | undefined;
+    if (tool.inputSchema) {
+      if (tool.inputSchema instanceof z.ZodObject) {
+        inputSchema = tool.inputSchema;
+      } else if (typeof tool.inputSchema === 'object' && Object.keys(tool.inputSchema).length > 0) {
+        inputSchema = z.object(tool.inputSchema);
+      }
+    }
+
+    let outputSchema: z.ZodObject<any> | undefined;
+    if (tool.outputSchema) {
+      if (tool.outputSchema instanceof z.ZodObject) {
+        outputSchema = tool.outputSchema;
+      } else if (typeof tool.outputSchema === 'object' && Object.keys(tool.outputSchema).length > 0) {
+        outputSchema = z.object(tool.outputSchema);
+      }
+    }
 
     server.registerTool(
       tool.name,
       {
         title: tool.title,
         description: tool.description,
-        inputSchema,
-        outputSchema,
+        inputSchema: inputSchema as any,
+        outputSchema: tool.outputSchema as any,
         annotations: tool.annotations
       },
       (args, extra) => tool.handler(args ?? {}, extra)

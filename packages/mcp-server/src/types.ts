@@ -6,7 +6,7 @@ import type {
   ToolAnnotations
 } from '@modelcontextprotocol/sdk/types.js';
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js';
-import type { ZodRawShape } from 'zod';
+import type { ZodObject, ZodRawShape } from 'zod';
 import type { Logger } from '@magsag/shared-logging';
 
 export interface ToolDefinition {
@@ -14,8 +14,8 @@ export interface ToolDefinition {
   readonly title?: string;
   readonly description?: string;
   readonly annotations?: ToolAnnotations;
-  readonly inputSchema?: ZodRawShape;
-  readonly outputSchema?: ZodRawShape;
+  readonly inputSchema?: ZodObject<ZodRawShape> | ZodRawShape;
+  readonly outputSchema?: ZodObject<ZodRawShape> | ZodRawShape;
   readonly handler: ToolHandler;
 }
 
