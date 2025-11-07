@@ -16,6 +16,8 @@ import {
   attachAgentWebSocketServer,
   createAgentApp,
   ensureRunner,
+  resolveSessionStore,
+  BoundedSessionStore,
   InMemorySessionStore,
   type AgentWebSocketOptions
 } from './index.js';
@@ -227,6 +229,143 @@ describe('createAgentApp', () => {
     expect(document.paths).toHaveProperty('/api/v1/sessions');
     expect(document.paths).toHaveProperty('/openapi.json');
   });
+
+  it('enforces configured rate limits when exceeded', async () => {
+    const registry = new InMemoryRunnerRegistry();
+    registry.register(
+      createStubRunnerFactory([
+        { type: 'log', data: 'start' },
+        { type: 'done' }
+      ])
+    );
+    const app = createAgentApp({
+      registry,
+      security: {
+        rateLimit: {
+          enabled: true,
+          requestsPerSecond: 1,
+          burst: 1
+        }
+      }
+    });
+
+    const firstResponse = await app.request('/api/v1/agent/run', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        engine: 'codex-cli',
+        repo: '/tmp/repo',
+        prompt: 'rate-limit-1'
+      } satisfies RunSpec)
+    });
+    expect(firstResponse.status).toBe(200);
+    await firstResponse.text();
+
+    const secondResponse = await app.request('/api/v1/agent/run', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        engine: 'codex-cli',
+        repo: '/tmp/repo',
+        prompt: 'rate-limit-2'
+      } satisfies RunSpec)
+    });
+    expect(secondResponse.status).toBe(429);
+    const payload = (await secondResponse.json()) as { error?: { message?: string } };
+    expect(payload?.error?.message).toContain('Rate limit exceeded');
+  });
+
+  it('applies CORS allowlists and blocks untrusted origins', async () => {
+    const registry = new InMemoryRunnerRegistry();
+    registry.register(createStubRunnerFactory([]));
+    const trustedOrigin = 'https://trusted.example.com';
+    const app = createAgentApp({
+      registry,
+      security: {
+        cors: {
+          allowedOrigins: [trustedOrigin]
+        }
+      }
+    });
+
+    const allowedResponse = await app.request('/openapi.json', {
+      headers: { origin: trustedOrigin }
+    });
+    expect(allowedResponse.status).toBe(200);
+    expect(allowedResponse.headers.get('access-control-allow-origin')).toBe(trustedOrigin);
+
+    const blockedResponse = await app.request('/openapi.json', {
+      headers: { origin: 'https://malicious.example.com' }
+    });
+    expect(blockedResponse.status).toBe(403);
+  });
+
+  it('responds to preflight requests with configured headers', async () => {
+    const registry = new InMemoryRunnerRegistry();
+    registry.register(createStubRunnerFactory([]));
+    const origin = 'https://trusted.example.com';
+    const app = createAgentApp({
+      registry,
+      security: {
+        cors: {
+          allowedOrigins: [origin],
+          allowHeaders: ['content-type'],
+          allowMethods: ['POST', 'OPTIONS']
+        }
+      }
+    });
+
+    const response = await app.request('/api/v1/agent/run', {
+      method: 'OPTIONS',
+      headers: {
+        origin,
+        'access-control-request-headers': 'content-type',
+        'access-control-request-method': 'POST'
+      }
+    });
+    expect(response.status).toBe(204);
+    expect(response.headers.get('access-control-allow-origin')).toBe(origin);
+    expect(response.headers.get('access-control-allow-methods')).toContain('POST');
+  });
+
+  it('allows any origin when CORS guard is disabled', async () => {
+    const registry = new InMemoryRunnerRegistry();
+    registry.register(createStubRunnerFactory([]));
+    const app = createAgentApp({
+      registry,
+      security: {
+        cors: {
+          enabled: false
+        }
+      }
+    });
+
+    const response = await app.request('/openapi.json', {
+      headers: { origin: 'https://any.example.com' }
+    });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('access-control-allow-origin')).toBeNull();
+  });
+});
+
+describe('resolveSessionStore', () => {
+  it('returns provided store when supplied', () => {
+    const customStore = new InMemorySessionStore();
+    const resolved = resolveSessionStore({ store: customStore });
+    expect(resolved).toBe(customStore);
+  });
+
+  it('falls back to bounded store by default', () => {
+    const resolved = resolveSessionStore();
+    expect(resolved).toBeInstanceOf(BoundedSessionStore);
+  });
+
+  it('honours MAGSAG_SESSION_BACKEND=memory', () => {
+    const resolved = resolveSessionStore(undefined, {
+      MAGSAG_SESSION_BACKEND: 'memory'
+    } as NodeJS.ProcessEnv);
+    expect(resolved).toBeInstanceOf(InMemorySessionStore);
+  });
 });
 
 describe('attachAgentWebSocketServer', () => {
@@ -278,6 +417,7 @@ describe('attachAgentWebSocketServer', () => {
     expect(summaryEvent?.summary).toEqual(summaryFixture());
     wss.close();
   });
+
 });
 
 describe('ensureRunner', () => {

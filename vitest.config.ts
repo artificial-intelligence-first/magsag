@@ -15,6 +15,10 @@ export default defineConfig({
         replacement: `${serversRoot}/$1/index.ts`
       },
       {
+        find: /^@magsag\/([^/]+)\/(.+)$/,
+        replacement: `${packagesRoot}/$1/src/$2`
+      },
+      {
         find: /^@magsag\/(.+)$/,
         replacement: `${packagesRoot}/$1/src/index.ts`
       }
@@ -25,10 +29,26 @@ export default defineConfig({
     environment: 'node',
     clearMocks: true,
     include: ['tests/vitest/**/*.test.ts'],
-    reporters: 'default',
+    reporters: ['default'],
     coverage: {
+      enabled: true,
+      all: true,
       reporter: ['text', 'lcov'],
-      reportsDirectory: 'coverage'
+      reportsDirectory: 'coverage',
+      include: [
+        'packages/runner-openai-agents/src/index.ts',
+        'packages/server/src/**/*.ts',
+        'packages/worktree/src/**/*.ts'
+      ],
+      exclude: ['**/*.test.ts', '**/__mocks__/**'],
+      thresholds: {
+        global: {
+          statements: 80,
+          branches: 70,
+          functions: 75,
+          lines: 80
+        }
+      }
     },
     watchExclude: ['dist/**', 'build/**']
   },

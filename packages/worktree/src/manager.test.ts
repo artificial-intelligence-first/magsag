@@ -3,12 +3,9 @@ import { promises as fs } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-const execFileAsyncMock = vi.hoisted(() =>
-  vi.fn<
-    [cmd: string, args: string[]],
-    Promise<{ stdout: string; stderr: string }>
-  >()
-);
+type ExecFileAsync = (cmd: string, args: string[]) => Promise<{ stdout: string; stderr: string }>;
+
+const execFileAsyncMock = vi.hoisted(() => vi.fn<ExecFileAsync>());
 
 const execFileMock = vi.hoisted(() =>
   vi.fn((...args: any[]) => {
@@ -181,6 +178,30 @@ describe('WorktreeManager', () => {
 
       // Should still have max 3 active
       expect(activeAfter.length).toBeLessThanOrEqual(3);
+    });
+
+    it('defaults baseRef to main when not specified', async () => {
+      manager = new WorktreeManager(
+        {
+          gcOnStart: false,
+          gcOnExit: false
+        },
+        store
+      );
+
+      await manager.allocate('plan-default', 'step-default');
+
+      const worktreeCall = execFileAsyncMock.mock.calls.find(
+        ([cmd, args]) =>
+          cmd === 'git' &&
+          Array.isArray(args) &&
+          args[0] === 'worktree' &&
+          args[1] === 'add'
+      );
+
+      expect(worktreeCall).toBeDefined();
+      const args = worktreeCall?.[1] as string[];
+      expect(args.at(-1)).toBe('main');
     });
   });
 

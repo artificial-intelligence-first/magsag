@@ -16,6 +16,8 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -41,7 +43,7 @@ jobs:
         run: pnpm build
 
       - name: Create Release Pull Request or Publish
-        if: ${{ secrets.NPM_TOKEN != '' }}
+        if: ${{ env.NPM_TOKEN != '' }}
         id: changesets-publish
         uses: changesets/action@v1
         with:
@@ -51,11 +53,11 @@ jobs:
           title: 'chore: version packages'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ env.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
       - name: Create Release Pull Request
-        if: ${{ secrets.NPM_TOKEN == '' }}
+        if: ${{ env.NPM_TOKEN == '' }}
         id: changesets-version
         uses: changesets/action@v1
         with:

@@ -268,7 +268,8 @@ export const createOpenApiDocument = () => {
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' },
             lastEventType: { type: 'string' },
-            error: { $ref: '#/components/schemas/SessionError' }
+            error: { $ref: '#/components/schemas/SessionError' },
+            droppedEvents: { type: 'integer', minimum: 0 }
           }
         },
         SessionRecord: {

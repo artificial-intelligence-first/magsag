@@ -150,8 +150,20 @@ pnpm catalog:validate
 - `packages/runner-claude-agent` and `packages/runner-openai-agents` bridge SDK integrations; ensure credentials are set before executing.
 - MCP presets live in `tools/adk/servers/*.yaml`. Regenerate typed wrappers with `pnpm mcp:codegen` (add `--check` in CI) so skills and SKILL docs stay in sync.
 
+## Agent API Security Defaults
+
+- Export explicit allowlists through `MAGSAG_CORS_ORIGINS` (comma-separated). Production instances stay permissive until you provide the variable, while development automatically whitelists loopback origins (`http://localhost:3000`, `http://localhost:5173`, `http://127.0.0.1:5173`) so unexpected origins are rejected by default. Override `security.cors.allowedOrigins` for programmatic wiring.
+- Optional flags: `MAGSAG_CORS_ALLOW_CREDENTIALS` (`true`/`false`, default `true`), `MAGSAG_RATE_LIMIT_ENABLED` (defaults to `true` in production, `false` elsewhere), `MAGSAG_RATE_LIMIT_QPS` (queries per second, default `10` in production / `25` otherwise), and `MAGSAG_RATE_LIMIT_BURST` (token bucket size, default `3×QPS` in production).
+- Only set `MAGSAG_RATE_LIMIT_TRUST_PROXY=true` when requests always transit a trusted reverse proxy; otherwise the limiter keys clients directly by the socket address that `@hono/node-server` exposes via `context.env.incoming` and intentionally ignores spoofable forwarded headers.
+- Switch session persistence via `MAGSAG_SESSION_BACKEND`. The bounded in-memory store is the default; set `MAGSAG_SESSION_BACKEND=memory` for emergency fallbacks to the legacy (unbounded) behaviour.
+- Rate limiting applies to REST and WebSocket entry points. Requests exceeding the configured budget receive `429` responses (or upgrade rejections) with `Retry-After` hints; update operational dashboards to watch `x-ratelimit-*` headers.
+- Document deployments with chosen origin and rate-limit values in delivery notes so reviewers can verify the configuration matches the target environment.
+- Record 403 (`CORS origin not allowed`) and 429 (rate limit) responses in monitoring dashboards; alert when either spikes unexpectedly to surface misconfigurations or traffic anomalies quickly.
+- Use the bundled smoke harness (`pnpm --filter @magsag/server smoke`) to validate allowlisted origins and rate-limit fallbacks before rolling out configuration changes.
+
 ## Update Log
 
+- 2025-11-06: Documented production server guardrails (CORS allowlists, rate limiting env requirements) and clarified validation expectations for agent API deployments.
 - 2025-11-06: Documented workspace sandbox controls, MCP code generation workflow, channel-aware runner logs, and SKILL metadata requirements.
 - 2025-11-05: Documented MAG/SAG delegation lifecycle, RunnerEvent handling, and cancellation semantics.
 - 2025-11-04: Replaced Python/uv guidance with TypeScript + pnpm instructions, refreshed MCP preset path to `tools/adk/servers/`, and updated package references.

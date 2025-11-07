@@ -78,6 +78,10 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 
 - [Repository Cleanup ExecPlan](../development/plans/repo-cleanup-execplan.md) — Align MCP presets, retire deprecated guides, and consolidate tooling for the TypeScript stack.
 
+## Completed Plans
+
+- _None (archive cleaned; reference completed work via changelog entries and delivery notes)._
+
 ## See Also
 
 - `docs/workflows/plans.md` — End-to-end ExecPlan workflow and maintenance cadence.
@@ -89,3 +93,4 @@ Store plans in `docs/development/plans/<slug>.md` (bootstrap with `docs/_templat
 - 2025-11-03: Logged SDK unification plan under Active Plans.
 - 2025-11-02: Linked workflow and template references.
 - 2025-11-01: Adopted the unified documentation format and clarified audience guidance.
+- 2025-11-08: Archived the Reliability Hardening ExecPlan entry after its outcomes were merged into canonical docs and changelog.

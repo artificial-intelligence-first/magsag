@@ -90,18 +90,23 @@ When deploying the MAGSAG framework, please be aware of the following security c
 
 ### Rate Limiting
 
-- **Production Recommended:** Enable rate limiting to prevent abuse
-- **Default:** Rate limiting is **disabled** (`MAGSAG_RATE_LIMIT_QPS=None`)
-- **To Enable:** Set `MAGSAG_RATE_LIMIT_QPS` environment variable (e.g., `10` for 10 queries per second)
-- For distributed deployments, use Redis-backed rate limiting via `MAGSAG_REDIS_URL`
-- Monitor rate limit violations and adjust as needed
+- **Production Default:** Rate limiting is automatically enabled (10 QPS, burst `3×QPS`) unless you explicitly set `MAGSAG_RATE_LIMIT_ENABLED=false`.
+- **Non-production:** The limiter is disabled by default so local developers are not throttled. Opt in by setting `MAGSAG_RATE_LIMIT_ENABLED=true` (default 25 QPS) to rehearse rollout configs.
+- **Tuning:** Adjust `MAGSAG_RATE_LIMIT_QPS` / `MAGSAG_RATE_LIMIT_BURST` to fit expected traffic. Flip `MAGSAG_RATE_LIMIT_ENABLED` off only during controlled incident response.
+- **Distributed deployments:** Provide `MAGSAG_REDIS_URL` so multiple API instances share limiter state and enable `MAGSAG_RATE_LIMIT_TRUST_PROXY=true` only behind trusted proxies.
+- **Remote address source:** When `MAGSAG_RATE_LIMIT_TRUST_PROXY` is left at the default (`false`), the guard derives identifiers from the raw socket address surfaced by `@hono/node-server` via `context.env.incoming`. No client-supplied header (including `X-Forwarded-For`) is considered until you explicitly trust forwarded headers.
+- Monitor rate-limit violations (`429`, `x-ratelimit-*`) and alert when they spike unexpectedly.
 
 **Example:**
 ```bash
-# Enable rate limiting at 10 QPS
+# Production-style limiter
+export MAGSAG_RATE_LIMIT_ENABLED=true
 export MAGSAG_RATE_LIMIT_QPS=10
 
-# For distributed deployments
+# Disable temporarily (incident response only)
+export MAGSAG_RATE_LIMIT_ENABLED=false
+
+# Multi-instance deployment
 export MAGSAG_REDIS_URL=redis://localhost:6379
 ```
 
@@ -112,6 +117,12 @@ export MAGSAG_REDIS_URL=redis://localhost:6379
 - Consider encryption at rest for sensitive data
 - Implement backup and retention policies
 - Use the storage layer's vacuum feature to clean up old data
+
+### Session Store Recovery
+
+- The agent API uses a bounded in-memory session store by default to cap event growth and enforce retention.
+- Toggle `MAGSAG_SESSION_BACKEND=memory` to revert to the legacy unbounded store when you need a fast, in-place rollback during incidents.
+- Revert the toggle (or supply a persistent store via `sessions.store`) once the incident is mitigated to regain backpressure guarantees.
 
 ### Dependency Security
 
@@ -132,8 +143,9 @@ Before deploying MAGSAG to production, ensure the following security measures ar
 
 ### Recommended Environment Variables
 
-- [ ] **`MAGSAG_RATE_LIMIT_QPS`**: Enable rate limiting (recommended: `10`)
+- [ ] **`MAGSAG_RATE_LIMIT_ENABLED` / `MAGSAG_RATE_LIMIT_QPS`**: Confirm limiter settings match the deployment profile (defaults to `true`/`10` in production, `false`/`25` elsewhere)
 - [ ] **`MAGSAG_REDIS_URL`**: Configure Redis for distributed rate limiting in multi-instance deployments
+- [ ] **`MAGSAG_SESSION_BACKEND`**: Keep `bounded` for steady-state and document when to flip to `memory` during incidents
 - [ ] **`MAGSAG_GITHUB_WEBHOOK_SECRET`**: Set if using GitHub webhooks (generate with `openssl rand -hex 32`)
 - [ ] **`MAGSAG_OTEL_TRACING_ENABLED`**: Enable observability for production monitoring
 - [ ] **`MAGSAG_OTLP_ENDPOINT`**: Configure OpenTelemetry collector endpoint

@@ -35,7 +35,7 @@ export interface WorktreeManagerConfig {
 
 const DEFAULT_CONFIG: Required<WorktreeManagerConfig> = {
   root: '.magsag/wt',
-  baseRef: 'dev/integration',
+  baseRef: 'main',
   maxAlive: 6,
   ttlOkMs: 24 * 60 * 60 * 1000,     // 24 hours for successful worktrees
   ttlFailedMs: 72 * 60 * 60 * 1000, // 72 hours for failed worktrees
@@ -52,6 +52,10 @@ export interface WorktreeStore {
 }
 
 export class JsonWorktreeStore implements WorktreeStore {
+  private cache?: Record<string, WorktreeRecord>;
+  private writePromise?: Promise<void>;
+  private pendingFlush = false;
+
   constructor(private readonly indexPath: string) {}
 
   private async ensureDir(): Promise<void> {
@@ -59,20 +63,47 @@ export class JsonWorktreeStore implements WorktreeStore {
   }
 
   private async load(): Promise<Record<string, WorktreeRecord>> {
+    if (this.cache) {
+      return this.cache;
+    }
     try {
       const data = await fs.readFile(this.indexPath, 'utf-8');
-      return JSON.parse(data);
+      this.cache = JSON.parse(data) as Record<string, WorktreeRecord>;
+      return this.cache;
     } catch (error) {
       if ((error as any).code === 'ENOENT') {
-        return {};
+        this.cache = {};
+        return this.cache;
       }
       throw error;
     }
   }
 
-  private async save(records: Record<string, WorktreeRecord>): Promise<void> {
-    await this.ensureDir();
-    await fs.writeFile(this.indexPath, JSON.stringify(records, null, 2));
+  private async persist(): Promise<void> {
+    if (!this.cache) {
+      return;
+    }
+
+    if (!this.writePromise) {
+      this.writePromise = (async () => {
+        try {
+          await this.ensureDir();
+          await fs.writeFile(this.indexPath, JSON.stringify(this.cache, null, 2));
+        } finally {
+          this.writePromise = undefined;
+        }
+      })();
+      await this.writePromise;
+      if (this.pendingFlush) {
+        this.pendingFlush = false;
+        return this.persist();
+      }
+      return;
+    }
+
+    this.pendingFlush = true;
+    await this.writePromise;
+    return this.persist();
   }
 
   async get(id: string): Promise<WorktreeRecord | undefined> {
@@ -83,13 +114,16 @@ export class JsonWorktreeStore implements WorktreeStore {
   async put(record: WorktreeRecord): Promise<void> {
     const records = await this.load();
     records[record.id] = record;
-    await this.save(records);
+    await this.persist();
   }
 
   async delete(id: string): Promise<void> {
     const records = await this.load();
+    if (!(id in records)) {
+      return;
+    }
     delete records[id];
-    await this.save(records);
+    await this.persist();
   }
 
   async all(): Promise<WorktreeRecord[]> {

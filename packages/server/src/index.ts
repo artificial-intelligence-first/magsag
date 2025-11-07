@@ -11,10 +11,21 @@ import type { Duplex } from 'stream';
 import { WebSocketServer, type RawData, WebSocket } from 'ws';
 import { createOpenApiDocument } from './openapi.js';
 import {
+  BoundedSessionStore,
   InMemorySessionStore,
+  type BoundedSessionStoreOptions,
   type SessionErrorPayload,
   type SessionStore
 } from './session-store.js';
+import {
+  createCorsGuard,
+  createCorsPreflightHandler,
+  createRateLimitGuard,
+  createRateLimiter,
+  createSecurityRuntime,
+  isOriginAllowed,
+  type AgentSecurityOptions
+} from './security.js';
 
 type FlowSummaryLoader = (basePath?: string) => Promise<FlowSummary>;
 
@@ -26,8 +37,12 @@ export interface AgentObservabilityOptions {
   logOnError?: boolean;
 }
 
+export type SessionBackend = 'bounded' | 'memory';
+
 export interface AgentSessionOptions {
   store?: SessionStore;
+  bounded?: BoundedSessionStoreOptions;
+  backend?: SessionBackend;
 }
 
 interface ObservabilityRuntime {
@@ -100,6 +115,7 @@ export interface AgentServerOptions {
   defaultRunner?: Runner;
   observability?: AgentObservabilityOptions;
   sessions?: AgentSessionOptions;
+  security?: AgentSecurityOptions;
 }
 
 const serializeEvent = (event: RunnerEvent): string => JSON.stringify(event);
@@ -126,17 +142,47 @@ const mapEventToSse = (event: RunnerEvent): { event: string; data: string } => (
   data: serializeEvent(event)
 });
 
+const normalizeSessionBackend = (value?: SessionBackend | string | null): SessionBackend => {
+  if (!value) {
+    return 'bounded';
+  }
+  const normalized = value.toString().trim().toLowerCase();
+  return normalized === 'memory' ? 'memory' : 'bounded';
+};
+
+export const resolveSessionStore = (
+  options?: AgentSessionOptions,
+  env: NodeJS.ProcessEnv = process.env
+): SessionStore => {
+  if (options?.store) {
+    return options.store;
+  }
+  const backend = normalizeSessionBackend(options?.backend ?? env.MAGSAG_SESSION_BACKEND);
+  if (backend === 'memory') {
+    return new InMemorySessionStore();
+  }
+  return new BoundedSessionStore(options?.bounded);
+};
+
 export const createAgentApp = ({
   registry,
   defaultRunner,
   observability,
-  sessions
+  sessions,
+  security
 }: AgentServerOptions) => {
   const app = new Hono();
   const observabilityRuntime = toObservabilityRuntime(observability);
   const emitFlowSummary = createFlowSummaryEmitter(observabilityRuntime);
-  const sessionStore = sessions?.store ?? new InMemorySessionStore();
+  const sessionStore = resolveSessionStore(sessions);
   const openApiDocument = createOpenApiDocument();
+  const securityRuntime = createSecurityRuntime(security);
+  const corsGuard = createCorsGuard(securityRuntime.cors);
+  const corsPreflight = createCorsPreflightHandler(securityRuntime.cors);
+  const rateLimitGuard = createRateLimitGuard(securityRuntime.rateLimit);
+
+  app.use('*', corsGuard);
+  app.options('*', corsPreflight);
 
   app.get('/openapi.json', (c) => c.json(openApiDocument));
 
@@ -182,6 +228,10 @@ export const createAgentApp = ({
   });
 
   app.post('/api/v1/agent/run', async (c) => {
+    const limited = rateLimitGuard?.(c);
+    if (limited) {
+      return limited;
+    }
     const spec = runSpecSchema.parse(await c.req.json<unknown>());
     const runner = ensureRunner(registry, spec, defaultRunner);
     const session = await sessionStore.create(spec, { id: spec.resumeId });
@@ -274,11 +324,19 @@ export interface AgentWebSocketOptions extends AgentServerOptions {
 
 export const attachAgentWebSocketServer = (
   httpServer: HttpServer,
-  { registry, defaultRunner, observability, path = defaultWebSocketPath }: AgentWebSocketOptions
+  {
+    registry,
+    defaultRunner,
+    observability,
+    security,
+    path = defaultWebSocketPath
+  }: AgentWebSocketOptions
 ) => {
   const wss = new WebSocketServer({ noServer: true });
   const observabilityRuntime = toObservabilityRuntime(observability);
   const emitFlowSummary = createFlowSummaryEmitter(observabilityRuntime);
+  const securityRuntime = createSecurityRuntime(security);
+  const rateLimiter = createRateLimiter(securityRuntime.rateLimit);
 
   const handleMessage = async (socket: WebSocket, data: RawData) => {
     let spec: RunSpec;
@@ -342,6 +400,39 @@ export const attachAgentWebSocketServer = (
       return;
     }
 
+    const originHeader = request.headers.origin ?? request.headers['sec-websocket-origin'];
+    if (!isOriginAllowed(securityRuntime.cors, typeof originHeader === 'string' ? originHeader : undefined)) {
+      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+
+    if (rateLimiter) {
+      let remote = request.socket.remoteAddress ?? request.socket.remoteFamily ?? undefined;
+      if (securityRuntime.rateLimit.trustForwardedHeaders) {
+        const forwardedFor = Array.isArray(request.headers['x-forwarded-for'])
+          ? request.headers['x-forwarded-for'][0]
+          : request.headers['x-forwarded-for'];
+        remote =
+          forwardedFor?.split(',')[0]?.trim() ??
+          (Array.isArray(request.headers['cf-connecting-ip'])
+            ? request.headers['cf-connecting-ip'][0]
+            : request.headers['cf-connecting-ip']) ??
+          (Array.isArray(request.headers['x-real-ip'])
+            ? request.headers['x-real-ip'][0]
+            : request.headers['x-real-ip']) ??
+          remote;
+      }
+      const result = rateLimiter.consume(remote ?? 'anonymous');
+      if (!result.allowed) {
+        const retryHeader =
+          result.retryAfterSeconds > 0 ? `Retry-After: ${Math.max(1, result.retryAfterSeconds)}\r\n` : '';
+        socket.write(`HTTP/1.1 429 Too Many Requests\r\n${retryHeader}\r\n`);
+        socket.destroy();
+        return;
+      }
+    }
+
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
     });
@@ -350,8 +441,9 @@ export const attachAgentWebSocketServer = (
   return wss;
 };
 
-export { InMemorySessionStore } from './session-store.js';
+export { BoundedSessionStore, InMemorySessionStore } from './session-store.js';
 export type {
+  BoundedSessionStoreOptions,
   SessionStore,
   SessionRecord,
   SessionSummary,

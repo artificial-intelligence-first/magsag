@@ -11,16 +11,53 @@ export interface OpenAiAgentsRunnerOptions {
   apiKey?: string;
   instructions?: string;
   model?: string;
+  baseUrl?: string;
+  organization?: string;
+  project?: string;
+  moduleLoader?: () => Promise<{
+    Agent: new (options: { name: string; instructions?: string; model?: string }) => unknown;
+    Runner: new (config?: {
+      modelProvider?: unknown;
+      model?: string;
+      tracingDisabled?: boolean;
+      traceIncludeSensitiveData?: boolean;
+    }) => {
+      run: (
+        agent: unknown,
+        input: string,
+        options?: { context?: unknown }
+      ) => Promise<unknown>;
+    };
+    OpenAIProvider: new (options: {
+      apiKey?: string;
+      baseURL?: string;
+      organization?: string;
+      project?: string;
+    }) => unknown;
+  }>;
 }
 
 const loadAgentsModule = async () =>
   (await import('@openai/agents')) as unknown as {
-    Agent: new (options: { name?: string; instructions?: string }) => unknown;
-    run: (
-      agent: unknown,
-      input: string,
-      options?: { stream?: boolean }
-    ) => Promise<unknown>;
+    Agent: new (options: { name: string; instructions?: string; model?: string }) => unknown;
+    Runner: new (config?: {
+      modelProvider?: unknown;
+      model?: string;
+      tracingDisabled?: boolean;
+      traceIncludeSensitiveData?: boolean;
+    }) => {
+      run: (
+        agent: unknown,
+        input: string,
+        options?: { context?: unknown }
+      ) => Promise<unknown>;
+    };
+    OpenAIProvider: new (options: {
+      apiKey?: string;
+      baseURL?: string;
+      organization?: string;
+      project?: string;
+    }) => unknown;
   };
 
 const extractFinalOutput = (result: unknown): string | undefined => {
@@ -60,14 +97,54 @@ const normalizeEnvRecord = (value: unknown): Record<string, string> => {
   }, {});
 };
 
+interface ResolvedOpenAiConfig {
+  apiKey?: string;
+  baseURL?: string;
+  organization?: string;
+  project?: string;
+}
+
+const resolveOpenAiConfig = (
+  options: OpenAiAgentsRunnerOptions,
+  env: Record<string, string>
+): ResolvedOpenAiConfig => {
+  const apiKey =
+    options.apiKey ?? env.OPENAI_API_KEY ?? process.env.OPENAI_API_KEY ?? undefined;
+  const baseURL =
+    options.baseUrl ??
+    env.OPENAI_BASE_URL ??
+    env.OPENAI_API_BASE ??
+    process.env.OPENAI_BASE_URL ??
+    process.env.OPENAI_API_BASE ??
+    undefined;
+  const organization =
+    options.organization ?? env.OPENAI_ORGANIZATION ?? process.env.OPENAI_ORGANIZATION;
+  const project = options.project ?? env.OPENAI_PROJECT ?? process.env.OPENAI_PROJECT;
+
+  return {
+    apiKey,
+    ...(baseURL ? { baseURL } : {}),
+    ...(organization ? { organization } : {}),
+    ...(project ? { project } : {})
+  };
+};
+
 export class OpenAiAgentsRunner implements Runner {
-  constructor(private readonly options: OpenAiAgentsRunnerOptions = {}) {}
+  private readonly config: Omit<OpenAiAgentsRunnerOptions, 'moduleLoader'>;
+  private readonly loadModule: () => ReturnType<typeof loadAgentsModule>;
+
+  constructor(options: OpenAiAgentsRunnerOptions = {}) {
+    const { moduleLoader, ...rest } = options;
+    this.config = rest;
+    this.loadModule = moduleLoader ?? loadAgentsModule;
+  }
 
   async *run(spec: RunSpec): AsyncIterable<RunnerEvent> {
     const validated = runSpecSchema.parse(spec);
-    const apiKey = this.options.apiKey ?? process.env.OPENAI_API_KEY;
+    const envOverrides = normalizeEnvRecord(validated.extra?.env);
+    const credentials = resolveOpenAiConfig(this.config, envOverrides);
 
-    if (!apiKey) {
+    if (!credentials.apiKey) {
       yield {
         type: 'error',
         error: { message: 'OPENAI_API_KEY is required for openai-agents runner' }
@@ -75,9 +152,6 @@ export class OpenAiAgentsRunner implements Runner {
       yield { type: 'done' };
       return;
     }
-
-    const previous = process.env.OPENAI_API_KEY;
-    process.env.OPENAI_API_KEY = apiKey;
 
     const workspaceEvents: RunnerEvent[] = [];
     const flushWorkspace = function* (): Generator<RunnerEvent> {
@@ -92,24 +166,30 @@ export class OpenAiAgentsRunner implements Runner {
         })
       : null;
 
-    const extraEnv = {
-      ...normalizeEnvRecord(validated.extra?.env),
+    const runtimeEnv = {
+      ...envOverrides,
       ...(workspace ? workspace.environment() : {})
     };
-    const previousEnvEntries = new Map<string, string | undefined>();
-    for (const [key, value] of Object.entries(extraEnv)) {
-      previousEnvEntries.set(key, process.env[key]);
-      process.env[key] = value;
-    }
 
     const restoreMcpEnvironment = applyRunnerMcpEnv(validated.extra?.mcp);
     yield* flushWorkspace();
 
     try {
-      const { Agent, run } = await loadAgentsModule();
+      const { Agent, Runner, OpenAIProvider } = await this.loadModule();
       const agent = new Agent({
         name: 'MAGSAG Runner',
-        instructions: this.options.instructions ?? validated.prompt
+        instructions: this.config.instructions ?? validated.prompt,
+        model: this.config.model
+      });
+      const provider = new OpenAIProvider({
+        apiKey: credentials.apiKey,
+        ...(credentials.baseURL ? { baseURL: credentials.baseURL } : {}),
+        ...(credentials.organization ? { organization: credentials.organization } : {}),
+        ...(credentials.project ? { project: credentials.project } : {})
+      });
+      const runner = new Runner({
+        modelProvider: provider,
+        ...(this.config.model ? { model: this.config.model } : {})
       });
 
       yield {
@@ -118,7 +198,9 @@ export class OpenAiAgentsRunner implements Runner {
       };
       yield* flushWorkspace();
 
-      const result = await run(agent, validated.prompt);
+      const result = await runner.run(agent, validated.prompt, {
+        context: { environment: runtimeEnv }
+      });
       const output = extractFinalOutput(result);
 
       if (output) {
@@ -148,18 +230,6 @@ export class OpenAiAgentsRunner implements Runner {
       yield { type: 'done' };
       yield* flushWorkspace();
     } finally {
-      if (previous !== undefined) {
-        process.env.OPENAI_API_KEY = previous;
-      } else {
-        delete process.env.OPENAI_API_KEY;
-      }
-      for (const [key, previousValue] of previousEnvEntries.entries()) {
-        if (previousValue !== undefined) {
-          process.env[key] = previousValue;
-        } else {
-          delete process.env[key];
-        }
-      }
       restoreMcpEnvironment();
       await workspace?.finalize();
       yield* flushWorkspace();

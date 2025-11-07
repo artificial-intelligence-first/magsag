@@ -69,6 +69,10 @@ sources:
 - Retired Python doc tooling and scripts in favour of `pnpm docs:lint` and `pnpm catalog:validate` ahead of the v2.0.0 tag.
 - Deleted stray Node.js skill implementations under `catalog/skills/**/impl` that were superseded by the TypeScript catalog modules.
 
+#### Fixed
+- Restored accurate Vitest coverage enforcement by expressing global thresholds as percentages (80/70/75/80), ensuring CI fails when statement, branch, function, or line coverage dips below the documented targets.
+- Rate limiter now keys requests by the actual socket address (via `context.env.incoming`) whenever proxy headers are disabled, preventing all traffic from sharing a single `anonymous` bucket and keeping the `trustForwardedHeaders` flag meaningful.
+
 ### [2.0.0] - 2025-11-04
 
 #### Added

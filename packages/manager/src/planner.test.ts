@@ -63,7 +63,8 @@ describe('HeuristicPlanner', () => {
       const plan = await planner.createPlan(task, mockContext);
 
       const planDetails = plan as Plan & { metadata?: { maxParallel?: number } };
-      expect(planDetails.metadata?.maxParallel).toBe(2);
+      expect(planDetails.metadata?.maxParallel).toBeGreaterThanOrEqual(1);
+      expect(planDetails.metadata?.maxParallel).toBeLessThanOrEqual(2);
     });
   });
 
@@ -90,11 +91,14 @@ describe('HeuristicPlanner', () => {
         expect(firstStepWithKeys.exclusiveKeys).toBeDefined();
         expect(Array.isArray(firstStepWithKeys.exclusiveKeys)).toBe(true);
 
-        // Should include package.json
-        const hasPackageJson = firstStepWithKeys.exclusiveKeys.some((key: string) =>
-          key.includes('package.json')
+        const keys: string[] = firstStepWithKeys.exclusiveKeys;
+        expect(keys).toEqual(
+          expect.arrayContaining([
+            expect.stringContaining('package.json'),
+            expect.stringContaining('pkg:'),
+            expect.stringContaining('dir:')
+          ])
         );
-        expect(hasPackageJson).toBe(true);
       }
     });
 
@@ -265,6 +269,83 @@ describe('HeuristicPlanner', () => {
 
       expect(indexA).toBeLessThan(indexB);
       expect(indexB).toBeLessThan(indexC);
+    });
+  });
+
+  describe('Adaptive concurrency', () => {
+    it('reduces parallelism when workload is heavy', async () => {
+      const graph = new Map([
+        ['@magsag/core', ['@magsag/schema']],
+        ['@magsag/schema', []],
+        ['@magsag/cli', ['@magsag/core']]
+      ]);
+
+      const heavyProviders = {
+        graph: {
+          getPackageGraph: vi.fn().mockResolvedValue(graph)
+        },
+        diag: {
+          collectErrors: vi.fn().mockResolvedValue(
+            new Map([
+              ['@magsag/core', { errorCount: 120, files: ['src/index.ts'] }],
+              ['@magsag/schema', { errorCount: 80, files: ['src/types.ts'] }],
+              ['@magsag/cli', { errorCount: 30, files: ['src/cli.ts'] }]
+            ])
+          )
+        },
+        metrics: {
+          getAverageExecutionTime: vi.fn().mockResolvedValue(24000),
+          recordExecution: vi.fn().mockResolvedValue(undefined)
+        },
+        repo: {
+          getChangedFiles: vi.fn().mockResolvedValue(['src/index.ts', 'src/config.ts']),
+          getChangedLines: vi.fn().mockResolvedValue(120)
+        }
+      };
+
+      const lightProviders = {
+        graph: {
+          getPackageGraph: vi.fn().mockResolvedValue(graph)
+        },
+        diag: {
+          collectErrors: vi.fn().mockResolvedValue(
+            new Map([
+              ['@magsag/core', { errorCount: 5, files: [] }],
+              ['@magsag/schema', { errorCount: 0, files: [] }],
+              ['@magsag/cli', { errorCount: 3, files: [] }]
+            ])
+          )
+        },
+        metrics: {
+          getAverageExecutionTime: vi.fn().mockResolvedValue(3000),
+          recordExecution: vi.fn().mockResolvedValue(undefined)
+        },
+        repo: {
+          getChangedFiles: vi.fn().mockResolvedValue(['src/index.ts']),
+          getChangedLines: vi.fn().mockResolvedValue(10)
+        }
+      };
+
+      const task: TaskSpec = {
+        id: 'adaptive',
+        goal: 'Stress test adaptive concurrency'
+      };
+
+      const heavyPlan = await new HeuristicPlanner({}, heavyProviders).createPlan(task, mockContext);
+      const lightPlan = await new HeuristicPlanner({}, lightProviders).createPlan(task, mockContext);
+
+      const heavyMeta = (heavyPlan as Plan & { metadata?: any }).metadata;
+      const lightMeta = (lightPlan as Plan & { metadata?: any }).metadata;
+
+      expect(heavyMeta?.adaptiveConcurrency?.parallel).toBeGreaterThan(0);
+      expect(lightMeta?.adaptiveConcurrency?.parallel).toBeGreaterThan(0);
+      expect(lightMeta?.adaptiveConcurrency?.parallel).toBeGreaterThanOrEqual(
+        heavyMeta?.adaptiveConcurrency?.parallel ?? 0
+      );
+      expect(heavyMeta?.adaptiveConcurrency?.adjustments).toMatchObject({
+        errorPenalty: expect.any(Number)
+      });
+      expect(heavyMeta?.maxParallel).toBeLessThanOrEqual(lightMeta?.maxParallel ?? Infinity);
     });
   });
 });

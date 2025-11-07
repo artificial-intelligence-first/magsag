@@ -45,8 +45,19 @@ jobs:
       - name: Workspace build
         run: pnpm -r build
 
-      - name: Workspace tests
-        run: pnpm -r test
+      - name: Workspace tests (coverage)
+        run: pnpm -r test -- --coverage --coverage.reporter=lcov
+
+      - name: Upload coverage (lcov)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-coverage-lcov
+          path: '**/coverage/lcov.info'
+          if-no-files-found: warn
+
+      - name: Dependency audit
+        run: pnpm audit --prod --dev --audit-level=high
 
       - name: Vitest e2e subset
         run: pnpm ci:e2e

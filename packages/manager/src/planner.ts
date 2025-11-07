@@ -2,7 +2,7 @@ import { cpus } from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import type {
   AgentContext,
   Plan,
@@ -30,6 +30,8 @@ const DEFAULT_CONFIG: Required<PlannerConfig> = {
   preferLeaf: true,
   fileLocking: true
 };
+
+const MAX_PARALLEL_CAP = 10;
 
 interface PackageInfo {
   name: string;
@@ -94,7 +96,11 @@ export class HeuristicPlanner implements Planner {
 
     const layers = this.topologicalSort(packages);
     const steps = await this.generateSteps(task, layers);
-    const maxParallel = this.calculateMaxParallel(packages);
+    const concurrencyInsight = this.calculateMaxParallel(packages);
+    const maxParallel =
+      this.config.maxParallel === 'auto'
+        ? Math.min(MAX_PARALLEL_CAP, concurrencyInsight.parallel)
+        : Math.min(this.config.maxParallel, concurrencyInsight.parallel);
 
     return {
       id: `${task.id}-plan`,
@@ -103,7 +109,8 @@ export class HeuristicPlanner implements Planner {
       // Add hints for the execution engine
       metadata: {
         maxParallel,
-        strategy: 'heuristic-v1'
+        strategy: 'heuristic-v1',
+        adaptiveConcurrency: concurrencyInsight
       }
     } as Plan;
   }
@@ -262,23 +269,6 @@ export class HeuristicPlanner implements Planner {
     return layers;
   }
 
-  private calculateScore(pkg: PackageInfo): number {
-    // Weighted Shortest Processing Time (WSPT) scoring
-    const errorWeight = 0.5;
-    const timeWeight = 0.3;
-    const changesWeight = 0.2;
-
-    const errorScore = (pkg.errorCount ?? 0) / 100; // Normalize
-    const timeScore = (pkg.estimatedTimeMs ?? 5000) / 10000; // Normalize
-    const changesScore = (pkg.changedFiles ?? 0) / 50; // Normalize
-
-    return (
-      errorWeight * errorScore +
-      timeWeight * timeScore +
-      changesWeight * changesScore
-    );
-  }
-
   private async generateSteps(task: TaskSpec, layers: PackageInfo[][]): Promise<PlanStep[]> {
     const planId = `${task.id}-plan`;
     const orderedLayers = this.config.preferLeaf ? [...layers].reverse() : layers;
@@ -325,15 +315,8 @@ export class HeuristicPlanner implements Planner {
       };
 
       if (this.config.fileLocking) {
-        const exclusiveKeys: string[] = [];
         const packageFiles = await this.getPackageFiles(pkg);
-        exclusiveKeys.push(...packageFiles.map(f => `file:${f}`));
-        exclusiveKeys.push(
-          `file:${pkg.path}/package.json`,
-          `file:${pkg.path}/tsconfig.json`,
-          `file:${pkg.path}/.eslintrc.json`
-        );
-
+        const exclusiveKeys = this.buildExclusiveKeys(pkg, packageFiles);
         if (exclusiveKeys.length > 0) {
           step.exclusiveKeys = exclusiveKeys;
         }
@@ -381,22 +364,107 @@ export class HeuristicPlanner implements Planner {
     }
   }
 
-  private calculateMaxParallel(packages: PackageInfo[]): number {
-    const cpuCount = cpus().length;
-    const baseParallel = Math.max(1, Math.floor(cpuCount * this.config.cpuMultiplier));
+  private buildExclusiveKeys(pkg: PackageInfo, files: string[]): string[] {
+    const keys = new Set<string>();
+    const normalizedPath = pkg.path.replace(/\\/g, '/');
+    keys.add(`pkg:${pkg.name}`);
+    keys.add(`dir:${normalizedPath}`);
 
-    // Adjust based on workload
-    const totalErrors = packages.reduce((sum, pkg) => sum + (pkg.errorCount ?? 0), 0);
-    const workloadMultiplier = totalErrors > 200 ? 1.5 : totalErrors > 50 ? 1.2 : 1.0;
+    const addFileKey = (path: string) => {
+      const formatted = path.replace(/\\/g, '/');
+      keys.add(`file:${formatted}`);
+      const parent = dirname(formatted);
+      if (parent && parent !== '.' && parent !== formatted) {
+        keys.add(`dir:${parent}`);
+      }
+    };
 
-    const calculated = Math.floor(baseParallel * workloadMultiplier);
-
-    // Apply cap
-    if (this.config.maxParallel === 'auto') {
-      return Math.min(10, calculated);
-    } else {
-      return Math.min(this.config.maxParallel, calculated);
+    for (const file of files) {
+      addFileKey(file);
     }
+
+    addFileKey(join(pkg.path, 'package.json'));
+    addFileKey(join(pkg.path, 'tsconfig.json'));
+    addFileKey(join(pkg.path, '.eslintrc.json'));
+
+    return Array.from(keys);
+  }
+
+  private calculateMaxParallel(packages: PackageInfo[]): {
+    parallel: number;
+    baseParallel: number;
+    cpuCount: number;
+    workloadScore: number;
+    adjustments: Record<string, number>;
+  } {
+    const cpuCount = Math.max(1, cpus().length);
+    const baseParallel = Math.max(1, Math.floor(cpuCount * this.config.cpuMultiplier));
+    const packageCount = Math.max(1, packages.length);
+    const totalErrors = packages.reduce((sum, pkg) => sum + (pkg.errorCount ?? 0), 0);
+    const totalChanges = packages.reduce((sum, pkg) => sum + (pkg.changedFiles ?? 0), 0);
+    const longRunning = packages.filter((pkg) => (pkg.estimatedTimeMs ?? 0) > 15000).length;
+
+    let adjusted = baseParallel;
+    const adjustments: Record<string, number> = {};
+
+    const workloadScore = Math.min(
+      1,
+      (totalErrors / 400) * 0.5 + (totalChanges / 200) * 0.3 + (longRunning / packageCount) * 0.2
+    );
+
+    if (longRunning > 0) {
+      const penalty = Math.max(0.4, 1 - longRunning / packageCount);
+      adjusted = Math.max(1, Math.floor(adjusted * penalty));
+      adjustments.longRunningPenalty = penalty;
+    }
+
+    if (totalErrors > 200) {
+      adjusted = Math.max(1, Math.floor(adjusted * 0.6));
+      adjustments.errorPenalty = 0.6;
+    } else if (totalErrors > 100) {
+      adjusted = Math.max(1, Math.floor(adjusted * 0.8));
+      adjustments.errorPenalty = 0.8;
+    }
+
+    if (totalChanges > 150) {
+      adjusted = Math.max(1, Math.floor(adjusted * 0.75));
+      adjustments.changePenalty = 0.75;
+    }
+
+    if (adjusted > packageCount) {
+      adjustments.packageLimit = packageCount / adjusted;
+      adjusted = packageCount;
+    }
+
+    if (this.config.maxParallel !== 'auto' && adjusted > this.config.maxParallel) {
+      adjustments.configCap = this.config.maxParallel / adjusted;
+      adjusted = this.config.maxParallel;
+    }
+
+    return {
+      parallel: Math.max(1, adjusted),
+      baseParallel,
+      cpuCount,
+      workloadScore,
+      adjustments
+    };
+  }
+
+  private calculateScore(pkg: PackageInfo): number {
+    // Weighted Shortest Processing Time (WSPT) scoring
+    const errorWeight = 0.5;
+    const timeWeight = 0.3;
+    const changesWeight = 0.2;
+
+    const errorScore = (pkg.errorCount ?? 0) / 100; // Normalize
+    const timeScore = (pkg.estimatedTimeMs ?? 5000) / 10000; // Normalize
+    const changesScore = (pkg.changedFiles ?? 0) / 50; // Normalize
+
+    return (
+      errorWeight * errorScore +
+      timeWeight * timeScore +
+      changesWeight * changesScore
+    );
   }
 }
 

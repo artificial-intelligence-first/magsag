@@ -165,7 +165,12 @@ ws.on('message', (data) => {
 - `MAGSAG_API_KEY` - API key for authentication
 - `MAGSAG_CORS_ORIGINS` - CORS origins (comma-separated)
 - `MAGSAG_RATE_LIMIT_QPS` - Rate limit (queries per second)
+- `MAGSAG_RATE_LIMIT_BURST` - Rate limit burst capacity (defaults to `3×QPS` in production when unset)
+- `MAGSAG_RATE_LIMIT_ENABLED` - Enable rate limiting (defaults to `true` when `NODE_ENV=production`)
+- `MAGSAG_RATE_LIMIT_TRUST_PROXY` - Trust `x-forwarded-*` headers for client identity (defaults to `false`)
 - `MAGSAG_API_DEBUG` - Enable debug mode (default: false)
+
+> Copy `packages/server/.env.example` into your deployment tooling and replace the sample domains with real frontend origins before promoting to production. Without an explicit allowlist the server retains the legacy “allow all origins” behaviour.
 
 ### Programmatic Configuration
 
@@ -247,9 +252,19 @@ const server = createServer({
     enabled: true,
     qps: 10, // 10 queries per second
     burst: 20, // Allow bursts up to 20
+    trustForwardedHeaders: false, // Default: derive client identity from the socket
   },
 });
 ```
+
+> **Note:** When `trustForwardedHeaders` stays `false`, the limiter keys every request by the socket address surfaced via `@hono/node-server` (`context.env.incoming`). Only enable `trustForwardedHeaders` once your deployment sits behind a trusted reverse proxy that injects canonical `X-Forwarded-For` / `X-Client-IP` headers; otherwise malicious clients can spoof their identity and bypass quotas.
+
+## Monitoring
+
+- Export `x-ratelimit-limit` and `x-ratelimit-remaining` headers to your metrics store and alert when remaining capacity stays at `0` for sustained windows.
+- Capture counts of `429` responses (REST) and rejected WebSocket upgrades to verify rate limits are tuned for production workloads.
+- Track `403` responses with the payload `{ "error": { "message": "CORS origin not allowed" } }` to detect misconfigured `MAGSAG_CORS_ORIGINS`.
+- Run `pnpm --filter @magsag/server smoke` to execute an automated smoke test that demonstrates the 200/403/429 paths with the bundled sample configuration.
 
 ## Error Responses
 
