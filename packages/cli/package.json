@@ -37,7 +37,7 @@
     "@oclif/core": "3.27.0",
     "execa": "^8.0.1",
     "yaml": "^2.5.1",
-    "zod": "^3.23.8"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.21.1",
