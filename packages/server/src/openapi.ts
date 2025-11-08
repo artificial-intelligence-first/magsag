@@ -15,9 +15,10 @@ const packageVersion =
     : '0.0.0';
 
 export const createOpenApiDocument = () => {
-  const runSpecJson = zodToJsonSchema(runSpecSchema, 'RunSpec');
-  const runnerEventJson = zodToJsonSchema(runnerEventSchema, 'RunnerEvent');
-  const flowSummaryJson = zodToJsonSchema(flowSummarySchema, 'FlowSummary');
+  const convertSchema = zodToJsonSchema as unknown as (schema: unknown, name?: string) => unknown;
+  const runSpecJson = convertSchema(runSpecSchema, 'RunSpec');
+  const runnerEventJson = convertSchema(runnerEventSchema, 'RunnerEvent');
+  const flowSummaryJson = convertSchema(flowSummarySchema, 'FlowSummary');
 
   return {
     openapi: '3.1.0',

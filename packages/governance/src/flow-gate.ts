@@ -209,19 +209,21 @@ export const evaluateFlowSummary = async (
   const maxMcpRate = numbers(mcpPolicy?.max_error_rate);
   if (maxMcpRate !== undefined) {
     const mcpSummary = toRecord(summary.mcp) ?? {};
+    const aggregatedCalls = steps.reduce(
+      (acc: number, step: FlowSummaryStep) => acc + (numbers(toRecord(step.mcp)?.calls) ?? 0),
+      0
+    );
+    const aggregatedErrors = steps.reduce(
+      (acc: number, step: FlowSummaryStep) => acc + (numbers(toRecord(step.mcp)?.errors) ?? 0),
+      0
+    );
     let totalCalls = numbers(mcpSummary.calls);
     let totalErrors = numbers(mcpSummary.errors);
-    if (totalCalls === undefined) {
-      totalCalls = steps.reduce(
-        (acc: number, step: FlowSummaryStep) => acc + (numbers(toRecord(step.mcp)?.calls) ?? 0),
-        0
-      );
+    if (totalCalls === undefined || (totalCalls === 0 && aggregatedCalls > 0)) {
+      totalCalls = aggregatedCalls;
     }
-    if (totalErrors === undefined) {
-      totalErrors = steps.reduce(
-        (acc: number, step: FlowSummaryStep) => acc + (numbers(toRecord(step.mcp)?.errors) ?? 0),
-        0
-      );
+    if (totalErrors === undefined || (totalErrors === 0 && aggregatedErrors > 0)) {
+      totalErrors = aggregatedErrors;
     }
     const rate = ratio(totalErrors, totalCalls);
     if (rate !== undefined && rate > maxMcpRate) {

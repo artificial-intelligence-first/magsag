@@ -1,4 +1,0 @@
-{
-  "note": "Future hardening: attach with --security-opt=seccomp=tools/security/sandbox/seccomp.profile.json",
-  "todo": ["deny dangerous syscalls; baseline based on Docker default + project needs"]
-}

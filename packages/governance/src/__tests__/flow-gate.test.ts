@@ -244,9 +244,39 @@ per_step:
     expect(errors.some((e) => e.includes('finalize') && e.includes('avg_latency_ms'))).toBe(true);
   });
 
-  // MCP error rate tests - skipped for now as they require additional setup
-  it.skip('should evaluate MCP error rates', async () => {
-    // Test skipped - MCP error rate validation requires additional configuration
+  it('should evaluate MCP error rates', async () => {
+    const summaryPath = join(TEST_DIR, 'mcp-error-summary.json');
+    const policyPath = join(TEST_DIR, 'mcp-error-policy.yaml');
+
+    const summary = {
+      runs: 5,
+      success_rate: 0.9,
+      avg_latency_ms: 1200,
+      mcp: {
+        calls: 100,
+        errors: 20
+      },
+      steps: [
+        {
+          name: 'hello',
+          runs: 5,
+          successes: 4,
+          avg_latency_ms: 1000
+        }
+      ]
+    };
+
+    const policy = `
+min_runs: 1
+mcp:
+  max_error_rate: 0.05
+`;
+
+    await writeFile(summaryPath, JSON.stringify(summary));
+    await writeFile(policyPath, policy);
+
+    const errors = await evaluateFlowSummary(summaryPath, policyPath);
+    expect(errors.some((e) => e.includes('mcp.error_rate'))).toBe(true);
   });
 
   it('should handle zero denominator gracefully', async () => {
@@ -272,7 +302,42 @@ per_step:
     expect(Array.isArray(errors)).toBe(true);
   });
 
-  it.skip('should aggregate MCP stats from steps when summary does not have them', async () => {
-    // Test skipped - MCP aggregation requires additional configuration
+  it('should aggregate MCP stats from steps when summary does not have them', async () => {
+    const summaryPath = join(TEST_DIR, 'mcp-aggregate-summary.json');
+    const policyPath = join(TEST_DIR, 'mcp-aggregate-policy.yaml');
+
+    const summary = {
+      runs: 5,
+      success_rate: 1.0,
+      avg_latency_ms: 900,
+      mcp: {
+        calls: 0,
+        errors: 0
+      },
+      steps: [
+        {
+          name: 'aggregate',
+          runs: 5,
+          successes: 5,
+          avg_latency_ms: 900,
+          mcp: {
+            calls: 10,
+            errors: 2
+          }
+        }
+      ]
+    };
+
+    const policy = `
+min_runs: 1
+mcp:
+  max_error_rate: 0.05
+`;
+
+    await writeFile(summaryPath, JSON.stringify(summary));
+    await writeFile(policyPath, policy);
+
+    const errors = await evaluateFlowSummary(summaryPath, policyPath);
+    expect(errors.some((e) => e.includes('mcp.error_rate'))).toBe(true);
   });
 });

@@ -27,36 +27,82 @@ export class ToolRegistry {
   }
 
   applyTool(server: McpServer, tool: ToolDefinition): void {
-    // If inputSchema is a ZodRawShape, wrap it in z.object()
-    // If it's already a ZodObject, use it as-is
-    let inputSchema: z.ZodObject<any> | undefined;
-    if (tool.inputSchema) {
-      if (tool.inputSchema instanceof z.ZodObject) {
-        inputSchema = tool.inputSchema;
-      } else if (typeof tool.inputSchema === 'object' && Object.keys(tool.inputSchema).length > 0) {
-        inputSchema = z.object(tool.inputSchema);
-      }
-    }
+    const normalizedInput = this.normalizeSchema(tool.inputSchema);
+    const normalizedOutput = this.normalizeSchema(tool.outputSchema);
 
-    let outputSchema: z.ZodObject<any> | undefined;
-    if (tool.outputSchema) {
-      if (tool.outputSchema instanceof z.ZodObject) {
-        outputSchema = tool.outputSchema;
-      } else if (typeof tool.outputSchema === 'object' && Object.keys(tool.outputSchema).length > 0) {
-        outputSchema = z.object(tool.outputSchema);
-      }
-    }
-
-    server.registerTool(
+    const registered = server.registerTool(
       tool.name,
       {
         title: tool.title,
         description: tool.description,
-        inputSchema: inputSchema as any,
-        outputSchema: outputSchema as any,
+        inputSchema: this.extractShape(normalizedInput),
+        outputSchema: this.extractShape(normalizedOutput),
         annotations: tool.annotations
       },
       (args, extra) => tool.handler(args ?? {}, extra)
     );
+
+    if (normalizedInput) {
+      (registered as { inputSchema?: ZodObjectLike }).inputSchema = normalizedInput;
+    }
+    if (normalizedOutput) {
+      (registered as { outputSchema?: ZodObjectLike }).outputSchema = normalizedOutput;
+    }
+  }
+
+  private normalizeSchema(schema?: unknown): ZodObjectLike | undefined {
+    if (!schema) {
+      return undefined;
+    }
+    if (schema instanceof z.ZodObject) {
+      return schema;
+    }
+    if (this.isForeignZodObject(schema)) {
+      return schema;
+    }
+    if (typeof schema === 'object') {
+      return z.object(schema as z.ZodRawShape);
+    }
+    return undefined;
+  }
+
+  private extractShape(schema?: ZodObjectLike): z.ZodRawShape | undefined {
+    if (!schema) {
+      return undefined;
+    }
+    if (schema instanceof z.ZodObject) {
+      return schema.shape;
+    }
+    if (this.isForeignZodObject(schema)) {
+      if (typeof schema.shape === 'function') {
+        return schema.shape();
+      }
+      if (schema.shape && typeof schema.shape === 'object') {
+        return schema.shape as z.ZodRawShape;
+      }
+      const defShape = schema._def?.shape;
+      if (typeof defShape === 'function') {
+        return defShape();
+      }
+    }
+    return undefined;
+  }
+
+  private isForeignZodObject(value: unknown): value is ForeignZodObject {
+    if (typeof value !== 'object' || value === null) {
+      return false;
+    }
+    const def = (value as ForeignZodObject)._def;
+    return typeof def === 'object' && def?.typeName === 'ZodObject';
   }
 }
+
+type ForeignZodObject = {
+  _def?: {
+    typeName?: string;
+    shape?: () => z.ZodRawShape;
+  };
+  shape?: z.ZodRawShape | (() => z.ZodRawShape);
+};
+
+type ZodObjectLike = z.ZodObject<z.ZodRawShape> | ForeignZodObject;

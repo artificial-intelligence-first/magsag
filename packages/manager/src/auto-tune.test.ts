@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { AutoTune } from './auto-tune.js';
 
 describe('AutoTune', () => {
@@ -14,6 +14,10 @@ describe('AutoTune', () => {
       windowSize: 3,
       cooldownMs: 100 // Short cooldown for testing
     });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe('Basic functionality', () => {
@@ -39,47 +43,48 @@ describe('AutoTune', () => {
   });
 
   describe('Failure rate adjustments', () => {
-    it.skip('should decrease parallelism on high failure rate', async () => {
-      // Record executions with high failure rate
-      autoTune.recordExecution({
+    it('should decrease parallelism on high failure rate', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(1_000);
+      const first = autoTune.recordExecution({
         planId: 'plan1',
         timestamp: Date.now(),
         parallelCount: 3,
         totalTasks: 10,
         successCount: 5,
-        failureCount: 5, // 50% failure rate
-        averageTimeMs: 1000
+        failureCount: 5,
+        averageTimeMs: 1_000
       });
+      expect(first).toBe(2);
 
-      autoTune.recordExecution({
+      vi.setSystemTime(1_050); // still within cooldown
+      const duringCooldown = autoTune.recordExecution({
         planId: 'plan1b',
         timestamp: Date.now(),
-        parallelCount: 3,
+        parallelCount: 2,
         totalTasks: 10,
         successCount: 5,
-        failureCount: 5, // 50% failure rate
-        averageTimeMs: 1000
+        failureCount: 5,
+        averageTimeMs: 1_000
       });
+      expect(duringCooldown).toBe(2);
 
-      // Wait for cooldown
-      await new Promise(resolve => setTimeout(resolve, 110));
-
-      const newParallel = autoTune.recordExecution({
+      vi.setSystemTime(1_120); // after cooldown
+      const next = autoTune.recordExecution({
         planId: 'plan2',
         timestamp: Date.now(),
-        parallelCount: 3,
+        parallelCount: 2,
         totalTasks: 10,
-        successCount: 6,
-        failureCount: 4, // 40% failure rate - window avg is 46.7%
-        averageTimeMs: 1000
+        successCount: 4,
+        failureCount: 6,
+        averageTimeMs: 1_000
       });
-
-      // Should decrease due to >20% failure rate
-      expect(newParallel).toBe(2);
+      expect(next).toBe(1);
     });
 
-    it.skip('should not adjust during cooldown', async () => {
-      // First set up the failure conditions
+    it('should not adjust during cooldown', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(1_000);
       autoTune.recordExecution({
         planId: 'plan0',
         timestamp: Date.now(),
@@ -87,79 +92,83 @@ describe('AutoTune', () => {
         totalTasks: 10,
         successCount: 5,
         failureCount: 5,
-        averageTimeMs: 1000
+        averageTimeMs: 1_000
       });
 
-      await new Promise(resolve => setTimeout(resolve, 110)); // wait for cooldown
-
-      // This should trigger a decrease from 3 to 2
-      const p1 = autoTune.recordExecution({
+      vi.setSystemTime(1_050);
+      const decreased = autoTune.recordExecution({
         planId: 'plan1',
         timestamp: Date.now(),
         parallelCount: 3,
         totalTasks: 10,
         successCount: 5,
         failureCount: 5,
-        averageTimeMs: 1000
+        averageTimeMs: 1_000
       });
+      expect(decreased).toBe(2);
 
-      expect(p1).toBe(2); // Should have decreased
-
-      // Immediate second call (within cooldown) - should not change
-      const parallel = autoTune.recordExecution({
+      const duringCooldown = autoTune.recordExecution({
         planId: 'plan2',
         timestamp: Date.now(),
         parallelCount: 2,
         totalTasks: 10,
         successCount: 5,
         failureCount: 5,
-        averageTimeMs: 1000
+        averageTimeMs: 1_000
       });
+      expect(duringCooldown).toBe(2);
 
-      // Should not change due to cooldown
-      expect(parallel).toBe(2);
+      vi.setSystemTime(1_200); // after cooldown
+      const postCooldown = autoTune.recordExecution({
+        planId: 'plan3',
+        timestamp: Date.now(),
+        parallelCount: 2,
+        totalTasks: 10,
+        successCount: 5,
+        failureCount: 5,
+        averageTimeMs: 1_000
+      });
+      expect(postCooldown).toBe(1);
     });
 
-    it.skip('should increase parallelism on low CPU utilization', async () => {
-      // Record good executions with low CPU - need multiple for window
-      autoTune.recordExecution({
+    it('should increase parallelism on low CPU utilization', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(1_000);
+      const first = autoTune.recordExecution({
         planId: 'plan1',
         timestamp: Date.now(),
         parallelCount: 3,
         totalTasks: 10,
         successCount: 10,
-        failureCount: 0, // 0% failure rate
-        averageTimeMs: 1000,
-        cpuUtilization: 0.3 // 30% CPU
+        failureCount: 0,
+        averageTimeMs: 1_000,
+        cpuUtilization: 0.3
       });
-
-      autoTune.recordExecution({
+      expect(first).toBe(4);
+      vi.setSystemTime(1_050);
+      const duringCooldown = autoTune.recordExecution({
         planId: 'plan1b',
         timestamp: Date.now(),
         parallelCount: 3,
         totalTasks: 10,
         successCount: 10,
-        failureCount: 0, // 0% failure rate
-        averageTimeMs: 1000,
-        cpuUtilization: 0.3 // 30% CPU
+        failureCount: 0,
+        averageTimeMs: 1_000,
+        cpuUtilization: 0.4
       });
-
-      // Wait for cooldown
-      await new Promise(resolve => setTimeout(resolve, 110));
-
-      const newParallel = autoTune.recordExecution({
+      expect(duringCooldown).toBe(4);
+      vi.setSystemTime(1_120);
+      const increased = autoTune.recordExecution({
         planId: 'plan2',
         timestamp: Date.now(),
         parallelCount: 3,
         totalTasks: 10,
         successCount: 10,
         failureCount: 0,
-        averageTimeMs: 1000,
-        cpuUtilization: 0.4 // 40% CPU - avg is still <0.7
+        averageTimeMs: 1_000,
+        cpuUtilization: 0.5
       });
-
-      // Should increase due to low CPU utilization
-      expect(newParallel).toBe(4);
+      expect(increased).toBe(5);
     });
   });
 
