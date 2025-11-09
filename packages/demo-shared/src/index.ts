@@ -56,7 +56,22 @@ export const listMcpTransports = (document: unknown): string[] => {
 };
 
 export const loadMcpSummaries = async (): Promise<McpSummary[]> => {
-  const entries = await readdir(SERVERS_DIR, { withFileTypes: true });
+  let entries: import('node:fs').Dirent[] = [];
+  try {
+    // If the servers dir is missing, return an empty list instead of throwing.
+    // This prevents a runtime crash when consumers request MCP summaries.
+    // Caller will receive an empty `servers` array in that case.
+    // `withFileTypes: true` is used to get Dirent objects.
+    // Use a liberal fallback to keep behavior safe in different environments.
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    // (the return type from readdir is compatible)
+    // Note: readdir may throw ENOENT if the directory doesn't exist.
+    // We catch and handle that below.
+    // @ts-expect-error safe cast for Dirent[]
+    entries = await readdir(SERVERS_DIR, { withFileTypes: true } as any);
+  } catch {
+    return [];
+  }
   const results: McpSummary[] = [];
   for (const entry of entries) {
     if (!entry.isFile() || !isYamlFile(entry.name)) {
@@ -115,16 +130,23 @@ const selectSection = (markdown: string, headings: readonly string[]): string =>
 };
 
 export const loadPlanSummary = async (): Promise<PlanSummary> => {
-  const content = await readFile(PLAN_PATH, 'utf8');
-  return {
-    status: parseList(
-      selectSection(content, ['## Completion Status', '## Status'])
-    ),
-    planOfWork: parseList(
-      selectSection(content, ['## Workstreams and Tasks', '## Plan of Work'])
-    ),
-    followUp: parseList(
-      selectSection(content, ['## Milestones', '## Follow-up'])
-    )
-  };
+  try {
+    const content = await readFile(PLAN_PATH, 'utf8');
+    return {
+      status: parseList(
+        selectSection(content, ['## Completion Status', '## Status'])
+      ),
+      planOfWork: parseList(
+        selectSection(content, ['## Workstreams and Tasks', '## Plan of Work'])
+      ),
+      followUp: parseList(
+        selectSection(content, ['## Milestones', '## Follow-up'])
+      )
+    };
+  } catch {
+    // If the plan file doesn't exist or can't be read/parsed, return
+    // an empty summary rather than throwing. This keeps the demo API
+    // operational even when documentation files are absent.
+    return { status: [], planOfWork: [], followUp: [] };
+  }
 };
