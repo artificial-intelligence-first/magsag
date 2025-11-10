@@ -26,7 +26,7 @@ sources:
 
 ## TypeScript Workflow Overview
 
-1. **Bootstrap** — Install Node.js 18.18+ (22.x recommended) and pnpm 9. Run `pnpm install` inside each worktree after rebasing.
+1. **Bootstrap** — Install Node.js 20+ (22.x recommended) and pnpm 9. Run `pnpm install` inside each worktree after rebasing.
 2. **Create a branch** — `git checkout -b feature/<slug>` and record worktree commands in the handoff doc when collaborating asynchronously.
 3. **Author agent logic** — Implement MAG/SAG and shared helpers in TypeScript packages (for example `packages/catalog`). Reference exports via registry entrypoints such as `@magsag/catalog#agents.offerOrchestratorMag`.
 4. **Update catalog metadata** — Adjust `catalog/agents/*/agent.yaml` and `catalog/registry/*.yaml` to point at the new TypeScript entrypoints.

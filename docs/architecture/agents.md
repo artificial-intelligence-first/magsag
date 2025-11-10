@@ -34,7 +34,7 @@ This guide expands on `AGENTS.md` with deeper context about packages, validation
 
 ## Environment Essentials
 
-- Install Node.js 18.18+ (22.x LTS recommended) and pnpm 9.
+- Install Node.js 20+ (22.x LTS recommended) and pnpm 9.
 - Run `pnpm install` per worktree to sync dependencies.
 - TypeScript packages live under `packages/` (CLI, core, governance, observability, runners, MCP, shared logging, worktree utilities).
 - Catalog assets remain under `catalog/`; docs stay under `docs/`.
