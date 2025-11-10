@@ -63,12 +63,9 @@ export const loadMcpSummaries = async (): Promise<McpSummary[]> => {
     // Caller will receive an empty `servers` array in that case.
     // `withFileTypes: true` is used to get Dirent objects.
     // Use a liberal fallback to keep behavior safe in different environments.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    // (the return type from readdir is compatible)
     // Note: readdir may throw ENOENT if the directory doesn't exist.
     // We catch and handle that below.
-    // @ts-expect-error safe cast for Dirent[]
-    entries = await readdir(SERVERS_DIR, { withFileTypes: true } as any);
+    entries = await readdir(SERVERS_DIR, { withFileTypes: true });
   } catch {
     return [];
   }
