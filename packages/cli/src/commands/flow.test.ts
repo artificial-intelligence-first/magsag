@@ -17,13 +17,17 @@ const infoMock = vi.hoisted(() => vi.fn());
 const validateMock = vi.hoisted(() => vi.fn());
 const runMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../flow/runner.js', () => ({
-  FlowRunner: vi.fn().mockImplementation(() => ({
-    info: infoMock,
-    validate: validateMock,
-    run: runMock
-  }))
-}));
+// Vitest v4 の ESM モック挙動では new 可能なコンストラクタが必要。
+// 以前の arrow 実装だと "is not a constructor" 例外で失敗したため、
+// クラス形式で置き換える。
+vi.mock('../flow/runner.js', () => {
+  class MockFlowRunner {
+    info = infoMock;
+    validate = validateMock;
+    run = runMock;
+  }
+  return { FlowRunner: MockFlowRunner };
+});
 
 const summarizeMock = vi.hoisted(() => vi.fn());
 vi.mock('@magsag/observability', () => ({

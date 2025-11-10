@@ -73,6 +73,8 @@ sources:
 #### Fixed
 - Restored accurate Vitest coverage enforcement by expressing global thresholds as percentages (80/70/75/80), ensuring CI fails when statement, branch, function, or line coverage dips below the documented targets.
 - Rate limiter now keys requests by the actual socket address (via `context.env.incoming`) whenever proxy headers are disabled, preventing all traffic from sharing a single `anonymous` bucket and keeping the `trustForwardedHeaders` flag meaningful.
+- CLI tests: make `FlowRunner` mock constructible for Vitest v4 to avoid "is not a constructor" and ensure `flow` suite passes.
+- Tooling: pin `vite` to `^6` via pnpm overrides to resolve `ERR_PACKAGE_PATH_NOT_EXPORTED` from vitest/vite subpath mismatch.
 
 ### [2.0.0] - 2025-11-04
 
