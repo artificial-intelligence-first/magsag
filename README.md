@@ -1,7 +1,7 @@
 # MAGSAG Framework
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Node Version](https://img.shields.io/badge/node-18.18%2B-%23026e00)](https://nodejs.org/en)
+[![Node Version](https://img.shields.io/badge/node-20%2B-%23026e00)](https://nodejs.org/en)
 [![CI Status](https://img.shields.io/github/actions/workflow/status/artificial-intelligence-first/magsag/ci.yml?branch=main&label=CI)](https://github.com/artificial-intelligence-first/magsag/actions/workflows/ci.yml?branch=main)
 
 MAGSAG is a governance-first framework for building and operating AI agent workflows.  
@@ -43,7 +43,7 @@ Version 2.0 is a TypeScript-only monorepo that ships a subscription-first MAG/SA
 
 ## Prerequisites
 
-- Node.js **18.18+** (22.x LTS recommended for local development)
+- Node.js **20+** (22.x LTS recommended for local development)
 - pnpm **9.x**
 - Codex CLI / Claude CLI installed and authenticated for subscription mode
 - Optional API engines: OpenAI Agents, Claude Agent SDK, Google ADK (requires credentials)
@@ -198,14 +198,14 @@ Add these settings to your `tsconfig.json`:
 
 ### Package Requirements
 
-- **Node.js:** 18.18 or higher
+- **Node.js:** 20 or higher
 - **Package Manager:** pnpm 9.x (recommended), npm 9.x, or yarn 4.x
 - **Module System:** ESM (all MAGSAG packages are ESM-only)
 
 ### Troubleshooting
 
 **Module not found errors:**
-- Ensure you're using Node.js 18.18+
+- Ensure you're using Node.js 20+
 - Verify your `package.json` has `"type": "module"`
 - Check that `moduleResolution` is set to `NodeNext` in tsconfig.json
 

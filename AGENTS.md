@@ -31,7 +31,7 @@ sources:
 
 ## Development Environment
 
-- Install Node.js 18.18+ (22.x LTS recommended) and [pnpm 9](https://pnpm.io/installation); bootstrap each worktree with `pnpm install`.
+- Install Node.js 20+ (22.x LTS recommended) and [pnpm 9](https://pnpm.io/installation); bootstrap each worktree with `pnpm install`.
 - Build packages on demand (for example `pnpm --filter @magsag/cli build`) and execute the CLI via `pnpm --filter @magsag/cli exec node dist/index.js --help`.
 - Place new TypeScript modules under `packages/`; demo surfaces stay in `apps/`; catalog assets remain in `catalog/`; documentation continues under `docs/`.
 - Update MCP YAML in `tools/adk/servers/` and document any manual regeneration steps until the TypeScript sync utility lands; Python fallbacks are retired.

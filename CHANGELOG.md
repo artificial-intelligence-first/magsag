@@ -64,6 +64,7 @@ sources:
 - CI helper scripts (`ci:lint`, `ci:typecheck`, `ci:build`, `ci:test`) now execute across the entire workspace.
 - Archived legacy Python documentation for handoff and memory flows while TypeScript replacements are prepared.
 - Catalog skills now consume generated MCP modules via `callMcpTool`/`createPostgresQuery`, eliminating direct `executeTool` usage and enabling lazy MCP client caching.
+- Raised the documented and enforced Node.js baseline to 20+ to align with the Vitest 4 toolchain.
 
 #### Removed
 - Retired Python doc tooling and scripts in favour of `pnpm docs:lint` and `pnpm catalog:validate` ahead of the v2.0.0 tag.
