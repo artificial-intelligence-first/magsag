@@ -36,7 +36,7 @@
   "devDependencies": {
     "@magsag/cli": "workspace:*",
     "@changesets/cli": "^2.29.7",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
     "@types/split2": "^4.2.3",
     "@types/ws": "^8.18.1",
     "@vitest/coverage-v8": "^4.0.8",
