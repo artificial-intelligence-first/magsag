@@ -100,7 +100,7 @@ importers:
         version: 9.39.1
       eslint-plugin-vitest:
         specifier: ^0.5.4
-        version: 0.5.4(eslint@9.39.1)(typescript@5.9.3)(vitest@4.0.8(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1))
+        version: 0.5.4(eslint@9.39.1)(typescript@5.9.3)(vitest@4.0.8(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1))
       rimraf:
         specifier: ^6.1.0
         version: 6.1.0
@@ -112,7 +112,7 @@ importers:
         version: 8.46.4(eslint@9.39.1)(typescript@5.9.3)
       vitest:
         specifier: ^4.0.8
-        version: 4.0.8(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1)
 
   packages/cli:
     dependencies:
@@ -179,7 +179,7 @@ importers:
         version: 1.21.1
       vite-tsconfig-paths:
         specifier: ^5.1.4
-        version: 5.1.4(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1))
+        version: 5.1.4(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1))
 
   packages/core:
     dependencies:
@@ -253,7 +253,7 @@ importers:
         version: 9.39.1
       eslint-plugin-vitest:
         specifier: ^0.5.4
-        version: 0.5.4(eslint@9.39.1)(typescript@5.9.3)(vitest@4.0.8(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1))
+        version: 0.5.4(eslint@9.39.1)(typescript@5.9.3)(vitest@4.0.8(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1))
       rimraf:
         specifier: ^6.1.0
         version: 6.1.0
@@ -265,7 +265,7 @@ importers:
         version: 8.46.4(eslint@9.39.1)(typescript@5.9.3)
       vitest:
         specifier: ^4.0.8
-        version: 4.0.8(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1)
+        version: 4.0.8(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1)
 
   packages/observability:
     dependencies:
@@ -367,7 +367,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^1.7.0
-        version: 1.19.6(hono@4.10.4)
+        version: 1.19.6(hono@4.10.5)
       '@magsag/core':
         specifier: workspace:*
         version: link:../core
@@ -378,8 +378,8 @@ importers:
         specifier: workspace:*
         version: link:../schema
       hono:
-        specifier: ^4.5.0
-        version: 4.10.4
+        specifier: ^4.10.5
+        version: 4.10.5
       ws:
         specifier: ^8.18.0
         version: 8.18.3
@@ -1166,6 +1166,9 @@ packages:
 
   '@types/node@24.10.0':
     resolution: {integrity: sha512-qzQZRBqkFsYyaSWXuEHc2WR9c0a0CXwiE5FWUvn7ZM+vdy1uZLfCunD38UzhuB7YN/J11ndbDBcTmOdxJo9Q7A==}
+
+  '@types/node@24.10.1':
+    resolution: {integrity: sha512-GNWcUTRBgIRJD5zj+Tq0fKOJ5XZajIiBroOF0yvj2bSU1WvNdYS/dn9UxwsujGW4JX06dnHyjV2y9rRaybH0iQ==}
 
   '@types/pidusage@2.0.5':
     resolution: {integrity: sha512-MIiyZI4/MK9UGUXWt0jJcCZhVw7YdhBuTOuqP/BjuLDLZ2PmmViMIQgZiWxtaMicQfAz/kMrZ5T7PKxFSkTeUA==}
@@ -1965,8 +1968,8 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  hono@4.10.4:
-    resolution: {integrity: sha512-YG/fo7zlU3KwrBL5vDpWKisLYiM+nVstBQqfr7gCPbSYURnNEP9BDxEMz8KfsDR9JX0lJWDRNc6nXX31v7ZEyg==}
+  hono@4.10.5:
+    resolution: {integrity: sha512-h/MXuTkoAK8NG1EfDp0jI1YLf6yGdDnfkebRO2pwEh5+hE3RAJFXkCsnD0vamSiARK4ZrB6MY+o3E/hCnOyHrQ==}
     engines: {node: '>=16.9.0'}
 
   html-entities@2.6.0:
@@ -3396,9 +3399,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@hono/node-server@1.19.6(hono@4.10.4)':
+  '@hono/node-server@1.19.6(hono@4.10.5)':
     dependencies:
-      hono: 4.10.4
+      hono: 4.10.5
 
   '@humanfs/core@0.19.1': {}
 
@@ -3772,12 +3775,16 @@ snapshots:
     dependencies:
       undici-types: 7.16.0
 
+  '@types/node@24.10.1':
+    dependencies:
+      undici-types: 7.16.0
+
   '@types/pidusage@2.0.5': {}
 
   '@types/request@2.48.13':
     dependencies:
       '@types/caseless': 0.12.5
-      '@types/node': 24.10.0
+      '@types/node': 24.10.1
       '@types/tough-cookie': 4.0.5
       form-data: 2.5.5
 
@@ -3955,6 +3962,14 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 6.4.1(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1)
+
+  '@vitest/mocker@4.0.8(vite@6.4.1(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1))':
+    dependencies:
+      '@vitest/spy': 4.0.8
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      vite: 6.4.1(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1)
 
   '@vitest/pretty-format@4.0.8':
     dependencies:
@@ -4301,6 +4316,16 @@ snapshots:
       eslint: 9.39.1
     optionalDependencies:
       vitest: 4.0.8(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1)
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+
+  eslint-plugin-vitest@0.5.4(eslint@9.39.1)(typescript@5.9.3)(vitest@4.0.8(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1)):
+    dependencies:
+      '@typescript-eslint/utils': 7.18.0(eslint@9.39.1)(typescript@5.9.3)
+      eslint: 9.39.1
+    optionalDependencies:
+      vitest: 4.0.8(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -4732,7 +4757,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  hono@4.10.4: {}
+  hono@4.10.5: {}
 
   html-entities@2.6.0: {}
 
@@ -5607,13 +5632,13 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite-tsconfig-paths@5.1.4(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1)):
+  vite-tsconfig-paths@5.1.4(typescript@5.9.3)(vite@6.4.1(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1)):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       globrex: 0.1.2
       tsconfck: 3.1.6(typescript@5.9.3)
     optionalDependencies:
-      vite: 6.4.1(@types/node@24.10.0)(tsx@4.20.6)(yaml@2.8.1)
+      vite: 6.4.1(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -5628,6 +5653,20 @@ snapshots:
       tinyglobby: 0.2.15
     optionalDependencies:
       '@types/node': 24.10.0
+      fsevents: 2.3.3
+      tsx: 4.20.6
+      yaml: 2.8.1
+
+  vite@6.4.1(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1):
+    dependencies:
+      esbuild: 0.25.12
+      fdir: 6.5.0(picomatch@4.0.3)
+      picomatch: 4.0.3
+      postcss: 8.5.6
+      rollup: 4.53.1
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@types/node': 24.10.1
       fsevents: 2.3.3
       tsx: 4.20.6
       yaml: 2.8.1
@@ -5656,6 +5695,44 @@ snapshots:
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 24.10.0
+    transitivePeerDependencies:
+      - jiti
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
+
+  vitest@4.0.8(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1):
+    dependencies:
+      '@vitest/expect': 4.0.8
+      '@vitest/mocker': 4.0.8(vite@6.4.1(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1))
+      '@vitest/pretty-format': 4.0.8
+      '@vitest/runner': 4.0.8
+      '@vitest/snapshot': 4.0.8
+      '@vitest/spy': 4.0.8
+      '@vitest/utils': 4.0.8
+      debug: 4.4.3(supports-color@8.1.1)
+      es-module-lexer: 1.7.0
+      expect-type: 1.2.2
+      magic-string: 0.30.21
+      pathe: 2.0.3
+      picomatch: 4.0.3
+      std-env: 3.10.0
+      tinybench: 2.9.0
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.15
+      tinyrainbow: 3.0.3
+      vite: 6.4.1(@types/node@24.10.1)(tsx@4.20.6)(yaml@2.8.1)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/node': 24.10.1
     transitivePeerDependencies:
       - jiti
       - less
