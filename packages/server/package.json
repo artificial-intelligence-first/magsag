@@ -21,7 +21,7 @@
     "@magsag/core": "workspace:*",
     "@magsag/observability": "workspace:*",
     "@magsag/schema": "workspace:*",
-    "hono": "^4.5.0",
+    "hono": "^4.10.5",
     "ws": "^8.18.0",
     "zod-to-json-schema": "^3.24.6"
   },
