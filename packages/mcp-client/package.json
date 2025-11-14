@@ -16,7 +16,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.21.1"
+    "@modelcontextprotocol/sdk": "^1.22.0"
   },
   "exports": {
     ".": {
