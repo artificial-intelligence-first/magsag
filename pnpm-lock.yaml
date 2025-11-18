@@ -303,8 +303,8 @@ importers:
   packages/runner-claude-agent:
     dependencies:
       '@anthropic-ai/claude-agent-sdk':
-        specifier: ^0.1.37
-        version: 0.1.37(zod@4.1.12)
+        specifier: ^0.1.43
+        version: 0.1.43(zod@4.1.12)
       '@magsag/core':
         specifier: workspace:*
         version: link:../core
@@ -419,8 +419,8 @@ importers:
 
 packages:
 
-  '@anthropic-ai/claude-agent-sdk@0.1.37':
-    resolution: {integrity: sha512-LMfqMIPLTz0vRhpcO7hpPJ5L6Bg24y5/PaqZvwAUNZ/GR3OAl7xmJR7IryIR6m8Pyd/6Hs2yBU8j86Os+wHFQQ==}
+  '@anthropic-ai/claude-agent-sdk@0.1.43':
+    resolution: {integrity: sha512-gH7VFnIIp4cpK2kK0FTah3O41rAJkyzJOVqgxoALZTKt9W1dXuSOxsJOh+e9ZHShCuBukjJVq2/lWUyhTqjXuQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
       zod: ^3.24.1
@@ -2926,7 +2926,7 @@ packages:
 
 snapshots:
 
-  '@anthropic-ai/claude-agent-sdk@0.1.37(zod@4.1.12)':
+  '@anthropic-ai/claude-agent-sdk@0.1.43(zod@4.1.12)':
     dependencies:
       zod: 4.1.12
     optionalDependencies:
