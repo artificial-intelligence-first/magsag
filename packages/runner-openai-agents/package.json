@@ -18,7 +18,7 @@
   "dependencies": {
     "@magsag/core": "workspace:*",
     "@magsag/schema": "workspace:*",
-    "@openai/agents": "^0.3.1"
+    "@openai/agents": "^0.3.2"
   },
   "exports": {
     ".": {
