@@ -23,7 +23,7 @@
     "@magsag/schema": "workspace:*",
     "hono": "^4.10.5",
     "ws": "^8.18.0",
-    "zod-to-json-schema": "^3.24.6"
+    "zod-to-json-schema": "^3.25.0"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1"
