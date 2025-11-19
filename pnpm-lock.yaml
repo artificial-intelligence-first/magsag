@@ -283,10 +283,10 @@ importers:
     dependencies:
       '@google/adk':
         specifier: ^0.1.3
-        version: 0.1.3(@google-cloud/storage@7.17.3)(@google/genai@1.29.1(@modelcontextprotocol/sdk@1.21.1))(@modelcontextprotocol/sdk@1.21.1)(@opentelemetry/api@1.9.0)(zod@3.25.76)
+        version: 0.1.3(@google-cloud/storage@7.17.3)(@google/genai@1.30.0(@modelcontextprotocol/sdk@1.21.1))(@modelcontextprotocol/sdk@1.21.1)(@opentelemetry/api@1.9.0)(zod@3.25.76)
       '@google/genai':
-        specifier: 1.29.1
-        version: 1.29.1(@modelcontextprotocol/sdk@1.21.1)
+        specifier: 1.30.0
+        version: 1.30.0(@modelcontextprotocol/sdk@1.21.1)
       '@magsag/core':
         specifier: workspace:*
         version: link:../core
@@ -724,8 +724,8 @@ packages:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  '@google/genai@1.29.1':
-    resolution: {integrity: sha512-Buywpq0A6xf9cOdhiWCi5KUiDBbZkjCH5xbl+xxNQRItoYQgd31p0OKyn5cUnT0YNzC/pAmszqXoOc7kncqfFQ==}
+  '@google/genai@1.30.0':
+    resolution: {integrity: sha512-3MRcgczBFbUat1wIlZoLJ0vCCfXgm7Qxjh59cZi2X08RgWLtm9hKOspzp7TOg1TV2e26/MLxR2GR5yD5GmBV2w==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.20.1
@@ -1790,6 +1790,10 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    hasBin: true
+
+  glob@10.5.0:
+    resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
     hasBin: true
 
   glob@11.0.3:
@@ -3252,15 +3256,15 @@ snapshots:
       - encoding
       - supports-color
 
-  '@google/adk@0.1.3(@google-cloud/storage@7.17.3)(@google/genai@1.29.1(@modelcontextprotocol/sdk@1.21.1))(@modelcontextprotocol/sdk@1.21.1)(@opentelemetry/api@1.9.0)(zod@3.25.76)':
+  '@google/adk@0.1.3(@google-cloud/storage@7.17.3)(@google/genai@1.30.0(@modelcontextprotocol/sdk@1.21.1))(@modelcontextprotocol/sdk@1.21.1)(@opentelemetry/api@1.9.0)(zod@3.25.76)':
     dependencies:
       '@google-cloud/storage': 7.17.3
-      '@google/genai': 1.29.1(@modelcontextprotocol/sdk@1.21.1)
+      '@google/genai': 1.30.0(@modelcontextprotocol/sdk@1.21.1)
       '@modelcontextprotocol/sdk': 1.21.1
       '@opentelemetry/api': 1.9.0
       zod: 3.25.76
 
-  '@google/genai@1.29.1(@modelcontextprotocol/sdk@1.21.1)':
+  '@google/genai@1.30.0(@modelcontextprotocol/sdk@1.21.1)':
     dependencies:
       google-auth-library: 10.5.0
       ws: 8.18.3
@@ -4462,6 +4466,15 @@ snapshots:
       package-json-from-dist: 1.0.1
       path-scurry: 1.11.1
 
+  glob@10.5.0:
+    dependencies:
+      foreground-child: 3.3.1
+      jackspeak: 3.4.3
+      minimatch: 9.0.5
+      minipass: 7.1.2
+      package-json-from-dist: 1.0.1
+      path-scurry: 1.11.1
+
   glob@11.0.3:
     dependencies:
       foreground-child: 3.3.1
@@ -5045,7 +5058,7 @@ snapshots:
 
   rimraf@5.0.10:
     dependencies:
-      glob: 10.4.5
+      glob: 10.5.0
 
   rimraf@6.1.0:
     dependencies:
